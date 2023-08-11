@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+<body>
+    <h2>Hangman</h2>
+    <div id="newGameButton" onclick="startNewGame()">New game</div>
+    <br>
+    <br>
+    <br>
+    <div id="word"></div>
+    <h3 id="lives"></h3>
+    <div id="guessedLetters"></div>
+    <div id="message"></div>
+
+    <style>
+    body {
+        font-family: Courier;
+    }
+    #newGameButton {
+        width: 100px;
+        height: 40px;
+        line-height: 40px;
+        color: white;
+        background-color: blue;
+        text-align: center;
+        cursor: pointer;
+    }
+    </style>
+
+    <script>
+      let words = ["apple", "banana", "grape", "raspberry", "blueberry", "dragonfruit",
+"people", "world", "school", "system", "program", "problem", "family", 
+"country", "company", "product", "information", "history", "development", 
+"process", "nature", "example", "picture", "environment", "production", 
+"software", "internet", "service", "language", "management", "player", 
+"security", "network", "solution", "project", "application", "culture", 
+"policy", "market", "research", "difference", "energy", "knowledge", 
+"training", "society", "computer", "analysis", "strategy", "technology", 
+"description", "activity", "property", "customer", "character", "industry", 
+"position", "performance", "decision", "structure", "expression", 
+"operation", "education", "community", "reality", "experience", 
+"profession", "resource", "question", "international", "direction", 
+"reference", "machine", "method", "theory", "communication", "discussion", 
+"material", "purpose", "feature", "document", "context", "category", 
+"standard", "function", "message", "project", "factor", "article"];
+        let word = '';
+        let guessedLetters = [];
+        let lives = 6;
+
+        startNewGame();
+
+        function startNewGame(){
+            word = getRandomWord();
+            guessedLetters = [];
+            lives = 6;
+            updateGameProgress();
+        }
+
+        function getRandomWord() {
+            const randomIndex = Math.floor(Math.random() * words.length);
+            return words[randomIndex].toUpperCase();
+        }
+
+        function makeGuess(letter){
+            letter = letter.toUpperCase();
+        
+            if(guessedLetters.includes(letter)){
+                document.getElementById("message").innerHTML = "Already guessed that letter!";
+                return;
+            }
+        
+            guessedLetters.push(letter);
+            document.getElementById("guessedLetters").innerHTML = "Guessed Letters: " + guessedLetters.join(", ");
+        
+            if(word.includes(letter)){
+                document.getElementById("message").innerHTML = "Good guess!";
+            } else {
+                lives--;
+                document.getElementById("message").innerHTML = "Bad guess!";
+                if(lives <= 0){
+                    document.getElementById("message").innerHTML = "Game over. The word was "+word;
+                    startNewGame();
+                }
+            }
+            updateGameProgress();
+        }
+
+        function updateGameProgress(){
+            let wordProgress = '';
+            for(let i=0; i< word.length; i++){
+                if(guessedLetters.includes(word[i])){
+                    wordProgress += word[i];
+                } else {
+                    wordProgress += "_ ";
+                }
+            }
+            document.getElementById("word").innerHTML = wordProgress;
+            document.getElementById("lives").innerHTML = "Lives: " + lives;
+        }
+
+        document.body.onkeyup = function(e){
+            const letter = String.fromCharCode(e.keyCode);
+            if(/^[A-Z]$/i.test(letter)){
+                makeGuess(letter);
+            }
+        }
+    </script>
+
+</body>
+</html>

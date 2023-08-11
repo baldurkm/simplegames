@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+  #game-board {
+    position: relative;
+    height: 400px;
+    width: 400px;
+    border: 1px solid black;
+  }
+  .dot {
+    position: absolute;
+    height: 20px;
+    width: 20px;
+    background: #000;
+  }
+  #snake-head {
+    background: #f00;
+  }
+  #apple {
+    background: #0f0;
+  }
+</style>
+</head>
+
+<body>
+  <div id="game-board"></div>
+
+<script>
+// game variables
+var dotSize = 20;
+var direction = [0, -1];
+var apple = null;
+var snake = [{
+  top: 200,
+  left: 200
+}]
+  
+function updateGame() {  
+  // update snake head position
+  var head = Object.assign({}, snake[0]); // start with old head position
+  head.top += direction[1] * dotSize; // update position
+  head.left += direction[0] * dotSize;
+
+  // check for collision with border
+  if (head.top < 0 || head.left < 0 || head.top == 400 || head.left == 400) {
+    return gameOver();
+  }
+
+  // check for collision with self by checking if any dot has the new head coordinates
+  if (snake.find(dot => dot.top == head.top && dot.left == head.left)) {
+    return gameOver();
+  }
+
+  // keep head, remove tail (unless ate apple)
+  snake.unshift(head);
+  if (apple && apple.top == head.top && apple.left == head.left) {
+    apple = null;
+  } else {
+    snake.pop();
+  }
+
+  // generate new apple if necessary
+  if (!apple) {
+    apple = {
+      top: Math.floor(Math.random() * 20) * dotSize,
+      left: Math.floor(Math.random() * 20) * dotSize,
+    };
+  }
+
+  // redraw game
+  var gameBoard = document.getElementById('game-board');
+  // remove all dot elements, will re-add them below
+  Array.from(gameBoard.getElementsByClassName('dot')).forEach(dot => dot.remove());
+
+  // draw snake
+  snake.forEach((dot, index) => {
+    var dotEl = document.createElement('div');
+    dotEl.style.top = `${dot.top}px`;
+    dotEl.style.left = `${dot.left}px`;
+    dotEl.classList.add('dot');
+    if (index == 0) dotEl.id = 'snake-head';
+    gameBoard.appendChild(dotEl);
+  });
+
+  // draw apple
+  var appleEl = document.createElement('div');
+  appleEl.style.top = `${apple.top}px`;
+  appleEl.style.left = `${apple.left}px`;
+  appleEl.classList.add('dot');
+  appleEl.id = 'apple';
+  gameBoard.appendChild(appleEl);
+}
+
+function gameOver() {
+  // alert('Game over!');
+  // reset game
+  direction = [0, -1];
+  apple = null;
+  snake = [{
+    top: 200,
+    left: 200
+  }];
+}
+
+window.onload = function(){
+  // game loop
+  setInterval(updateGame, 200);
+
+  // movement keys (WASD)
+  window.onkeydown = function(e) {
+    switch (e.key) {
+    case 'w':
+      direction = [0, -1];
+      break;
+    case 's':
+      direction = [0, 1];
+      break;
+    case 'a':
+      direction = [-1, 0];
+      break;
+    case 'd':
+      direction = [1, 0];
+      break;
+    }
+    return false;
+  };
+}
+</script>
+
+</body>
+</html>
