@@ -24,7 +24,8 @@
 </head>
 
 <body>
-  <div id="game-board"></div>
+  <div id="game-board"></div> 
+  <p id="score-count">Score: 0</p> <!-- Added score counter -->
 
 <script>
 // game variables
@@ -34,46 +35,46 @@ var apple = null;
 var snake = [{
   top: 200,
   left: 200
-}]
-  
+}];
+var score = 0; // score variable
+var speed = 200; // speed variable
+
 function updateGame() {  
-  // update snake head position
-  var head = Object.assign({}, snake[0]); // start with old head position
-  head.top += direction[1] * dotSize; // update position
+  var head = Object.assign({}, snake[0]); 
+  head.top += direction[1] * dotSize; 
   head.left += direction[0] * dotSize;
 
-  // check for collision with border
   if (head.top < 0 || head.left < 0 || head.top == 400 || head.left == 400) {
     return gameOver();
   }
 
-  // check for collision with self by checking if any dot has the new head coordinates
   if (snake.find(dot => dot.top == head.top && dot.left == head.left)) {
     return gameOver();
   }
 
-  // keep head, remove tail (unless ate apple)
   snake.unshift(head);
   if (apple && apple.top == head.top && apple.left == head.left) {
     apple = null;
+    score++; // increase score when apple is eaten
+    document.getElementById('score-count').innerText = "Score: " + score; // update score in html
+    if(score % 5 == 0) { // speed up every 5 apples eaten
+        speed *= 0.8;
+        setInterval(updateGame, speed);
+    }
   } else {
     snake.pop();
   }
 
-  // generate new apple if necessary
   if (!apple) {
     apple = {
       top: Math.floor(Math.random() * 20) * dotSize,
-      left: Math.floor(Math.random() * 20) * dotSize,
+      left: Math.floor(Math.random() * 20) * dotSize
     };
   }
 
-  // redraw game
   var gameBoard = document.getElementById('game-board');
-  // remove all dot elements, will re-add them below
   Array.from(gameBoard.getElementsByClassName('dot')).forEach(dot => dot.remove());
 
-  // draw snake
   snake.forEach((dot, index) => {
     var dotEl = document.createElement('div');
     dotEl.style.top = `${dot.top}px`;
@@ -83,7 +84,6 @@ function updateGame() {
     gameBoard.appendChild(dotEl);
   });
 
-  // draw apple
   var appleEl = document.createElement('div');
   appleEl.style.top = `${apple.top}px`;
   appleEl.style.left = `${apple.left}px`;
@@ -93,36 +93,38 @@ function updateGame() {
 }
 
 function gameOver() {
-  // alert('Game over!');
-  // reset game
   direction = [0, -1];
   apple = null;
   snake = [{
     top: 200,
     left: 200
   }];
+  score = 0; // reset score on game over
+  speed = 200;
 }
 
 window.onload = function(){
-  // game loop
-  setInterval(updateGame, 200);
+  setInterval(updateGame, speed);
 
-  // movement keys (WASD)
-  window.onkeydown = function(e) {
-    switch (e.key) {
+window.onkeydown = function(e) {
+  switch (e.key) {
     case 'w':
+    case 'ArrowUp':
       direction = [0, -1];
       break;
     case 's':
+    case 'ArrowDown':
       direction = [0, 1];
       break;
     case 'a':
+    case 'ArrowLeft':
       direction = [-1, 0];
       break;
     case 'd':
+    case 'ArrowRight':
       direction = [1, 0];
       break;
-    }
+  }
     return false;
   };
 }
