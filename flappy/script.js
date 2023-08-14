@@ -16,12 +16,17 @@ function init() {
     gameContainer = document.getElementById('game-container');
     gameInterval = setInterval(update, 20);
 
-    // Event Listener for Flap
-    document.addEventListener('keydown', function(event) {
-        if (event.code === 'Space') {
-            flap();
-        }
-    });
+// Event Listener for Flap
+document.addEventListener('keydown', function(event) {
+    if (event.code === 'Space') {
+        flap();
+    }
+});
+
+// Event Listener for touch (Mobile Devices)
+document.addEventListener('touchstart', function() {
+    flap();
+});
 }
 
 // Update Game

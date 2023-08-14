@@ -8,9 +8,10 @@
 
 #bird {
     position: absolute;
-    width: 40px;
-    height: 30px;
-    background-color: yellow;
+    background: url('bird.gif') no-repeat center center; 
+    background-size: contain;
+    width: 50px;  /* updated based on .gif size */
+    height: 50px;  /* updated based on .gif size */
     left: 50px;
     top: 50%;
     transform: translateY(-50%);
