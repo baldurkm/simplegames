@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Minesweeper Clone</title>
+  <style>
+    .board {
+      display: grid;
+      grid-template-columns: repeat(10, 30px);
+      gap: 2px;
+      background-color: gray; /* Set default tile color */
+    }
+
+    .tile {
+      width: 30px;
+      height: 30px;
+      border: 1px solid #ccc;
+      text-align: center;
+      line-height: 30px;
+      font-size: 16px;
+      cursor: pointer;
+      background-color: #eee; /* Set unrevealed tile color */
+    }
+
+    .tile.mine {
+      color: black; /* Set mine tile color */
+    }
+
+    .tile.flagged {
+      background-color: #ffc107; /* Set flagged tile color */
+    }
+
+    .tile.cleared {
+      background-color: #ddd; /* Set cleared tile color */
+    }
+  </style>
+</head>
+<body>
+  <div class="board" id="board"></div>
+  <div id="message" class="message">You lost! Click here to restart.</div>
+<script>
+  const numRows = 10;
+  const numCols = 10;
+  const numMines = 15;
+  let isGameOver = false;
+
+  const board = document.getElementById("board");
+  const messageElement = document.getElementById("message");
+  const tiles = [];
+
+  // Create the game board
+  for (let row = 0; row < numRows; row++) {
+    for (let col = 0; col < numCols; col++) {
+      const tile = document.createElement("div");
+      tile.classList.add("tile");
+      tile.setAttribute("data-row", row);
+      tile.setAttribute("data-col", col);
+      board.appendChild(tile);
+      tiles.push(tile);
+    }
+  }
+
+  // Place mines randomly
+  const mineIndices = [];
+  while (mineIndices.length < numMines) {
+    const index = Math.floor(Math.random() * numRows * numCols);
+    if (!mineIndices.includes(index)) {
+      mineIndices.push(index);
+      tiles[index].classList.add("mine");
+    }
+  }
+
+  // Add click event listeners
+  tiles.forEach(tile => {
+    tile.addEventListener("click", () => revealTile(tile));
+    tile.addEventListener("contextmenu", (event) => flagTile(event, tile));
+  });
+
+  // Function to reveal a tile
+  function revealTile(tile) {
+    if (isGameOver || tile.classList.contains("revealed") || tile.classList.contains("flagged")) return;
+    tile.classList.add("revealed", "cleared");
+    if (tile.classList.contains("mine")) {
+      isGameOver = true;
+      messageElement.textContent = "You lost! Click here to restart.";
+      tiles.forEach(tile => {
+        if (tile.classList.contains("mine")) {
+          tile.textContent = "💣";
+        }
+      });
+      messageElement.style.display = "block";
+    } else {
+      const row = parseInt(tile.getAttribute("data-row"));
+      const col = parseInt(tile.getAttribute("data-col"));
+      const numNeighborMines = getNumNeighborMines(row, col);
+      if (numNeighborMines > 0) {
+        tile.textContent = numNeighborMines;
+      } else {
+        revealEmptyNeighbors(row, col);
+      }
+    }
+  }
+
+  // Function to flag a tile
+  function flagTile(event, tile) {
+    event.preventDefault();
+    if (!tile.classList.contains("revealed")) {
+      tile.classList.toggle("flagged");
+    }
+  }
+
+  // Function to count neighboring mines
+  function getNumNeighborMines(row, col) {
+    let count = 0;
+    for (let i = row - 1; i <= row + 1; i++) {
+      for (let j = col - 1; j <= col + 1; j++) {
+        if (i >= 0 && i < numRows && j >= 0 && j < numCols) {
+          if (tiles[i * numCols + j].classList.contains("mine")) {
+            count++;
+          }
+        }
+      }
+    }
+    return count;
+  }
+
+  // Function to auto-reveal empty neighboring tiles
+  function revealEmptyNeighbors(row, col) {
+    for (let i = row - 1; i <= row + 1; i++) {
+      for (let j = col - 1; j <= col + 1; j++) {
+        if (i >= 0 && i < numRows && j >= 0 && j < numCols) {
+          const neighborTile = tiles[i * numCols + j];
+          if (!neighborTile.classList.contains("revealed")) {
+            revealTile(neighborTile);
+          }
+        }
+      }
+    }
+  }
+
+  // Restart the game
+  function restartGame() {
+    isGameOver = false;
+    messageElement.style.display = "none";
+    tiles.forEach(tile => {
+      tile.classList.remove("revealed", "flagged", "cleared", "mine");
+      tile.textContent = "";
+    });
+    mineIndices.length = 0; // Clear the mine indices
+    while (mineIndices.length < numMines) {
+      const index = Math.floor(Math.random() * numRows * numCols);
+      if (!mineIndices.includes(index)) {
+        mineIndices.push(index);
+        tiles[index].classList.add("mine");
+      }
+    }
+  }
+
+  messageElement.addEventListener("click", restartGame);
+</script>
+</body>
+</html>
