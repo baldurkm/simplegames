@@ -4,10 +4,48 @@ var context = canvas.getContext("2d");
 var enemies = [];
 var towers = [];
 var projectiles = [];
+var addTowerButton = {x: canvas.width - 100, y: canvas.height - 100, width: 100, height: 30}; // Define Add Tower button
 var addTowerMode = false;
 var money = 100;
-var killCount = 0;  // Add this line
-var spawnInfluence = 0.01;  // Base spawn rate
+var killCount = 0; 
+var spawnInfluence = 0.01; 
+
+// Catch click to add tower
+canvas.addEventListener('click', function(event) {
+    var rect = canvas.getBoundingClientRect();
+    var x = event.clientX - rect.left;
+    var y = event.clientY - rect.top;
+
+    if (addTowerMode) {
+        placeTower(x, y);
+    } else {
+        // Check if Add Tower button is clicked
+        if (x >= addTowerButton.x && x <= addTowerButton.x + addTowerButton.width &&
+            y >= addTowerButton.y && y <= addTowerButton.y + addTowerButton.height) {
+            addTower();
+        }
+    }
+}, false);
+
+
+
+// Compatibility for touch devices
+canvas.addEventListener('touchstart', function(event) {
+    event.preventDefault();
+    var rect = canvas.getBoundingClientRect();
+    var touch = event.touches[0];
+
+    var x = touch.clientX - rect.left;
+    var y = touch.clientY - rect.top;
+
+    // Check if Add Tower button is clicked
+    if (x >= addTowerButton.x && x <= addTowerButton.x + addTowerButton.width &&
+        y >= addTowerButton.y && y <= addTowerButton.y + addTowerButton.height) {
+        addTower();
+    } else if (addTowerMode) {
+        placeTower(x, y);
+    }
+}, false);
 
 //make a grid
 var grid = [];
@@ -75,40 +113,44 @@ function Tower(x, y){
 }
 // Add tower mode
 function addTower() {
-  addTowerMode = !addTowerMode; // Toggle the state
+  addTowerMode = true;
 }
 
 // Place Tower
 function placeTower(x, y) {
     var i = Math.floor(y / gridSize);
     var j = Math.floor(x / gridSize);
-	addTowerMode = !addTowerMode; // Toggle the state
+    addTowerMode = false;
 
-    // Only if the cell is empty and there's enough money
-    if(grid[i][j] === 0 && money >= 50){
-        towers.push(new Tower(j * gridSize, i * gridSize)); 
-        grid[i][j] = 1; // Update grid cell to tower
-        money -= 50;  // Deduct tower cost
+    // Boundary condition fix
+    if (i >= gridRows || j >= gridColumns) {
+      alert("Invalid tower location!");
+    } else if (grid[i][j] == 1) {
+      alert("Cannot place a tower on top of another!");
+    } else if (money < 50) {
+      alert("Insufficient money to place a tower!");
     } else {
-        alert("Not enough money or cell is not empty!");
+      towers.push(new Tower(j * gridSize, i * gridSize));
+      grid[i][j] = 1;
+      money -= 50;
     }
 }
 
 
-// Catch click to add tower
-canvas.addEventListener('click', function(event) {
-    if (addTowerMode) {
-        var rect = canvas.getBoundingClientRect();
-        var x = event.clientX - rect.left;
-        var y = event.clientY - rect.top;
-        placeTower(x, y);
-    }
-}, false);
+
 
 // Game loop
 var gameLoop = setInterval(function(){
     context.clearRect(0, 0, canvas.width, canvas.height);
-	
+
+// Draw Add Tower button
+context.rect(addTowerButton.x, addTowerButton.y, addTowerButton.width, addTowerButton.height);
+context.fillStyle = "orange";
+context.fill();
+context.stroke();
+context.fillStyle = "black";
+context.fillText("BUILD $50", addTowerButton.x + 10, addTowerButton.y + 20); 
+
 	// Draw grid
     if (addTowerMode) {
         for (var i = 0; i < gridRows; i++) {
@@ -141,9 +183,9 @@ var gameLoop = setInterval(function(){
 		
 		//Draw money
 	context.fillStyle = "black";
-	context.font = "24px Arial";
-	context.fillText("Money: " + money, 10, 30);
-	context.fillText("Kills: " + killCount, 10, 60);
+	context.font = "16px Arial";
+	context.fillText("CASH: " + money, 10, 30);
+	context.fillText("KILLS: " + killCount, 10, 60);
 
     // Tower firing and drawing
     for (var i in towers) {
