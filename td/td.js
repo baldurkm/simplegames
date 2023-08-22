@@ -6,12 +6,29 @@ var statusMessageTimeout = 0;
 var enemies = [];
 var towers = [];
 var projectiles = [];
-var addTowerButton = {x: canvas.width - 100, y: canvas.height - 100, width: 100, height: 30}; // Define Add Tower button
+var addTowerButton = {x: canvas.width - 120, y: canvas.height - 60, width: 100, height: 30}; // Define Add Tower button
 var addTowerMode = false;
 var money = 100;
 var killCount = 0; 
 var spawnInfluence = 0.01; 
 var lastSpawnedOnKillCount = 0;  // Keep track of the kill count on the last spawn of breaker enemy
+
+// Create a background texture pattern
+var backgroundTextureImage = new Image();
+backgroundTextureImage.src = 'grass.jpg';
+var backgroundTexturePattern;
+
+//Graphics
+var towerImage = new Image();
+towerImage.src = 'tower.jpg';
+var enemyImage = new Image();
+enemyImage.src = 'monster.jpg';
+var breakerImage = new Image();
+breakerImage.src = 'breaker.jpg';
+
+backgroundTextureImage.onload = function() {
+    backgroundTexturePattern = context.createPattern(backgroundTextureImage, 'repeat');
+};
 
 // Catch click to add tower
 canvas.addEventListener('click', function(event) {
@@ -53,7 +70,7 @@ canvas.addEventListener('touchstart', function(event) {
 //make a grid
 var grid = [];
 var gridSize = 40;
-var gridRows = canvas.height / gridSize; 
+var gridRows = (canvas.height / gridSize) - 2; 
 var gridColumns = canvas.width / gridSize;
 
 // Initialize the grid with zeros
@@ -70,7 +87,7 @@ function Enemy(x, y) {
     this.y = y;
     this.speed = 2;
     this.hp = 3;
-    this.direction = 'right';
+    this.direction = 'down';
 	this.justChangedDirection = false;  // New flag to indicate if direction just changed
 
     this.move = function() {
@@ -118,7 +135,7 @@ function BreakerEnemy(x, y) {
     this.y = y;
     this.speed = 1; // Breaker enemy moves slower
     this.hp = 5; // More HP because this enemy is stronger
-    this.direction = 'right';
+    this.direction = 'down';
     this.justChangedDirection = false;
 
     this.move = function() {
@@ -262,6 +279,14 @@ statusMessageTimeout = 120;
 var gameLoop = setInterval(function(){
     context.clearRect(0, 0, canvas.width, canvas.height);
 
+    // Draw the background texture for each tile
+    for (var i = 0; i < gridRows; i++) {
+        for (var j = 0; j < gridColumns; j++) {
+            context.fillStyle = backgroundTexturePattern;
+            context.fillRect(j * gridSize, i * gridSize, gridSize, gridSize);
+        }
+    }
+
 // Draw Add Tower button
 context.rect(addTowerButton.x, addTowerButton.y, addTowerButton.width, addTowerButton.height);
 context.fillStyle = "orange";
@@ -279,36 +304,29 @@ context.fillText("BUILD $50", addTowerButton.x + 10, addTowerButton.y + 20);
             }
         }
     }
-	
-
 
     
-    // Move and Draw enemies
+// Move and Draw enemies
 for(var i in enemies) {
     var enemy = enemies[i];
 
-enemy.move();
-if (enemy instanceof BreakerEnemy) {
-    enemy.breakTower();
-}
+    enemy.move();
 
-if (enemy instanceof BreakerEnemy) {
-    context.fillStyle = enemy.hp === 5 ? "Purple" : enemy.hp > 3 ? "orange" : "yellow";
-} else {
-    context.fillStyle = enemy.hp === 3 ? "red" : enemy.hp === 2 ? "orange" : "yellow";
-}
-
-    context.fillRect(enemy.x, enemy.y, gridSize, gridSize);
-		
-		 // Check for lose condition
-		if (enemy.x + gridSize >= canvas.width) {
-				statusMessage = 'The enemies have reached our base. Abandon all hope.';
-				statusMessageTimeout = 120;  
-				clearInterval(gameLoop);  // End the game loop
-				return;  // If you want to stop execution after losing
-		}
-	
+    if (enemy instanceof BreakerEnemy) {
+        enemy.breakTower();
+        context.drawImage(breakerImage, enemy.x, enemy.y, gridSize, gridSize);
+    } else {
+        context.drawImage(enemyImage, enemy.x, enemy.y, gridSize, gridSize);
     }
+
+    // Check for lose condition
+    if (enemy.y + gridSize >= canvas.height - 60) {
+        statusMessage = 'The enemies have reached the bottom of our base. Game Over.';
+        statusMessageTimeout = 120;
+        clearInterval(gameLoop);  // End the game loop
+        return;  // If you want to stop execution after losing
+    }
+}
 		
 		//Draw money
 	context.fillStyle = "black";
@@ -326,12 +344,11 @@ if(statusMessageTimeout > 0) {
 
 
     // Tower firing and drawing
-    for (var i in towers) {
-        var tower = towers[i];
-        tower.fire(); 
-        context.fillStyle = "blue";
-        context.fillRect(tower.x, tower.y, gridSize, gridSize);
-    }
+for (var i in towers) {
+    var tower = towers[i];
+    tower.fire(); 
+    context.drawImage(towerImage, tower.x, tower.y, gridSize, gridSize);
+}
 
     // Projectile movement and drawing
     for (var i in projectiles){
@@ -391,11 +408,11 @@ if(statusMessageTimeout > 0) {
 spawnInfluence = 0.01 * Math.exp(killCount / 20.0);
 
 
-if(killCount % 10 === 0 && killCount > 0 && lastSpawnedOnKillCount != killCount){
-   enemies.push(new BreakerEnemy(0, Math.random() * (canvas.height - 30)));
-   lastSpawnedOnKillCount = killCount;
-} else if(Math.random() < spawnInfluence) {
-    enemies.push(new Enemy(0, Math.random() * (canvas.height - 30)));
-}
-
-}, 30);
+// Spawn Enemies
+if(killCount % 10 === 0 && killCount > 0 && lastSpawnedOnKillCount !== killCount){
+    enemies.push(new BreakerEnemy(Math.random() * (canvas.width - gridSize), 0));
+    lastSpawnedOnKillCount = killCount;
+ } else if(Math.random() < spawnInfluence) {
+     enemies.push(new Enemy(Math.random() * (canvas.width - gridSize), 0));
+ }
+ }, 30);
