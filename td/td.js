@@ -6,7 +6,7 @@ var statusMessageTimeout = 0;
 var enemies = [];
 var towers = [];
 var projectiles = [];
-var addTowerButton = {x: canvas.width - 120, y: canvas.height - 60, width: 100, height: 30}; // Define Add Tower button
+var addTowerButton = {x: canvas.width - 300, y: canvas.height - 120, width: 200, height: 80}; // Define Add Tower button
 var addTowerMode = false;
 var money = 100;
 var killCount = 0; 
@@ -69,9 +69,9 @@ canvas.addEventListener('touchstart', function(event) {
 
 //make a grid
 var grid = [];
-var gridSize = 40;
-var gridRows = (canvas.height / gridSize) - 2; 
-var gridColumns = canvas.width / gridSize;
+var gridSize = 60;
+var gridRows = Math.floor((canvas.height - 120) / gridSize); 
+var gridColumns = Math.floor(canvas.width / gridSize);
 
 // Initialize the grid with zeros
 for(var i = 0; i < gridRows; i++){
@@ -81,22 +81,30 @@ for(var i = 0; i < gridRows; i++){
     }
 }
 
-// Enemy constructor
 function Enemy(x, y) {
     this.x = x;
     this.y = y;
     this.speed = 2;
     this.hp = 3;
     this.direction = 'down';
-	this.justChangedDirection = false;  // New flag to indicate if direction just changed
+    this.justChangedDirection = false;  // New flag to indicate if direction just changed
+    this.path = [];
 
     this.move = function() {
         var gridX = Math.floor(this.x / gridSize);
         var gridY = Math.floor(this.y / gridSize);
 
-        var newPosition = { x: this.x, y: this.y };
+        this.path = AStar({i: gridY, j: gridX}, {i: gridRows-1, j: gridColumns-1});
 
-        // Calculate new position based on current direction
+        if (this.path[0]) {
+            var nextStep = this.path[0];
+            if (nextStep.i > gridY) this.direction = 'down';
+            else if (nextStep.i < gridY) this.direction = 'up';
+            else if (nextStep.j > gridX) this.direction = 'right';
+            else if (nextStep.j < gridX) this.direction = 'left';
+        }
+
+        var newPosition = { x: this.x, y: this.y };
         switch (this.direction) {
             case 'right':
                 newPosition.x += this.speed;
@@ -114,20 +122,16 @@ function Enemy(x, y) {
 
         var newGridX = Math.floor(newPosition.x / gridSize);
         var newGridY = Math.floor(newPosition.y / gridSize);
-
-        // Check if next cell in grid is free
         if (grid[newGridY] && grid[newGridY][newGridX] === 0) {
             this.x = newPosition.x;
             this.y = newPosition.y;
-			this.justChangedDirection = false;  // Reset flag
-        } else if (!this.justChangedDirection) {  // When hitting a tower
-            // If blocked by a tower, pick a random direction other than 'right'
-            var directions = ['left', 'up', 'down'];
-            this.direction = directions[Math.floor(Math.random() * directions.length)];
-			this.justChangedDirection = true;
+            this.justChangedDirection = false;  // Reset flag
+        } else {
+            this.path = AStar({i: gridY, j: gridX}, {i: gridRows-1, j: gridColumns-1});
         }
     }
 }
+
 
 //Breaker Enemy Constructor
 function BreakerEnemy(x, y) {
@@ -206,7 +210,7 @@ function BreakerEnemy(x, y) {
 function Projectile(x, y, target){
     this.x = x;
     this.y = y;
-    this.speed = 5;
+    this.speed = 10;
     this.target = target;
     this.life = 100; // Life of the projectile. This could be adjusted based on the desired decay speed.
 }
@@ -220,29 +224,30 @@ function Tower(x, y){
     this.timeToFire = this.firingDelay;
 
 	this.fire = function() {
-		if (this.timeToFire <= 0) {
-			for (var j in enemies) {
-				var enemy = enemies[j];
-				var dx = this.x - enemy.x;
-				var dy = this.y - enemy.y;
-				var distance = Math.sqrt(dx * dx + dy * dy);
+        if (this.timeToFire <= 0) {
+            for (var j in enemies) {
+                var enemy = enemies[j];
+                var dx = this.x - (enemy.x + gridSize / 2);  // Calculate enemy center X
+                var dy = this.y - (enemy.y + gridSize / 2);  // Calculate enemy center Y
+                var distance = Math.sqrt(dx * dx + dy * dy);
+    
+                if(distance < this.range) {
+                    // Draw a line between tower and enemy within range
+                    context.beginPath();
+                    context.moveTo(this.x + gridSize/2, this.y + gridSize/2);  // Tower center
+                    context.lineTo(enemy.x + gridSize/2, enemy.y + gridSize/2);  // Enemy center
+                    context.stroke();
+        
+                    projectiles.push(new Projectile(this.x + gridSize / 2, this.y + gridSize / 2, enemy));
 
-				if(distance < this.range) {
-					// Draw a line between tower and enemy within range
-					context.beginPath();
-					context.moveTo(this.x + gridSize/2, this.y + gridSize/2);  // Tower center
-					context.lineTo(enemy.x + gridSize/2, enemy.y + gridSize/2);  // Enemy center
-					context.stroke();
-					 
-					projectiles.push(new Projectile(this.x + 10, this.y + 10, enemy));
-					this.timeToFire = this.firingDelay;
-					break;
-				}
-			}
-		} else {
-			this.timeToFire--;
-		}
-	}
+                    this.timeToFire = this.firingDelay;
+                    break;
+                }
+            }
+        } else {
+            this.timeToFire--;
+        }
+    }
 }
 // Add tower mode
 function addTower() {
@@ -273,8 +278,80 @@ statusMessageTimeout = 120;
 }
 
 
+// Function to calculate Heuristic 
+function heuristic(a, b) {
+    return Math.abs(a.i - b.i) + Math.abs(a.j - b.j);
+  }
+  
+  // Function to get the neighboring grid cells
+  function getNeighbors(grid, node) {
+    var i = node.i;
+    var j = node.j;
+    var neighbors = [];
+  
+    if (i < gridRows-1) neighbors.push(grid[i+1][j]);
+    if (j < gridColumns-1) neighbors.push(grid[i][j+1]);
+    if (i > 0) neighbors.push(grid[i-1][j]);
+    if (j > 0) neighbors.push(grid[i][j-1]);
+  
+    return neighbors;
+  }
+  
+  // Implementing A* Search Algorithm
+  function AStar(start, goal) {
+    var openSet = [];
+    var closedSet = [];
+    var path = [];
+    
+    openSet.push(start);
+    
+    while(openSet.length > 0) {
+      var bestNodeIdx = 0;
+      for(var i=0; i<openSet.length; i++) {
+        if(openSet[i].f < openSet[bestNodeIdx].f) {
+          bestNodeIdx = i;
+        }
+      }
+      var current = openSet[bestNodeIdx];
+      
+      if(current === goal) {
+        var temp = current;
+        path.push(temp);
+        while(temp.previous) {
+          path.push(temp.previous);
+          temp = temp.previous;
+        }
+        return path;
+      }
+      
+      openSet = openSet.filter((el) => el !== current);
+      closedSet.push(current);
+      
+      var neighbors = getNeighbors(grid, current);
+  
+      for(var i=0; i<neighbors.length; i++) {
+        var neighbor = neighbors[i];
+        if(!closedSet.includes(neighbor)) {
+            var tempG = current.g + 1;
+            if(openSet.includes(neighbor)) {
+                if(tempG < neighbor.g) {
+                    neighbor.g = tempG;
+                }
+            } else {
+                neighbor.g = tempG;
+                openSet.push(neighbor);
+            }
+            neighbor.h = heuristic(neighbor, goal); // "end" replaced with "goal"
+            neighbor.f = neighbor.g + neighbor.h;
+            neighbor.previous = current;
+        }
+    }
+    }
+  
+    return [];
+  }
 
-
+//THIS IS WHERE THE GAME LOOP STARTS. BETTER HAVE ALL YOUR DUCKS IN A ROW B4 YOU GET HERE.
 // Game loop
 var gameLoop = setInterval(function(){
     context.clearRect(0, 0, canvas.width, canvas.height);
@@ -293,7 +370,7 @@ context.fillStyle = "orange";
 context.fill();
 context.stroke();
 context.fillStyle = "black";
-context.fillText("BUILD $50", addTowerButton.x + 10, addTowerButton.y + 20); 
+context.fillText("BUILD $50", addTowerButton.x + 20, addTowerButton.y + 55); 
 
 	// Draw grid
     if (addTowerMode) {
@@ -320,7 +397,7 @@ for(var i in enemies) {
     }
 
     // Check for lose condition
-    if (enemy.y + gridSize >= canvas.height - 60) {
+    if (enemy.y + gridSize >= canvas.height - 120) {
         statusMessage = 'The enemies have reached the bottom of our base. Game Over.';
         statusMessageTimeout = 120;
         clearInterval(gameLoop);  // End the game loop
@@ -330,9 +407,9 @@ for(var i in enemies) {
 		
 		//Draw money
 	context.fillStyle = "black";
-	context.font = "16px Arial";
-	context.fillText("CASH: " + money, 10, 30);
-	context.fillText("KILLS: " + killCount, 10, 60);
+	context.font = "32px Arial";
+	context.fillText("CASH: " + money, 10, 40);
+	context.fillText("KILLS: " + killCount, 10, 80);
 // Draw messages	
 context.fillStyle = 'red';
 context.fillText(statusMessage, canvas.width/2, canvas.height/2);
@@ -354,14 +431,14 @@ for (var i in towers) {
     for (var i in projectiles){
         var projectile = projectiles[i];
         var enemy = projectile.target;
-        var dx = enemy.x - projectile.x;
-        var dy = enemy.y - projectile.y;
+        var dx = enemy.x+30 - projectile.x;
+        var dy = enemy.y+30 - projectile.y;
         var distance = Math.sqrt(dx * dx + dy * dy);
         var velocityX = (dx / distance) * projectile.speed;
         var velocityY = (dy / distance) * projectile.speed;
 		projectile.life--;
 
-		if(distance < 1 || enemy.hp <= 0){
+		if(distance < 30 || enemy.hp <= 0){
 			// Decrease enemy's HP
 			enemy.hp--;
 
