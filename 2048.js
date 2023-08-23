@@ -8,52 +8,7 @@ document.addEventListener('DOMContentLoaded', () =>  {
   let xDown = null;
   let yDown = null;
 
-// Capture the starting coordinates when a touch starts
-document.addEventListener('touchstart', (e) => {
-    xDown = getTouches(e)[0].clientX;
-    yDown = getTouches(e)[0].clientY;
-}, false);
 
-// Compute the difference when a touch ends
-document.addEventListener('touchend', (e) => {
-    if ( ! xDown || ! yDown ) {
-        return;
-    }
-  
-    let xUp = getTouches(e)[0].clientX;
-    let yUp = getTouches(e)[0].clientY;
-
-    let xDiff = xDown - xUp;
-    let yDiff = yDown - yUp;
-
-    // Depending on the biggest difference we know which direction the user swiped
-    if ( Math.abs( xDiff ) > Math.abs( yDiff ) ) {
-        if ( xDiff > 0 ) {
-            /* left swipe */
-            keyLeft();
-        } else {
-            /* right swipe */
-            keyRight();
-        }
-    } else {
-        if ( yDiff > 0 ) {
-            /* up swipe */
-            keyUp();
-        } else {
-            /* down swipe */
-            keyDown();
-        }
-    }
-    /* reset values */
-    xDown = null;
-    yDown = null;
-
-}, false);
-
-function getTouches(evt) {
-  return evt.touches ||             // browser API
-         evt.originalEvent.touches; // jQuery
-}
   
   //create the playing board
   function createBoard() {
@@ -202,6 +157,53 @@ function getTouches(evt) {
   }
   document.addEventListener('keyup', control)
 
+// Capture the starting coordinates when a touch starts
+document.addEventListener('touchstart', (e) => {
+    xDown = getTouches(e)[0].clientX;
+    yDown = getTouches(e)[0].clientY;
+}, false);
+
+// Compute the difference when a touch ends
+document.addEventListener('touchend', (e) => {
+    if ( ! xDown || ! yDown ) {
+        return;
+    }
+  
+    let xUp = getTouches(e)[0].clientX;
+    let yUp = getTouches(e)[0].clientY;
+
+    let xDiff = xDown - xUp;
+    let yDiff = yDown - yUp;
+
+    // Depending on the biggest difference we know which direction the user swiped
+    if ( Math.abs( xDiff ) > Math.abs( yDiff ) ) {
+        if ( xDiff > 0 ) {
+            /* left swipe */
+            keyLeft();
+        } else {
+            /* right swipe */
+            keyRight();
+        }
+    } else {
+        if ( yDiff > 0 ) {
+            /* up swipe */
+            keyUp();
+        } else {
+            /* down swipe */
+            keyDown();
+        }
+    }
+    /* reset values */
+    xDown = null;
+    yDown = null;
+
+}, false);
+
+function getTouches(evt) {
+  return evt.touches ||             // browser API
+         evt.originalEvent.touches; // jQuery
+}
+  
   function keyRight() {
     moveRight()
     combineRow()
