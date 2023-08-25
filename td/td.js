@@ -12,6 +12,7 @@ var money = 100;
 var killCount = 0; 
 var spawnInfluence = 0.01; 
 var lastSpawnedOnKillCount = 0;  // Keep track of the kill count on the last spawn of breaker enemy
+var gamePaused = false;
 
 // Create a background texture pattern
 var backgroundTextureImage = new Image();
@@ -30,6 +31,17 @@ backgroundTextureImage.onload = function() {
     backgroundTexturePattern = context.createPattern(backgroundTextureImage, 'repeat');
 };
 
+//press keys
+document.addEventListener('keydown', function(event) {
+    if (event.key == 'B' || event.key == 'b') {
+        addTowerMode = !addTowerMode;  // Toggle addTowerMode on 'B' key press
+    }
+
+
+
+});
+
+
 // Catch click to add tower
 canvas.addEventListener('click', function(event) {
     var rect = canvas.getBoundingClientRect();
@@ -46,6 +58,7 @@ canvas.addEventListener('click', function(event) {
         }
     }
 }, false);
+
 
 
 
@@ -72,6 +85,7 @@ var grid = [];
 var gridSize = 60;
 var gridRows = Math.floor((canvas.height - 120) / gridSize); 
 var gridColumns = Math.floor(canvas.width / gridSize);
+console.log("Grid dimensions: ", gridRows,", ",gridColumns)
 
 // Initialize the grid with zeros
 for(var i = 0; i < gridRows; i++){
@@ -80,59 +94,57 @@ for(var i = 0; i < gridRows; i++){
         grid[i][j] = 0;
     }
 }
-
+//main enemy
+// Enemy constructor with the updated move function 
 function Enemy(x, y) {
     this.x = x;
     this.y = y;
     this.speed = 2;
     this.hp = 3;
     this.direction = 'down';
-    this.justChangedDirection = false;  // New flag to indicate if direction just changed
+    this.justChangedDirection = false;
+    this.pathUpdateFrequency = 1000; // update path every 1000 game loops
+    this.pathUpdateCountdown = this.pathUpdateFrequency; // countdown to next path update
     this.path = [];
+    
 
     this.move = function() {
         var gridX = Math.floor(this.x / gridSize);
         var gridY = Math.floor(this.y / gridSize);
+        console.log("Current location ", gridX,", ", gridY)
+      
+        if (!this.path.length || this.justChangedDirection || --this.pathUpdateCountdown <= 0) {
+            console.log("Starting pathfanding.", "this.path.length: ", this.path.length, " this.justChangedDirection: ", this.justChangedDirection, " this.pathUpdateCountdown: ", this.pathUpdateCountdown)
+          this.justChangedDirection = false;
+          var startNode = {i: gridY, j: gridX, f: 0, g: 0, h: 0};  // added initial f,g,h values
+          console.log("Start Node: ", startNode)
+          var endNode = {i: gridRows-1, j: gridColumns-1, f: 0, g: 0, h: 0};  // added initial f,g,h values
+          //var endNode = {i: 5, j: 5, f: 0, g: 0, h: 0};  // added initial f,g,h values
+          console.log("End Node: ", endNode)
+          this.path = AStar(startNode, endNode);
+          console.log("AStar Path: ", this.path)
+          this.pathUpdateCountdown = this.pathUpdateFrequency;
+        }
 
-        this.path = AStar({i: gridY, j: gridX}, {i: gridRows-1, j: gridColumns-1});
-
-        if (this.path[0]) {
+        if (this.path && this.path.length > 0) {
             var nextStep = this.path[0];
             if (nextStep.i > gridY) this.direction = 'down';
             else if (nextStep.i < gridY) this.direction = 'up';
             else if (nextStep.j > gridX) this.direction = 'right';
             else if (nextStep.j < gridX) this.direction = 'left';
+
+            if (gridX === this.path[0].j && gridY === this.path[0].i) this.path.shift();
+            console.log(nextStep)
         }
 
-        var newPosition = { x: this.x, y: this.y };
-        switch (this.direction) {
-            case 'right':
-                newPosition.x += this.speed;
-                break;
-            case 'left':
-                newPosition.x -= this.speed;
-                break;
-            case 'up':
-                newPosition.y -= this.speed;
-                break;
-            case 'down':
-                newPosition.y += this.speed;
-                break;
-        }
-
-        var newGridX = Math.floor(newPosition.x / gridSize);
-        var newGridY = Math.floor(newPosition.y / gridSize);
-        if (grid[newGridY] && grid[newGridY][newGridX] === 0) {
-            this.x = newPosition.x;
-            this.y = newPosition.y;
-            this.justChangedDirection = false;  // Reset flag
-        } else {
-            this.path = AStar({i: gridY, j: gridX}, {i: gridRows-1, j: gridColumns-1});
-        }
-    }
+        if(this.direction === "right") this.x += this.speed;
+        else if(this.direction === "left") this.x -= this.speed;
+        else if(this.direction === "up") this.y -= this.speed;
+        else if(this.direction === "down") this.y += this.speed;
+    };
 }
 
-
+/*
 //Breaker Enemy Constructor
 function BreakerEnemy(x, y) {
     this.x = x;
@@ -142,43 +154,36 @@ function BreakerEnemy(x, y) {
     this.direction = 'down';
     this.justChangedDirection = false;
 
-    this.move = function() {
-        var gridX = Math.floor(this.x / gridSize);
-        var gridY = Math.floor(this.y / gridSize);
+this.move = function() {
+    var gridX = Math.floor(this.x / gridSize);
+    var gridY = Math.floor(this.y / gridSize);
 
-        var newPosition = { x: this.x, y: this.y };
+    if (!this.path.length || this.justChangedDirection) {
+        this.justChangedDirection = false;
+        this.path = AStar({i: gridY, j: gridX}, {i: gridRows-1, j: gridColumns-1});
+    }
 
-        // Calculate new position based on current direction
-        switch (this.direction) {
-            case 'right':
-                newPosition.x += this.speed;
-                break;
-            case 'left':
-                newPosition.x -= this.speed;
-                break;
-            case 'up':
-                newPosition.y -= this.speed;
-                break;
-            case 'down':
-                newPosition.y += this.speed;
-                break;
-        }
+    // Checking if the enemy has a valid path before proceeding
+    if (this.path && this.path.length > 0) {
+        var nextStep = this.path[0];
+        
+        if (nextStep.i > gridY) this.direction = 'down';
+        else if (nextStep.i < gridY) this.direction = 'up';
+        else if (nextStep.j > gridX) this.direction = 'right';
+        else if (nextStep.j < gridX) this.direction = 'left';
 
-        var newGridX = Math.floor(newPosition.x / gridSize);
-        var newGridY = Math.floor(newPosition.y / gridSize);
+        // If the enemy reaches the next point they are following on the path, remove that point from the path.
+        if (gridX === nextStep.j && gridY === nextStep.i) this.path.shift();
+    }
+      
+    // Proceed to origin for further movement
+    if(this.direction === "right") this.x += this.speed;
+    else if(this.direction === "left") this.x -= this.speed;
+    else if(this.direction === "up") this.y -= this.speed;
+    else if(this.direction === "down") this.y += this.speed;
+};
 
-        // Check if next cell in grid is free
-        if (grid[newGridY] && grid[newGridY][newGridX] === 0) {
-            this.x = newPosition.x;
-            this.y = newPosition.y;
-			this.justChangedDirection = false;  // Reset flag
-        } else if (!this.justChangedDirection) {  // When hitting a tower
-            // If blocked by a tower, pick a random direction other than 'right'
-            var directions = ['left', 'up', 'down'];
-            this.direction = directions[Math.floor(Math.random() * directions.length)];
-			this.justChangedDirection = true;
-        }
-    };
+
     this.breakTower = function(){
     // Convert the position of the enemy from pixels to grid
     var gridX = Math.floor(this.x / gridSize);
@@ -204,7 +209,8 @@ function BreakerEnemy(x, y) {
         }
     }
 }
-}
+}*/
+
 
 // Projectile constructor
 function Projectile(x, y, target){
@@ -260,96 +266,212 @@ function placeTower(x, y) {
     var j = Math.floor(x / gridSize);
     addTowerMode = false;
 
-    // Boundary condition fix
     if (i >= gridRows || j >= gridColumns) {
-statusMessage = 'Invalid tower location';
-statusMessageTimeout = 120;  // Show message for 120 frames (4 seconds at 30 FPS)
+        statusMessage = 'Invalid tower location';
+        statusMessageTimeout = 120;
     } else if (grid[i][j] == 1) {
-statusMessage = 'Cant build a tower on another tower';
-statusMessageTimeout = 120;  
+        statusMessage = 'Cant build a tower on another tower';
+        statusMessageTimeout = 120;
     } else if (money < 50) {
-statusMessage = 'Insufficient funds';
-statusMessageTimeout = 120;  
+        statusMessage = 'Insufficient funds';
+        statusMessageTimeout = 120;
     } else {
-      towers.push(new Tower(j * gridSize, i * gridSize));
-      grid[i][j] = 1;
-      money -= 50;
+        towers.push(new Tower(j * gridSize, i * gridSize));
+        grid[i][j] = 1;
+        money -= 50;
+
+        // inform each enemy that a new tower has been placed
+        enemies.forEach(function(enemy) {
+            var gridX = Math.floor(enemy.x / gridSize);
+            var gridY = Math.floor(enemy.y / gridSize);
+            enemy.justChangedDirection = true;
+            enemy.path = AStar({i: gridY, j: gridX}, {i: gridRows-1, j: gridColumns-1});
+        });
     }
 }
 
 
-// Function to calculate Heuristic 
-function heuristic(a, b) {
+//heuristic 
+function heuristic(a, b, start) {
+    console.log("Heuristic value check. a:",a," b:",b," start:",start," i:",i," j:",j)
+    if (a.i !== start.i || a.j !== start.j){
+        console.log("Current grid is ",grid[a.i][a.j])
+        if (grid[a.i][a.j] === 1) {
+            console.log("NON-TRAVERSABLE");// print to console
+            
+            return Infinity; // a tile marked as a tower is now non-traversable
+        }
+    }
+    
     return Math.abs(a.i - b.i) + Math.abs(a.j - b.j);
-  }
+}
   
-  // Function to get the neighboring grid cells
-  function getNeighbors(grid, node) {
+// Function to get the neighboring grid cells
+function getNeighbors(grid, node) {
     var i = node.i;
     var j = node.j;
     var neighbors = [];
   
-    if (i < gridRows-1) neighbors.push(grid[i+1][j]);
-    if (j < gridColumns-1) neighbors.push(grid[i][j+1]);
-    if (i > 0) neighbors.push(grid[i-1][j]);
-    if (j > 0) neighbors.push(grid[i][j-1]);
+    if (i < gridRows-1 && grid[i+1][j] != 1) neighbors.push({i: i+1, j: j});
+    if (j < gridColumns-1 && grid[i][j+1] != 1) neighbors.push({i: i, j: j+1});
+    if (i > 0 && grid[i-1][j] != 1) neighbors.push({i: i-1, j: j});
+    if (j > 0 && grid[i][j-1] != 1) neighbors.push({i: i, j: j-1});
   
+    //console.log("Neighbors: ",neighbors)
     return neighbors;
-  }
-  
-  // Implementing A* Search Algorithm
-  function AStar(start, goal) {
+}
+
+
+/* OLD
+//pathfinding AStar
+function AStar(start, goal) {
+    console.log("Starting AStar")
     var openSet = [];
     var closedSet = [];
     var path = [];
     
     openSet.push(start);
     
+    var maxSteps = 100;  
+    var stepCounter = 0;
+
     while(openSet.length > 0) {
-      var bestNodeIdx = 0;
-      for(var i=0; i<openSet.length; i++) {
-        if(openSet[i].f < openSet[bestNodeIdx].f) {
-          bestNodeIdx = i;
+        if(stepCounter++ > maxSteps) {
+            console.error('Reached maximum calculation steps, breaking loop. Start and goal: ', start, goal);
+            return "Path not found within the maximum calculation steps.";
         }
-      }
-      var current = openSet[bestNodeIdx];
-      
-      if(current === goal) {
-        var temp = current;
-        path.push(temp);
-        while(temp.previous) {
-          path.push(temp.previous);
-          temp = temp.previous;
-        }
-        return path;
-      }
-      
-      openSet = openSet.filter((el) => el !== current);
-      closedSet.push(current);
-      
-      var neighbors = getNeighbors(grid, current);
-  
-      for(var i=0; i<neighbors.length; i++) {
-        var neighbor = neighbors[i];
-        if(!closedSet.includes(neighbor)) {
-            var tempG = current.g + 1;
-            if(openSet.includes(neighbor)) {
-                if(tempG < neighbor.g) {
-                    neighbor.g = tempG;
-                }
-            } else {
-                neighbor.g = tempG;
-                openSet.push(neighbor);
+
+        var bestNodeIdx = 0;
+        for(var i=0; i<openSet.length; i++) {
+            if(openSet[i].f < openSet[bestNodeIdx].f) {
+                bestNodeIdx = i;
             }
-            neighbor.h = heuristic(neighbor, goal); // "end" replaced with "goal"
-            neighbor.f = neighbor.g + neighbor.h;
-            neighbor.previous = current;
+        }
+
+        var current = openSet[bestNodeIdx];
+        console.log("XXXXXXXX")
+        console.log("Current: ",current, " Goal: ",  goal)
+        if (current.x === goal.x && current.y === goal.y) {
+            
+            var temp = current;
+            path.push(temp);
+            while(temp.previous) {
+                path.push(temp.previous);
+                temp = temp.previous;
+            }
+            return path;
+        }
+        
+        openSet = openSet.filter((el) => el !== current);
+        closedSet.push(current);
+      
+        var neighbors = getNeighbors(grid, current);
+  
+        for(var i=0; i<neighbors.length; i++) {
+            var neighbor = neighbors[i];
+            if(!closedSet.includes(neighbor) && grid[neighbor.i][neighbor.j] != 1) {
+                var tempG = current.g + 1;
+                if(openSet.includes(neighbor)) {
+                    if(tempG < neighbor.g) {
+                        neighbor.g = tempG;
+                    }
+                } else {
+                    neighbor.g = tempG;
+                    openSet.push(neighbor);
+                }
+                neighbor.h = heuristic(neighbor, goal, start);
+                neighbor.f = neighbor.g + neighbor.h;
+                neighbor.previous = current;
+            }
         }
     }
+    
+    //return [];
+}
+*/
+
+function removeFromArray(arr, node) {
+    for(var i = arr.length; i--;){
+        if(arr[i] === node){
+            arr.splice(i, 1);
+        }
     }
-  
+}
+ 
+function findInArray(arr, node) {
+    for(var i = 0; i < arr.length; i++){
+        if(arr[i].i === node.i && arr[i].j === node.j){
+            return arr[i];
+        }
+    }
+    return null;
+}
+
+function AStar(start, goal){
+    var openList = [];
+    var closedList = [];
+    openList.push(start);
+ 
+    while(openList.length > 0) {
+        // Best next option
+        var lowInd = 0;
+        for(var i=0; i<openList.length; i++) {
+            if(openList[i].f < openList[lowInd].f) { 
+                lowInd = i; 
+            }
+        }
+        var currentNode = openList[lowInd];
+ 
+        // End case
+        if(currentNode.i === goal.i && currentNode.j === goal.j) {
+            var curr = currentNode;
+            var ret = [];
+            while(curr.parent) {
+                ret.push(curr);
+                curr = curr.parent;
+            }
+            return ret.reverse();
+        }
+ 
+        // Normal case
+        removeFromArray(openList, currentNode);
+        closedList.push(currentNode);
+ 
+        var neighbors = getNeighbors(grid, currentNode);
+        
+        for(var i=0; i<neighbors.length;i++) {
+            var neighbor = neighbors[i];
+            // Not a valid node
+            if(findInArray(closedList, neighbor) || grid[neighbor.i][neighbor.j] === 1) {
+                continue;
+            }
+ 
+            var gScore = currentNode.g + 1; // 1 is the distance from a node to it's neighbor
+            var gScoreIsBest = false;
+ 
+            if(!findInArray(openList, neighbor)) {
+                // This the first time we have arrived at this node, it must be the best
+                gScoreIsBest = true;
+                neighbor.h = heuristic(neighbor, goal, start);
+                openList.push(neighbor);
+            }
+            else if(gScore < neighbor.g) {
+                // We have already seen the node, but last time it had a worse g (distance from start)
+                gScoreIsBest = true;
+            }
+ 
+            if(gScoreIsBest) {
+                // Found an optimal (so far) path to this node.	 Take score for node to see how good it is.	
+                neighbor.parent = currentNode;
+                neighbor.g = gScore;
+                neighbor.f = neighbor.g + neighbor.h;
+            }
+        }
+    }
+ 
+    // No result was found - empty array signifies failure to find path
     return [];
-  }
+}
 
 //THIS IS WHERE THE GAME LOOP STARTS. BETTER HAVE ALL YOUR DUCKS IN A ROW B4 YOU GET HERE.
 // Game loop
@@ -386,22 +508,32 @@ context.fillText("BUILD $50", addTowerButton.x + 20, addTowerButton.y + 55);
 // Move and Draw enemies
 for(var i in enemies) {
     var enemy = enemies[i];
+    console.log("Enemy moving ",enemy)
 
     enemy.move();
+    context.drawImage(enemyImage, enemy.x, enemy.y, gridSize, gridSize);
+    
+    // Draw Path
+    context.strokeStyle = 'red';
+    console.log("Attempting to draw path, ", enemy.path)
+    enemy.path.forEach((point, index, arr) => {
+        console.log(`Drawing from ${point.j * gridSize}, ${point.i * gridSize}`); // Log the point where we're starting to draw from
+        if (index < arr.length - 1) {
+            context.beginPath();
+            context.moveTo(point.j * gridSize, point.i * gridSize);
+            context.lineTo(arr[index + 1].j * gridSize, arr[index + 1].i * gridSize);
+            context.stroke();
 
-    if (enemy instanceof BreakerEnemy) {
-        enemy.breakTower();
-        context.drawImage(breakerImage, enemy.x, enemy.y, gridSize, gridSize);
-    } else {
-        context.drawImage(enemyImage, enemy.x, enemy.y, gridSize, gridSize);
-    }
+            console.log(`Drew to ${arr[index + 1].j * gridSize}, ${arr[index + 1].i * gridSize}`); // Log the point where we're drawing to
+        }
+    });
 
     // Check for lose condition
     if (enemy.y + gridSize >= canvas.height - 120) {
         statusMessage = 'The enemies have reached the bottom of our base. Game Over.';
         statusMessageTimeout = 120;
         clearInterval(gameLoop);  // End the game loop
-        return;  // If you want to stop execution after losing
+        //return;  // If you want to stop execution after losing
     }
 }
 		
@@ -470,26 +602,17 @@ for (var i in towers) {
     }
 
 
-
-		// Spawn rate
-	/*if (killCount >= 300) {
-        spawnInfluence = 0.05;
-	} else if (killCount >= 100) {
-        spawnInfluence = 0.04;
-    } else if (killCount >= 50) {
-        spawnInfluence = 0.03;
-    } else if (killCount >= 20) {
-        spawnInfluence = 0.02;
-    }*/
 	// Exponential Spawn rate
 spawnInfluence = 0.01 * Math.exp(killCount / 20.0);
 
 
 // Spawn Enemies
 if(killCount % 10 === 0 && killCount > 0 && lastSpawnedOnKillCount !== killCount){
-    enemies.push(new BreakerEnemy(Math.random() * (canvas.width - gridSize), 0));
+    enemies.push(new Enemy(Math.random() * (canvas.width - gridSize), 0));
     lastSpawnedOnKillCount = killCount;
  } else if(Math.random() < spawnInfluence) {
      enemies.push(new Enemy(Math.random() * (canvas.width - gridSize), 0));
  }
+
+ 
  }, 30);
