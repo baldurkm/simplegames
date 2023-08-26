@@ -13,7 +13,9 @@ var upgradeMultiplier = 0.75;
 var isUpgraded = false;
 var money = 150;
 var killCount = 0; 
-var spawnInfluence = 0.01; 
+var spawnMultiFactor = 0.2; //spawn rate multiplier
+var spawnLnFactor = 1; // spawn rate ln factor
+var spawnInfluence = 0.01;
 var lastSpawnedOnKillCount = 0;  // Keep track of the kill count on the last spawn of breaker enemy
 var gamePaused = false;
 var addTowerMode = false;
@@ -45,7 +47,7 @@ function initializeGame() {
 
     // Set canvas size
     canvas.width = 780;
-    canvas.height = 800;
+    canvas.height = 920;
 
     // Define Add Tower button
     addTowerButton = {x: canvas.width - 300, y: canvas.height - 120, width: 200, height: 80};
@@ -54,6 +56,7 @@ function initializeGame() {
     upgradeButton = {x: canvas.width - 600, y: canvas.height - 120, width: 200, height: 80};
 }
 
+//press B
 function addEventListeners() {
     // Press keys
     document.addEventListener('keydown', function(event) {
@@ -267,7 +270,7 @@ this.move = function() {
 function Projectile(x, y, target){
     this.x = x;
     this.y = y;
-    this.speed = 10;
+    this.speed = 40;
     this.target = target;
     this.life = 100; // Life of the projectile. This could be adjusted based on the desired decay speed.
 }
@@ -612,16 +615,19 @@ for (var i in towers) {
 
 
 	// Exponential Spawn rate
-spawnInfluence = 0.01 * Math.exp(killCount / 20.0);
+spawnInfluence = 0.01 * Math.exp(killCount / 25.0);
+//spawnInfluence = 0.00001 + Math.abs(spawnMultiFactor * Math.log(killCount / spawnLnFactor));
 
 
 // Spawn Enemies
-if(Math.random() < spawnInfluence) {
+if(Math.random() < spawnInfluence && enemies.length <= killCount / 3) {
     var enemyX = Math.random() * (canvas.width - gridSize);
     var enemyY = 0;
     var enemyPath = AStar({ i: Math.floor(enemyY / gridSize), j: Math.floor(enemyX / gridSize) }, { i: gridRows - 1, j: gridColumns - 1 });
     enemies.push(new Enemy(enemyX, enemyY, enemyPath));
  }
+
+
 
      //Draw money and kills
      context.beginPath();
@@ -630,6 +636,8 @@ if(Math.random() < spawnInfluence) {
      context.textAlign = 'left';
      context.fillText("CASH: " + money, 10, 40);
      context.fillText("KILLS: " + killCount, 10, 80);
+     //context.fillText("SPAWNRATE: " + spawnInfluence, 10, 120);
+     
 
  
  }, 30);
