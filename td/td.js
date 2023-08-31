@@ -197,75 +197,6 @@ function Enemy(x, y) {
         else if(this.direction === "down") this.y += this.speed;
     };
 }
-
-/*
-//Breaker Enemy Constructor
-function BreakerEnemy(x, y) {
-    this.x = x;
-    this.y = y;
-    this.speed = 1; // Breaker enemy moves slower
-    this.hp = 5; // More HP because this enemy is stronger
-    this.direction = 'down';
-    this.justChangedDirection = false;
-
-this.move = function() {
-    var gridX = Math.floor(this.x / gridSize);
-    var gridY = Math.floor(this.y / gridSize);
-
-    if (!this.path.length || this.justChangedDirection) {
-        this.justChangedDirection = false;
-        this.path = AStar({i: gridY, j: gridX}, {i: gridRows-1, j: gridColumns-1});
-    }
-
-    // Checking if the enemy has a valid path before proceeding
-    if (this.path && this.path.length > 0) {
-        var nextStep = this.path[0];
-        
-        if (nextStep.i > gridY) this.direction = 'down';
-        else if (nextStep.i < gridY) this.direction = 'up';
-        else if (nextStep.j > gridX) this.direction = 'right';
-        else if (nextStep.j < gridX) this.direction = 'left';
-
-        // If the enemy reaches the next point they are following on the path, remove that point from the path.
-        if (gridX === nextStep.j && gridY === nextStep.i) this.path.shift();
-    }
-      
-    // Proceed to origin for further movement
-    if(this.direction === "right") this.x += this.speed;
-    else if(this.direction === "left") this.x -= this.speed;
-    else if(this.direction === "up") this.y -= this.speed;
-    else if(this.direction === "down") this.y += this.speed;
-};
-
-
-    this.breakTower = function(){
-    // Convert the position of the enemy from pixels to grid
-    var gridX = Math.floor(this.x / gridSize);
-    var gridY = Math.floor(this.y / gridSize);
-
-    // Check nearby cells in a 3x3 area
-    for(var dy=-1; dy<=1; dy++){
-        for(var dx=-1; dx<=1; dx++){
-            // Check if this cell is inside the grid's boundary
-            if(gridY+dy >= 0 && gridY+dy < gridRows && gridX+dx >= 0 && gridX+dx < gridColumns){
-                // If there's a tower in this cell, remove it
-                if(grid[gridY+dy][gridX+dx] === 1){
-                    grid[gridY+dy][gridX+dx] = 0;
-                    // Loop through all towers, find the one standing in this grid cell and remove it
-                    for(var i = 0; i < towers.length; i++){
-                        if(towers[i].x === (gridX+dx) * gridSize && towers[i].y === (gridY+dy) * gridSize){
-                            towers.splice(i, 1);
-                            break;
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-}*/
-
-
 // Projectile constructor
 function Projectile(x, y, target){
     this.x = x;
@@ -496,8 +427,6 @@ var gameLoop = setInterval(function(){
     context.fillStyle = "white";
     context.fillText("UPGRADE $" + upgradePrice, upgradeButton.x + 100, upgradeButton.y + 40); 
 
-
-
     // Draw messages	
     context.beginPath();
     context.fillStyle = 'red';
@@ -636,6 +565,7 @@ if(Math.random() < spawnInfluence && enemies.length <= killCount / 3) {
      context.textAlign = 'left';
      context.fillText("CASH: " + money, 10, 40);
      context.fillText("KILLS: " + killCount, 10, 80);
+     context.fillText("MOBS: " + enemies.Length, 10, 120);
      //context.fillText("SPAWNRATE: " + spawnInfluence, 10, 120);
      
 
