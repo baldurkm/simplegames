@@ -549,7 +549,7 @@ spawnInfluence = 0.01 * Math.exp(killCount / 25.0);
 
 
 // Spawn Enemies
-if(Math.random() < spawnInfluence && enemies.length <= killCount / 3) {
+if(Math.random() < spawnInfluence && enemies.length <= (killCount / 3)+1) {
     var enemyX = Math.random() * (canvas.width - gridSize);
     var enemyY = 0;
     var enemyPath = AStar({ i: Math.floor(enemyY / gridSize), j: Math.floor(enemyX / gridSize) }, { i: gridRows - 1, j: gridColumns - 1 });
