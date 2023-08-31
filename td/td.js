@@ -549,7 +549,7 @@ spawnInfluence = 0.01 * Math.exp(killCount / 25.0);
 
 
 // Spawn Enemies
-if(Math.random() < spawnInfluence && enemies.Length <= killCount / 3) {
+if(Math.random() < spawnInfluence && enemies.length <= killCount / 3) {
     var enemyX = Math.random() * (canvas.width - gridSize);
     var enemyY = 0;
     var enemyPath = AStar({ i: Math.floor(enemyY / gridSize), j: Math.floor(enemyX / gridSize) }, { i: gridRows - 1, j: gridColumns - 1 });
@@ -565,7 +565,7 @@ if(Math.random() < spawnInfluence && enemies.Length <= killCount / 3) {
      context.textAlign = 'left';
      context.fillText("CASH: " + money, 10, 40);
      context.fillText("KILLS: " + killCount, 10, 80);
-     context.fillText("MOBS: " + enemies.Length, 10, 120);
+     context.fillText("MOBS: " + enemies.length, 10, 120);
      //context.fillText("SPAWNRATE: " + spawnInfluence, 10, 120);
      
 
