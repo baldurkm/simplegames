@@ -545,7 +545,7 @@ for (var i in towers) {
 
 	// Exponential Spawn rate
 //spawnInfluence = 0.01 * Math.exp(killCount / 25.0);
-spawnInfluence = 0.01 * killCount / 25.0;
+spawnInfluence = 0.01 * (killCount)+10 / 25.0;
 //spawnInfluence = 0.00001 + Math.abs(spawnMultiFactor * Math.log(killCount / spawnLnFactor));
 
 
