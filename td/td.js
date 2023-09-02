@@ -8,8 +8,8 @@ var towers = [];
 var projectiles = [];
 var addTowerButton; // Define Add Tower button
 var upgradeButton; // Define Upgrade button
-var upgradePrice = 500;
-var upgradeMultiplier = 0.75;
+var upgradePrice = 50;
+var upgradeMultiplier = 0.25;
 var isUpgraded = false;
 var money = 150;
 var killCount = 0; 
@@ -19,6 +19,7 @@ var spawnInfluence = 0.01;
 var lastSpawnedOnKillCount = 0;  // Keep track of the kill count on the last spawn of breaker enemy
 var gamePaused = false;
 var addTowerMode = false;
+var gameTimer = 0;
 
 
 var towerImage = new Image();
@@ -141,8 +142,8 @@ function upgradeTowers() {
     }
 }
 
-//main enemy
-// Enemy constructor with the updated move function 
+// main enemy
+// Enemy constructor
 function Enemy(x, y) {
     this.x = x;
     this.y = y;
@@ -275,7 +276,9 @@ function placeTower(x, y) {
     }
 }
 
+// **************************************************
 // THIS IS THE AI AND PATHFINDING SECTION OF THE CODE
+// **************************************************
 //heuristic 
 function heuristic(a, b, start) {
     //console.log("Heuristic value check. a:",a," b:",b," start:",start," i:",i," j:",j)
@@ -392,10 +395,14 @@ function AStar(start, goal){
     return [];
 }
 
-//THIS IS WHERE THE GAME LOOP STARTS. BETTER HAVE ALL YOUR DUCKS IN A ROW B4 YOU GET HERE.
-// Game loop
+
+//*******************************************************************************************
+//***********************THIS IS WHERE THE GAME LOOP STARTS.*********************************
+//*******************************************************************************************
+
 var gameLoop = setInterval(function(){
     // Clear canvas
+    gameTimer += 1;
     context.clearRect(0, 0, canvas.width, canvas.height);
 
     // Draw the background texture for each tile
@@ -448,6 +455,8 @@ var gameLoop = setInterval(function(){
             }
         }
     }
+
+
 
     
 // Move and Draw enemies
@@ -545,7 +554,16 @@ for (var i in towers) {
 
 	// Exponential Spawn rate
 //spawnInfluence = 0.01 * Math.exp(killCount / 25.0);
-spawnInfluence = 0.01 * (killCount)+3 / 75.0;
+spawnInfluence = 0.01 + (0.0005 * killCount);
+if (gameTimer < 100) // Enemies don't spawn until after 100 frames
+{
+    spawnInfluence = 0;
+    context.beginPath();
+    context.fillStyle = "red";
+    context.font = "32px Arial";
+    context.textAlign = 'center';
+    context.fillText("ENEMIES ARRIVING IN " + String(Math.trunc((100-gameTimer)/30)+1), 300, 300);
+}
 //spawnInfluence = 0.00001 + Math.abs(spawnMultiFactor * Math.log(killCount / spawnLnFactor));
 
 
@@ -567,7 +585,10 @@ if(Math.random() < spawnInfluence && enemies.length <= (killCount / 3)+1) {
      context.fillText("CASH: " + money, 10, 40);
      context.fillText("KILLS: " + killCount, 10, 80);
      context.fillText("MOBS: " + enemies.length, 10, 120);
-     //context.fillText("SPAWNRATE: " + spawnInfluence, 10, 120);
+     context.font = "18px Arial";
+     context.fillText("SPAWNRATE: " + spawnInfluence, 10, 160);
+     context.fillText("Game Timer: " + gameTimer, 10, 180);
+     
      
 
  
