@@ -6,10 +6,11 @@ Hangman (needs work)
 Tic-Tac-Toe (needs better AI)
 Pong
 Snake
+28. Tower Defense
+5. Space Invaders
 
 Games to put on site:
 3. Breakout
-5. Space Invaders
 7. Frogger
 8. Donkey Kong
 9. Minesweeper
@@ -28,7 +29,6 @@ Games to put on site:
 25. Concentration
 26. Match 3
 27. The Maze
-28. Tower Defense
 29. Connect Four
 31. Trivia Quiz
 32. Picture Puzzle
