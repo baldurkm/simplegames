@@ -11,7 +11,7 @@ var upgradeButton; // Define Upgrade button
 var upgradePrice = 50;
 var upgradeMultiplier = 0.25;
 var isUpgraded = false;
-var money = 150;
+var money = 350;
 var killCount = 0; 
 var spawnMultiFactor = 0.2; //spawn rate multiplier
 var spawnLnFactor = 1; // spawn rate ln factor
@@ -268,15 +268,15 @@ function Projectile(x, y, target){
     this.y = y;
     this.speed = 40;
     this.target = target;
-    this.life = 100; // Life of the projectile. This could be adjusted based on the desired decay speed.
+    this.life = 200; // Life of the projectile. This could be adjusted based on the desired decay speed.
 }
 
 // Tower constructor
 function Tower(x, y){
     this.x = x;
     this.y = y;
-    this.range = 300;
-    this.firingDelay = 30;
+    this.range = 200;
+    this.firingDelay = 40;
     this.timeToFire = this.firingDelay;
     this.upgradeLevel = 0; // Initial upgrade level
     this.upgradeCost = 100; // Cost for the first upgrade
@@ -295,25 +295,37 @@ Tower.prototype.upgrade = function() {
 
 
     this.fire = function() {
-	console.log("Start of this.fire function");
+	//console.log("Start of this.fire function");
         if (this.timeToFire <= 0) {
-	console.log("Cooldown elapsed, firing");
+	//console.log("Cooldown elapsed, firing");
             for (var j in enemies) {
-	console.log("Fire loop for enemy #" + enemies[j]);
+	//console.log("Fire loop for enemy #" + enemies[j]);
                 var enemy = enemies[j];
                 var dx = this.x - (enemy.x + gridSize / 2);  // Calculate enemy center X
                 var dy = this.y - (enemy.y + gridSize / 2);  // Calculate enemy center Y
                 var distance = Math.sqrt(dx * dx + dy * dy);
     
                 if(distance < this.range) {
-	console.log("In range, range = " + this.range);
+	//console.log("In range, range = " + this.range);
                     // Draw a line between tower and enemy within range
                     context.beginPath();
                     context.moveTo(this.x + gridSize/2, this.y + gridSize/2);  // Tower center
                     context.lineTo(enemy.x + gridSize/2, enemy.y + gridSize/2);  // Enemy center
                     context.stroke();
+                    enemy.hp--;
+                    console.log("Fired. Enemy HP now" + enemy.hp);
+                    			// If enemy's HP reached zero, delete it
+                    if (enemy.hp <= 0){
+                        var enemyIndex = enemies.indexOf(enemy);
+                        if (enemyIndex > -1){
+                            enemies.splice(enemyIndex, 1);
+                            // Award for killing an enemy
+                            money += 20;
+                            killCount++;  // Increase kill count when enemy is destroyed
+                        }
+                    }
         
-                    projectiles.push(new Projectile(this.x + gridSize / 2, this.y + gridSize / 2, enemy));
+                    //projectiles.push(new Projectile(this.x + gridSize / 2, this.y + gridSize / 2, enemy));
 
                     this.timeToFire = this.firingDelay;
                     break;
@@ -603,7 +615,7 @@ for (var i in towers) {
     context.textAlign = "center";
     context.fillText("LV " + tower.upgradeLevel, tower.x + gridSize / 2, tower.y + gridSize - 15);
 }
-
+/*
     // Projectile movement and drawing
     for (var i in projectiles){
         var projectile = projectiles[i];
@@ -646,10 +658,12 @@ for (var i in towers) {
 		}		
     }
 
+*/
+
 
 	// Exponential Spawn rate
 //spawnInfluence = 0.01 * Math.exp(killCount / 25.0);
-spawnInfluence = 0.01 + (0.0005 * killCount);
+spawnInfluence = 0.01 + (0.00075 * killCount);
 if (gameTimer < 100) // Enemies don't spawn until after 100 frames
 {
     spawnInfluence = 0;
