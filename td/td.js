@@ -211,7 +211,7 @@ canvas.addEventListener('click', function(event) {
 function Enemy(x, y) {
     this.x = x;
     this.y = y;
-    this.speed = 3 + spawnInfluence * 3;
+    this.speed = 2 + spawnInfluence * 3;
     this.hp = 3;
     this.direction = 'down';
     this.justChangedDirection = false;
