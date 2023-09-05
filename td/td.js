@@ -666,7 +666,7 @@ for (var i in towers) {
         // Display upgrade cost
         context.font = "16px Arial";
         context.fillStyle = "yellow";
-        context.fillText("$" + tower.upgradeCost, tower.x + gridSize / 2, tower.y + gridSize - 40);
+        context.fillText("$" + Math.trunc(tower.upgradeCost), tower.x + gridSize / 2, tower.y + gridSize - 40);
     }
 }
 /*
