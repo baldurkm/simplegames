@@ -11,7 +11,7 @@ var upgradeButton; // Define Upgrade button
 var upgradePrice = 50;
 var upgradeMultiplier = 0.25;
 var isUpgraded = false;
-var money = 350;
+var money = 250;
 var killCount = 0; 
 var spawnMultiFactor = 0.2; //spawn rate multiplier
 var spawnLnFactor = 1; // spawn rate ln factor
@@ -218,12 +218,31 @@ function Enemy(x, y) {
     this.pathUpdateFrequency = 1000; // update path every 1000 game loops
     this.pathUpdateCountdown = this.pathUpdateFrequency; // countdown to next path update
     this.path = [];
-    this.Image = new Image();
-    this.Image.src = 'orc.png';
+    //this.Image = new Image();
+    //this.Image.src = 'orc.png';
+
+    this.spriteSheet = new Image();
+    this.spriteSheet.src = 'es' + (Math.floor(Math.random() * 6) + 1) + '.png'; // Set the path to your sprite sheet
+    this.frameWidth = 20; // Width of each frame
+    this.frameHeight = 20; // Height of each frame
+    this.totalFrames = 8; // Total number of frames in the sprite sheet
+    this.currentFrame = 0; // Current frame index
+    this.frameUpdateInterval = 5; // Interval to update frames (adjust as needed)
 
     this.draw = function() {
-        context.drawImage(this.Image, this.x, this.y, gridSize, gridSize);
+        context.drawImage(
+            this.spriteSheet, // Image object containing the sprite sheet
+            this.currentFrame * this.frameWidth, // X-coordinate of the frame in the sprite sheet
+            this.frameHeight, // Y-coordinate of the frame (assuming you want the bottom row)
+            this.frameWidth, // Width of the frame
+            this.frameHeight, // Height of the frame
+            this.x, // X-coordinate to draw on the canvas
+            this.y, // Y-coordinate to draw on the canvas
+            gridSize * 1.25, // Width to draw on the canvas
+            gridSize * 1.25 // Height to draw on the canvas
+        );
     };
+    
 
     
  
@@ -260,6 +279,11 @@ function Enemy(x, y) {
         else if(this.direction === "left") this.x -= this.speed;
         else if(this.direction === "up") this.y -= this.speed;
         else if(this.direction === "down") this.y += this.speed;
+
+        if (gameTimer % this.frameUpdateInterval === 0) {
+            this.currentFrame = (this.currentFrame + 1) % this.totalFrames;
+        }
+
     };
 }
 // Projectile constructor
@@ -284,6 +308,7 @@ function Tower(x, y){
 Tower.prototype.upgrade = function() {
     if (money >= this.upgradeCost) {
         this.firingDelay *= 0.8; // Decrease firing delay (increase firing rate)
+        this.range *= 1.1; // Increase range
         money -= this.upgradeCost;
         this.upgradeLevel++;
         this.upgradeCost *= 1.5; // Increase upgrade cost for the next level
@@ -311,9 +336,10 @@ Tower.prototype.upgrade = function() {
                     context.beginPath();
                     context.moveTo(this.x + gridSize/2, this.y + gridSize/2);  // Tower center
                     context.lineTo(enemy.x + gridSize/2, enemy.y + gridSize/2);  // Enemy center
+                    context.lineWidth = 4;
                     context.stroke();
-                    enemy.hp--;
-                    console.log("Fired. Enemy HP now" + enemy.hp);
+                    enemy.hp--;                    
+    //console.log("Fired. Enemy HP now" + enemy.hp);
                     			// If enemy's HP reached zero, delete it
                     if (enemy.hp <= 0){
                         var enemyIndex = enemies.indexOf(enemy);
@@ -370,6 +396,24 @@ function placeTower(x, y) {
         });
     }
 }
+/*
+// Modify the code where enemies are created
+function createRandomEnemy() {
+    var enemyX = Math.random() * (canvas.width - gridSize);
+    var enemyY = 0;
+    var enemyPath = AStar(
+        { i: Math.floor(enemyY / gridSize), j: Math.floor(enemyX / gridSize) },
+        { i: gridRows - 1, j: gridColumns - 1 }
+    );
+
+    // Randomly select a sprite sheet
+    var spriteSheetIndex = Math.floor(Math.random() * 6);
+    var spriteSheetPath = 'es' + spriteSheetIndex + '.png';
+
+    enemies.push(new Enemy(enemyX, enemyY, enemyPath, spriteSheetPath));
+}
+*/
+
 
 // **************************************************
 // THIS IS THE AI AND PATHFINDING SECTION OF THE CODE
@@ -546,11 +590,13 @@ var gameLoop = setInterval(function(){
 if (addTowerMode || upgradeMode) {
     for (var i = 0; i < gridRows; i++) {
         for (var j = 0; j < gridColumns; j++) {
+            context.lineWidth = 1;
             context.strokeStyle = "lightgrey";
             context.strokeRect(j * gridSize, i * gridSize, gridSize, gridSize);
 
             // Check if this grid square matches the hoveredGridSquare
             if (hoveredGridSquare && j === hoveredGridSquare.x && i === hoveredGridSquare.y) {
+                context.lineWidth = 1;
                 context.fillStyle = "rgba(255, 255, 0, 0.3)"; // Yellow highlight
                 context.fillRect(j * gridSize, i * gridSize, gridSize, gridSize);
             }
@@ -578,6 +624,7 @@ for(var i in enemies) {
             context.beginPath();
             context.moveTo(point.j * gridSize, point.i * gridSize);
             context.lineTo(arr[index + 1].j * gridSize, arr[index + 1].i * gridSize);
+            context.lineWidth = 2;
             context.stroke();
 
             //console.log(`Drew to ${arr[index + 1].j * gridSize}, ${arr[index + 1].i * gridSize}`); // Log the point where we're drawing to
@@ -614,6 +661,13 @@ for (var i in towers) {
     context.fillStyle = "white";
     context.textAlign = "center";
     context.fillText("LV " + tower.upgradeLevel, tower.x + gridSize / 2, tower.y + gridSize - 15);
+
+    if (upgradeMode) {
+        // Display upgrade cost
+        context.font = "16px Arial";
+        context.fillStyle = "yellow";
+        context.fillText("$" + tower.upgradeCost, tower.x + gridSize / 2, tower.y + gridSize - 40);
+    }
 }
 /*
     // Projectile movement and drawing
@@ -663,7 +717,7 @@ for (var i in towers) {
 
 	// Exponential Spawn rate
 //spawnInfluence = 0.01 * Math.exp(killCount / 25.0);
-spawnInfluence = 0.01 + (0.00075 * killCount);
+spawnInfluence = 0.02 + (0.00075 * killCount);
 if (gameTimer < 100) // Enemies don't spawn until after 100 frames
 {
     spawnInfluence = 0;
@@ -671,7 +725,7 @@ if (gameTimer < 100) // Enemies don't spawn until after 100 frames
     context.fillStyle = "red";
     context.font = "32px Arial";
     context.textAlign = 'center';
-    context.fillText("ENEMIES ARRIVING IN " + String(Math.trunc((100-gameTimer)/30)+1), 300, 300);
+    context.fillText("ENEMIES ARRIVING IN " + String(Math.trunc((100-gameTimer)/30)+1), 360, 360);
 }
 //spawnInfluence = 0.00001 + Math.abs(spawnMultiFactor * Math.log(killCount / spawnLnFactor));
 
