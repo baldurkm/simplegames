@@ -604,7 +604,8 @@ if (addTowerMode || upgradeMode) {
                 context.lineWidth = 1;
                 context.fillStyle = "rgba(255, 255, 0, 0.3)"; // Yellow highlight
                 context.fillRect(j * gridSize, i * gridSize, gridSize, gridSize);
-            
+            if (addTowerMode)
+            {
                 // Calculate the center of the hovered square
                 var centerX = j * gridSize + gridSize / 2;
                 var centerY = i * gridSize + gridSize / 2;
@@ -618,6 +619,7 @@ if (addTowerMode || upgradeMode) {
                 context.strokeStyle = "yellow"; // Outline color
                 context.lineWidth = 2; // Outline thickness
                 context.stroke();
+            }
             }
         }
     }
