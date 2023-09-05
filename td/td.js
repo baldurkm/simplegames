@@ -225,7 +225,7 @@ function Enemy(x, y) {
     this.spriteSheet.src = 'es' + (Math.floor(Math.random() * 6) + 1) + '.png'; // Set the path to your sprite sheet
     this.frameWidth = 20; // Width of each frame
     this.frameHeight = 20; // Height of each frame
-    this.totalFrames = 8; // Total number of frames in the sprite sheet
+    this.totalFrames = 3; // Total number of frames in the sprite sheet
     this.currentFrame = 0; // Current frame index
     this.frameUpdateInterval = 5; // Interval to update frames (adjust as needed)
 
@@ -747,10 +747,12 @@ if(Math.random() < spawnInfluence && enemies.length <= (killCount / 3)+1) {
      context.textAlign = 'left';
      context.fillText("CASH: " + money, 10, 40);
      context.fillText("KILLS: " + killCount, 10, 80);
-     context.fillText("MOBS: " + enemies.length, 10, 120);
+     context.textAlign = 'center';
+     context.fillText("MOBS: " + enemies.length, 360, 40);
      context.font = "18px Arial";
-     context.fillText("SPAWNRATE: " + spawnInfluence, 10, 160);
-     context.fillText("Game Timer: " + (Math.trunc(gameTimer/30)), 10, 180);
+     context.textAlign = 'right';
+     context.fillText("SPAWNRATE: " + spawnInfluence, 710, 40);
+     context.fillText("Game Timer: " + (Math.trunc(gameTimer/30)), 710, 60);
      
      
 
