@@ -266,7 +266,7 @@ function Enemy(x, y) {
 function Projectile(x, y, target){
     this.x = x;
     this.y = y;
-    this.speed = 70;
+    this.speed = 40;
     this.target = target;
     this.life = 100; // Life of the projectile. This could be adjusted based on the desired decay speed.
 }
