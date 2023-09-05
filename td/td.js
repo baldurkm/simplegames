@@ -726,6 +726,18 @@ if (gameTimer < 100) // Enemies don't spawn until after 100 frames
     context.font = "32px Arial";
     context.textAlign = 'center';
     context.fillText("ENEMIES ARRIVING IN " + String(Math.trunc((100-gameTimer)/30)+1), 360, 360);
+    context.fillText("B for Build, U for Upgrade ", 360, 420);
+}
+
+if (gameTimer > 100 && gameTimer < 200) // messaging
+{
+    
+    context.beginPath();
+    context.fillStyle = "red";
+    context.font = "32px Arial";
+    context.textAlign = 'center';
+    context.fillText("You have 1 life. Good luck.", 360, 360)
+    context.fillText("B for Build, U for Upgrade ", 360, 420);
 }
 //spawnInfluence = 0.00001 + Math.abs(spawnMultiFactor * Math.log(killCount / spawnLnFactor));
 
