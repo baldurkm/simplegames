@@ -22,6 +22,8 @@ var addTowerMode = false;
 var gameTimer = 0;
 var hoveredGridSquare = null;
 var upgradeMode = false;
+var Spree = 0;
+var ShowSpree = 0;
 
 
 var towerImage = new Image();
@@ -69,6 +71,9 @@ function addEventListeners() {
         if (event.key == 'U' || event.key == 'u') {
             upgradeMode = !upgradeMode;  // Toggle upgrademode
         }
+       /* if (event.key == 'X') {
+            killCount = 100;
+        }*/
     });
 
     // Catch click to add tower
@@ -729,18 +734,6 @@ if (gameTimer < 100) // Enemies don't spawn until after 100 frames
     context.fillText("B for Build, U for Upgrade ", 360, 420);
 }
 
-if (gameTimer > 100 && gameTimer < 200) // messaging
-{
-    
-    context.beginPath();
-    context.fillStyle = "red";
-    context.font = "32px Arial";
-    context.textAlign = 'center';
-    context.fillText("You have 1 life. Good luck.", 360, 360)
-    context.fillText("B for Build, U for Upgrade ", 360, 420);
-}
-//spawnInfluence = 0.00001 + Math.abs(spawnMultiFactor * Math.log(killCount / spawnLnFactor));
-
 
 // Spawn Enemies
 if(Math.random() < spawnInfluence && enemies.length <= (killCount / 3)+1) {
@@ -749,6 +742,32 @@ if(Math.random() < spawnInfluence && enemies.length <= (killCount / 3)+1) {
     var enemyPath = AStar({ i: Math.floor(enemyY / gridSize), j: Math.floor(enemyX / gridSize) }, { i: gridRows - 1, j: gridColumns - 1 });
     enemies.push(new Enemy(enemyX, enemyY, enemyPath));
  }
+
+// MESSAGES TO THE PLAYER
+if (gameTimer > 100 && gameTimer < 200) // messaging
+{ 
+    context.beginPath();
+    context.fillStyle = "red";
+    context.font = "32px Arial";
+    context.textAlign = 'center';
+    context.fillText("You have 1 life. Good luck.", 360, 360)
+    context.fillText("B for Build, U for Upgrade ", 360, 420);
+}
+
+if (killCount % 100 === 0 && killCount > 1) // messaging
+{
+     Spree = killCount;
+     ShowSpree = 100;
+}
+if (ShowSpree > 0)
+{
+    context.beginPath();
+    context.fillStyle = "red";
+    context.font = "48px Arial";
+    context.textAlign = 'center';
+    context.fillText(Spree + " KILLS", 360, 360)
+    ShowSpree--;
+}
 
 
 
