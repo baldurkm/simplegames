@@ -751,7 +751,7 @@ if(Math.random() < spawnInfluence && enemies.length <= (killCount / 3)+1) {
      context.fillText("MOBS: " + enemies.length, 360, 40);
      context.font = "18px Arial";
      context.textAlign = 'right';
-     context.fillText("SPAWNRATE: " + spawnInfluence, 710, 40);
+     context.fillText("SPAWNRATE: " + Math.trunc((spawnInfluence)*100) + "%", 710, 40);
      context.fillText("Game Timer: " + (Math.trunc(gameTimer/30)), 710, 60);
      
      
