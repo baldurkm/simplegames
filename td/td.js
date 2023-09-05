@@ -20,6 +20,8 @@ var lastSpawnedOnKillCount = 0;  // Keep track of the kill count on the last spa
 var gamePaused = false;
 var addTowerMode = false;
 var gameTimer = 0;
+var hoveredGridSquare = null;
+var upgradeMode = false;
 
 
 var towerImage = new Image();
@@ -57,12 +59,15 @@ function initializeGame() {
     upgradeButton = {x: canvas.width - 600, y: canvas.height - 120, width: 200, height: 80};
 }
 
-//press B
+//ADD EVENT LISTENERS
 function addEventListeners() {
     // Press keys
     document.addEventListener('keydown', function(event) {
         if (event.key == 'B' || event.key == 'b') {
             addTowerMode = !addTowerMode;  // Toggle addTowerMode on 'B' key press
+        }
+        if (event.key == 'U' || event.key == 'u') {
+            upgradeMode = !upgradeMode;  // Toggle upgrademode
         }
     });
 
@@ -81,6 +86,33 @@ function addEventListeners() {
                 addTower();
             }
         }
+
+    if (upgradeMode) {
+        // Find the nearest tower for upgrade
+        var nearestTower = null;
+        var nearestDistance = Infinity;
+
+        for (var i = 0; i < towers.length; i++) {
+            var tower = towers[i];
+            var distance = Math.sqrt(
+                Math.pow(x - (tower.x + gridSize / 2), 2) +
+                Math.pow(y - (tower.y + gridSize / 2), 2)
+            );
+
+            if (distance <= tower.range && distance < nearestDistance) {
+                nearestTower = tower;
+                nearestDistance = distance;
+            }
+        }
+
+        // Upgrade the nearest tower
+        if (nearestTower) {
+            nearestTower.upgrade();
+            nearestTower.selectedForUpgrade = false; // Deselect the tower
+            upgradeMode = false; // Exit upgrade mode
+        }
+    }
+
     }, false);
 
     // Compatibility for touch devices
@@ -100,6 +132,44 @@ function addEventListeners() {
             placeTower(x, y);
         }
     }, false);
+
+canvas.addEventListener('mousemove', function(event) {
+    var rect = canvas.getBoundingClientRect();
+    var x = event.clientX - rect.left;
+    var y = event.clientY - rect.top;
+
+    // Calculate the grid coordinates based on the mouse position
+    var gridX = Math.floor(x / gridSize);
+    var gridY = Math.floor(y / gridSize);
+
+    // Update the hoveredGridSquare
+    hoveredGridSquare = { x: gridX, y: gridY };
+});
+
+/*
+//upgrade clicker
+canvas.addEventListener('click', function(event) {
+    var rect = canvas.getBoundingClientRect();
+    var x = event.clientX - rect.left;
+    var y = event.clientY - rect.top;
+
+    // Check if the click is within the range of any tower
+    for (var i = 0; i < towers.length; i++) {
+        var tower = towers[i];
+        var distance = Math.sqrt(
+            Math.pow(x - (tower.x + gridSize / 2), 2) +
+            Math.pow(y - (tower.y + gridSize / 2), 2)
+        );
+
+        if (distance <= tower.range) {
+            // Clicked on a tower, upgrade it
+            tower.upgrade();
+            break; // Stop checking other towers
+        }
+    }
+}, false);
+*/
+
 }
 
 //make a grid
@@ -118,29 +188,23 @@ for(var i = 0; i < gridRows; i++){
 }
 
 
-
+// THIS IS BROKEN
 // Add event listener for upgrade button click
 canvas.addEventListener('click', function(event) {
     var rect = canvas.getBoundingClientRect();
     var x = event.clientX - rect.left;
     var y = event.clientY - rect.top;
 
-    if (x >= upgradeButton.x && x <= upgradeButton.x + upgradeButton.width &&
-        y >= upgradeButton.y && y <= upgradeButton.y + upgradeButton.height) {
-        upgradeTowers();
+    // Check if the click is on the upgrade button
+    if (
+        x >= upgradeButton.x &&
+        x <= upgradeButton.x + upgradeButton.width &&
+        y >= upgradeButton.y &&
+        y <= upgradeButton.y + upgradeButton.height
+    ) {
+        upgradeMode = !upgradeMode; // Toggle upgrade mode
     }
 }, false);
-
-//Function to upgrade towers
-function upgradeTowers() {
-    if (money >= upgradePrice && !isUpgraded) {
-        for (var i in towers) {
-            towers[i].firingDelay *= upgradeMultiplier;
-        }
-        money -= upgradePrice;
-        isUpgraded = true;
-    }
-}
 
 // main enemy
 // Enemy constructor
@@ -202,7 +266,7 @@ function Enemy(x, y) {
 function Projectile(x, y, target){
     this.x = x;
     this.y = y;
-    this.speed = 40;
+    this.speed = 70;
     this.target = target;
     this.life = 100; // Life of the projectile. This could be adjusted based on the desired decay speed.
 }
@@ -214,16 +278,35 @@ function Tower(x, y){
     this.range = 300;
     this.firingDelay = 30;
     this.timeToFire = this.firingDelay;
+    this.upgradeLevel = 0; // Initial upgrade level
+    this.upgradeCost = 100; // Cost for the first upgrade
+
+Tower.prototype.upgrade = function() {
+    if (money >= this.upgradeCost) {
+        this.firingDelay *= 0.8; // Decrease firing delay (increase firing rate)
+        money -= this.upgradeCost;
+        this.upgradeLevel++;
+        this.upgradeCost *= 1.5; // Increase upgrade cost for the next level
+        
+        // Reset the upgradeMode flag to allow selecting a new tower
+        upgradeMode = false;
+    }
+};
+
 
     this.fire = function() {
+	console.log("Start of this.fire function");
         if (this.timeToFire <= 0) {
+	console.log("Cooldown elapsed, firing");
             for (var j in enemies) {
+	console.log("Fire loop for enemy #" + enemies[j]);
                 var enemy = enemies[j];
                 var dx = this.x - (enemy.x + gridSize / 2);  // Calculate enemy center X
                 var dy = this.y - (enemy.y + gridSize / 2);  // Calculate enemy center Y
                 var distance = Math.sqrt(dx * dx + dy * dy);
     
                 if(distance < this.range) {
+	console.log("In range, range = " + this.range);
                     // Draw a line between tower and enemy within range
                     context.beginPath();
                     context.moveTo(this.x + gridSize/2, this.y + gridSize/2);  // Tower center
@@ -447,14 +530,21 @@ var gameLoop = setInterval(function(){
     }
 
 	// Draw grid
-    if (addTowerMode) {
-        for (var i = 0; i < gridRows; i++) {
-            for (var j = 0; j < gridColumns; j++) {
-                context.strokeStyle = "lightgrey";
-                context.strokeRect(j * gridSize, i * gridSize, gridSize, gridSize);
+// Draw grid
+if (addTowerMode || upgradeMode) {
+    for (var i = 0; i < gridRows; i++) {
+        for (var j = 0; j < gridColumns; j++) {
+            context.strokeStyle = "lightgrey";
+            context.strokeRect(j * gridSize, i * gridSize, gridSize, gridSize);
+
+            // Check if this grid square matches the hoveredGridSquare
+            if (hoveredGridSquare && j === hoveredGridSquare.x && i === hoveredGridSquare.y) {
+                context.fillStyle = "rgba(255, 255, 0, 0.3)"; // Yellow highlight
+                context.fillRect(j * gridSize, i * gridSize, gridSize, gridSize);
             }
         }
     }
+}
 
 
 
@@ -495,7 +585,6 @@ for(var i in enemies) {
 
 
     // Tower firing and drawing
-// Tower firing and drawing
 for (var i in towers) {
     var tower = towers[i];
     if (tower.timeToFire <= 0) {
@@ -504,10 +593,16 @@ for (var i in towers) {
     } else {
         tower.timeToFire--;
     }
-
+    
+    // Draw tower image
     context.drawImage(towerImage, tower.x, tower.y, gridSize, gridSize);
+    
+    // Draw upgrade level text
+    context.font = "16px Arial";
+    context.fillStyle = "white";
+    context.textAlign = "center";
+    context.fillText("LV " + tower.upgradeLevel, tower.x + gridSize / 2, tower.y + gridSize - 15);
 }
-
 
     // Projectile movement and drawing
     for (var i in projectiles){
@@ -587,7 +682,7 @@ if(Math.random() < spawnInfluence && enemies.length <= (killCount / 3)+1) {
      context.fillText("MOBS: " + enemies.length, 10, 120);
      context.font = "18px Arial";
      context.fillText("SPAWNRATE: " + spawnInfluence, 10, 160);
-     context.fillText("Game Timer: " + gameTimer, 10, 180);
+     context.fillText("Game Timer: " + (Math.trunc(gameTimer/30)), 10, 180);
      
      
 
