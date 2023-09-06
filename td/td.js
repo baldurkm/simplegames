@@ -269,7 +269,7 @@ canvas.addEventListener('click', function(event) {
 function spawnEnemy() {
     var enemyX = Math.random() * (canvas.width - gridSize);
     var enemyY = 0;
-    var enemyPath = AStar({ i: Math.floor(enemyY / gridSize), j: Math.floor(enemyX / gridSize) }, { i: gridRows - 1, j: gridColumns - 1 });
+    var enemyPath = AStar({ i: Math.round(enemyY / gridSize), j: Math.round(enemyX / gridSize) }, { i: gridRows - 1, j: gridColumns - 1 });
     enemies.push(new Enemy(enemyX, enemyY, enemyPath));
 }
 
@@ -310,48 +310,97 @@ function Enemy(x, y) {
         );
     };
     
-
-    
- 
-    this.move = function() {
-        var gridX = Math.floor(this.x / gridSize);
-        var gridY = Math.floor(this.y / gridSize);
-        //console.log("Current location ", gridX,", ", gridY)
-      
-        if (!this.path.length || this.justChangedDirection || --this.pathUpdateCountdown <= 0) {
-            //console.log("Starting pathfanding.", "this.path.length: ", this.path.length, " this.justChangedDirection: ", this.justChangedDirection, " this.pathUpdateCountdown: ", this.pathUpdateCountdown)
-          this.justChangedDirection = false;
-          var startNode = {i: gridY, j: gridX, f: 0, g: 0, h: 0};  // added initial f,g,h values
-          //console.log("Start Node: ", startNode)
-          var endNode = {i: gridRows-1, j: gridColumns-1, f: 0, g: 0, h: 0};  // added initial f,g,h values
-          //var endNode = {i: 5, j: 5, f: 0, g: 0, h: 0};  // added initial f,g,h values
-          //console.log("End Node: ", endNode)
-          this.path = AStar(startNode, endNode);
-          //console.log("AStar Path: ", this.path)
-          this.pathUpdateCountdown = this.pathUpdateFrequency;
+    function isWalkable(gridX, gridY) {
+        // Check if the cell is within the bounds of the grid.
+        if (gridX < 0 || gridX >= gridColumns || gridY < 0 || gridY >= gridRows) {
+            return false; // Cell is out of bounds, considered blocked.
         }
-
+    
+        // Check if the cell is blocked by a tower.
+        return grid[gridY][gridX] === 0; // 0 represents a walkable cell, 1 represents a tower.
+    }
+    
+    // ENEMY MOVEMENT
+    this.move = function() {
+        var gridX = Math.round((this.x) / gridSize);
+        var gridY = Math.round((this.y) / gridSize);
+    
+        if (!this.path.length || this.justChangedDirection || --this.pathUpdateCountdown <= 0) {
+            this.justChangedDirection = false;
+            var startNode = { i: gridY, j: gridX, f: 0, g: 0, h: 0 };
+            var endNode = { i: gridRows - 1, j: gridColumns - 1, f: 0, g: 0, h: 0 };
+            this.path = AStar(startNode, endNode);
+            this.pathUpdateCountdown = this.pathUpdateFrequency;
+        }
+    
         if (this.path && this.path.length > 0) {
+            var nextStep = this.path[0];      
+    
+        if (this.path.length > 0) {
             var nextStep = this.path[0];
+    
             if (nextStep.i > gridY) this.direction = 'down';
             else if (nextStep.i < gridY) this.direction = 'up';
-            else if (nextStep.j > gridX) this.direction = 'right';
-            else if (nextStep.j < gridX) this.direction = 'left';
-
-            if (gridX === this.path[0].j && gridY === this.path[0].i) this.path.shift();
-            //console.log(nextStep)
+            else if (nextStep.j > (gridX)) this.direction = 'right';
+            else if (nextStep.j < (gridX)) this.direction = 'left';
         }
 
-        if(this.direction === "right") this.x += this.speed;
-        else if(this.direction === "left") this.x -= this.speed;
-        else if(this.direction === "up") this.y -= this.speed;
-        else if(this.direction === "down") this.y += this.speed;
+        if (gridX === nextStep.j && gridY === nextStep.i) {
+            // Check if the enemy is close to the center of the next cell
+            var distanceToNextCellCenter = Math.sqrt((this.x - nextStep.j * gridSize) ** 2 + (this.y - nextStep.i * gridSize) ** 2);
+            //console.log(distanceToNextCellCenter);
 
+            if (distanceToNextCellCenter < this.speed) {
+                this.path.shift();
+            } /*else {
+                // If the enemy moves too far from the center, change direction
+                //console.log("Trying to move closer to center");
+                // Calculate the direction towards the center of the next cell
+                var dx = ((nextStep.j * gridSize + gridSize / 2) - 30) - this.x;
+                var dy = ((nextStep.i * gridSize + gridSize / 2) - 30) - this.y;
+                var angle = Math.atan2(dy, dx);
+
+                // Move towards the center of the next cell
+                this.x += Math.cos(angle) * this.speed;
+                this.y += Math.sin(angle) * this.speed;
+            }*/
+
+        }
+    }
+    
+        // Move the enemy in the current direction
+        if (this.direction === "right") this.x += this.speed;
+        else if (this.direction === "left") this.x -= this.speed;
+        else if (this.direction === "up") this.y -= this.speed;
+        else if (this.direction === "down") this.y += this.speed;
+    
         if (gameTimer % this.frameUpdateInterval === 0) {
             this.currentFrame = (this.currentFrame + 1) % this.totalFrames;
         }
 
+            //DEBUGGING
+            if (this.path && this.path.length > 0) {
+                var nextStep = this.path[0];
+                var targetX = nextStep.j * gridSize;
+                var targetY = nextStep.i * gridSize;
+            
+                // Highlight the target square with a colored border
+                //context.fillStyle = "rgba(255, 0, 0, 0.5)"; // Red with 50% opacity
+                //context.fillRect(targetX, targetY, gridSize, gridSize);
+            
+                
+                if (targetY > gridY) this.direction = 'down';
+                else if (targetY < gridY) this.direction = 'up';
+                else if (targetX > gridX) this.direction = 'right';
+                else if (targetX < gridX) this.direction = 'left';
+            
+                if (gridX === nextStep.j && gridY === nextStep.i) this.path.shift();
+            }
+
+
     };
+    
+    
 }
 // Projectile constructor
 function Projectile(x, y, target){
@@ -474,30 +523,14 @@ function placeTower(x, y) {
 
         // inform each enemy that a new tower has been placed
         enemies.forEach(function(enemy) {
-            var gridX = Math.floor(enemy.x / gridSize);
-            var gridY = Math.floor(enemy.y / gridSize);
+            var gridX = Math.round(enemy.x / gridSize);
+            var gridY = Math.round(enemy.y / gridSize);
             enemy.justChangedDirection = true;
             enemy.path = AStar({i: gridY, j: gridX}, {i: gridRows - 1, j: gridColumns - 1});
         });
     }
 }
-/*
-// Modify the code where enemies are created
-function createRandomEnemy() {
-    var enemyX = Math.random() * (canvas.width - gridSize);
-    var enemyY = 0;
-    var enemyPath = AStar(
-        { i: Math.floor(enemyY / gridSize), j: Math.floor(enemyX / gridSize) },
-        { i: gridRows - 1, j: gridColumns - 1 }
-    );
 
-    // Randomly select a sprite sheet
-    var spriteSheetIndex = Math.floor(Math.random() * 6);
-    var spriteSheetPath = 'es' + spriteSheetIndex + '.png';
-
-    enemies.push(new Enemy(enemyX, enemyY, enemyPath, spriteSheetPath));
-}
-*/
 
 
 // **************************************************
@@ -716,8 +749,6 @@ if (addTowerMode || upgradeMode) {
     }
 }
 
-
-
     
 // Move and Draw enemies
 for(var i in enemies) {
@@ -728,31 +759,22 @@ for(var i in enemies) {
     enemy.draw();
     
     // Draw Path
-    context.strokeStyle = 'red';
+    /*context.strokeStyle = 'red';
     //console.log("Attempting to draw path, ", enemy.path)
-    enemy.path.forEach((point, index, arr) => {
-        //console.log(`Drawing from ${point.j * gridSize}, ${point.i * gridSize}`); // Log the point where we're starting to draw from
-        if (index < arr.length - 1) {
-            context.beginPath();
-            context.moveTo(point.j * gridSize, point.i * gridSize);
-            context.lineTo(arr[index + 1].j * gridSize, arr[index + 1].i * gridSize);
-            context.lineWidth = 2;
-            context.stroke();
-
-            //console.log(`Drew to ${arr[index + 1].j * gridSize}, ${arr[index + 1].i * gridSize}`); // Log the point where we're drawing to
-        }
-    });
+    enemy.path.forEach((point) => {
+        // Highlight the square in green
+        context.fillStyle = "rgba(0, 255, 0, 0.5)"; // Green with 50% opacity
+        context.fillRect(point.j * gridSize, point.i * gridSize, gridSize, gridSize);
+    });*/
 
     // Check for lose condition
     if (enemy.y + gridSize >= canvas.height - 150) {
         statusMessage = 'Game Over.';
-        statusMessageTimeout = 120;
+        statusMessageTimeout = 9999;
         clearInterval(gameLoop);  // End the game loop
         //return;  // If you want to stop execution after losing
     }
 }
-		
-
 
 
     // Tower firing and drawing
