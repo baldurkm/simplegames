@@ -78,9 +78,9 @@ function addEventListeners() {
         if (event.key == 'S' || event.key == 's') {
             spawnEnemy();
         }
-       /* if (event.key == 'X') {
-            killCount = 100;
-        }*/
+        if (event.key == 'X') {
+            money = money + 100;
+        }
     });
 
     // Catch click to add tower
@@ -450,9 +450,27 @@ function placeTower(x, y) {
         statusMessage = 'Insufficient funds';
         statusMessageTimeout = 120;
     } else {
+	var originalValue = grid[i][j]; // Store the original value
+        grid[i][j] = 1; // Mark the potential tower location as blocked
+
+    // Check if there is a viable path for enemies on the temporary grid
+    var start = { i: 1, j: 1 }; 
+    var goal = { i: gridRows - 1, j: gridColumns - 1 };
+    var path = AStar(start, goal, grid);
+
+    // Restore the original grid value
+    grid[i][j] = originalValue;
+
+    if (path.length > 0) {
+        // Path exists on the temporary grid, so you can place the tower
         towers.push(new Tower(j * gridSize, i * gridSize));
         grid[i][j] = 1;
         money -= 50;
+    } else {
+        // No viable path, show an error message to the user
+        statusMessage = 'Tower blocks path';
+        statusMessageTimeout = 120;
+    }
 
         // inform each enemy that a new tower has been placed
         enemies.forEach(function(enemy) {
