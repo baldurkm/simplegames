@@ -8,6 +8,7 @@ var towers = [];
 var projectiles = [];
 var addTowerButton; // Define Add Tower button
 var upgradeButton; // Define Upgrade button
+var spawnButton; // Define Upgrade button
 var upgradePrice = 50;
 var upgradeMultiplier = 0.25;
 var isUpgraded = false;
@@ -55,10 +56,13 @@ function initializeGame() {
     canvas.height = 920;
 
     // Define Add Tower button
-    addTowerButton = {x: canvas.width - 300, y: canvas.height - 120, width: 200, height: 80};
+    addTowerButton = {x: canvas.width - 250, y: canvas.height - 120, width: 200, height: 80};
 
     // Upgrade button variables
-    upgradeButton = {x: canvas.width - 600, y: canvas.height - 120, width: 200, height: 80};
+    upgradeButton = {x: canvas.width - 485, y: canvas.height - 120, width: 200, height: 80};
+
+    // Spawn button variables
+    spawnButton = {x: canvas.width -  720, y: canvas.height - 120, width: 200, height: 80};
 }
 
 //ADD EVENT LISTENERS
@@ -70,6 +74,9 @@ function addEventListeners() {
         }
         if (event.key == 'U' || event.key == 'u') {
             upgradeMode = !upgradeMode;  // Toggle upgrademode
+        }
+        if (event.key == 'S' || event.key == 's') {
+            spawnEnemy();
         }
        /* if (event.key == 'X') {
             killCount = 100;
@@ -118,6 +125,14 @@ function addEventListeners() {
         }
     }
 
+    else if (x >= spawnButton.x && x <= spawnButton.x + spawnButton.width &&
+        y >= spawnButton.y && y <= spawnButton.y + spawnButton.height)
+        {
+            spawnEnemy();
+        }
+
+    
+
     }, false);
 
     // Compatibility for touch devices
@@ -132,10 +147,51 @@ function addEventListeners() {
         // Check if Add Tower button is clicked
         if (x >= addTowerButton.x && x <= addTowerButton.x + addTowerButton.width &&
             y >= addTowerButton.y && y <= addTowerButton.y + addTowerButton.height) {
-            addTower();
+            addTowerMode = !addTowerMode;
         } else if (addTowerMode) {
             placeTower(x, y);
         }
+        else if (upgradeMode) {
+            if (upgradeMode) {
+                // Find the nearest tower for upgrade
+                var nearestTower = null;
+                var nearestDistance = Infinity;
+        
+                for (var i = 0; i < towers.length; i++) {
+                    var tower = towers[i];
+                    var distance = Math.sqrt(
+                        Math.pow(x - (tower.x + gridSize / 2), 2) +
+                        Math.pow(y - (tower.y + gridSize / 2), 2)
+                    );
+        
+                    if (distance <= tower.range && distance < nearestDistance) {
+                        nearestTower = tower;
+                        nearestDistance = distance;
+                    }
+                }
+        
+                // Upgrade the nearest tower
+                if (nearestTower) {
+                    nearestTower.upgrade();
+                    nearestTower.selectedForUpgrade = false; // Deselect the tower
+                    upgradeMode = false; // Exit upgrade mode
+                }
+            }
+        }
+        // Check if upgrade button is clicked
+        if (x >= upgradeButton.x && x <= upgradeButton.x + upgradeButton.width &&
+            y >= upgradeButton.y && y <= upgradeButton.y + upgradeButton.height) {
+            upgradeMode = !upgradeMode;
+        } //else if (upgradeMode) {
+           // placeTower(x, y);
+      //  }
+
+      if (x >= spawnButton.x && x <= spawnButton.x + spawnButton.width &&
+        y >= spawnButton.y && y <= spawnButton.y + spawnButton.height)
+        {
+            spawnEnemy();
+        }
+
     }, false);
 
 canvas.addEventListener('mousemove', function(event) {
@@ -193,7 +249,6 @@ for(var i = 0; i < gridRows; i++){
 }
 
 
-// THIS IS BROKEN
 // Add event listener for upgrade button click
 canvas.addEventListener('click', function(event) {
     var rect = canvas.getBoundingClientRect();
@@ -210,6 +265,13 @@ canvas.addEventListener('click', function(event) {
         upgradeMode = !upgradeMode; // Toggle upgrade mode
     }
 }, false);
+
+function spawnEnemy() {
+    var enemyX = Math.random() * (canvas.width - gridSize);
+    var enemyY = 0;
+    var enemyPath = AStar({ i: Math.floor(enemyY / gridSize), j: Math.floor(enemyX / gridSize) }, { i: gridRows - 1, j: gridColumns - 1 });
+    enemies.push(new Enemy(enemyX, enemyY, enemyPath));
+}
 
 // main enemy
 // Enemy constructor
@@ -562,11 +624,11 @@ var gameLoop = setInterval(function(){
     context.textAlign = 'center';
     context.rect(addTowerButton.x, addTowerButton.y, addTowerButton.width, addTowerButton.height);
     context.fillStyle = "orange";
-    context.font = "32px Arial";
+    context.font = "24px Arial";
     context.fill();
     context.stroke();
     context.fillStyle = "black";
-    context.fillText("BUILD $50", addTowerButton.x + 100, addTowerButton.y + 40); 
+    context.fillText("BUILD $50 (B)", addTowerButton.x + 100, addTowerButton.y + 40); 
 
     // Draw Upgrade button
     context.beginPath();
@@ -576,13 +638,24 @@ var gameLoop = setInterval(function(){
     context.fill();
     context.stroke();
     context.fillStyle = "white";
-    context.fillText("UPGRADE $" + upgradePrice, upgradeButton.x + 100, upgradeButton.y + 40); 
+    context.fillText("UPGRADE (U)", upgradeButton.x + 100, upgradeButton.y + 40); 
+
+    // Draw Spawn button
+    context.beginPath();
+    context.rect(spawnButton.x, spawnButton.y, spawnButton.width, spawnButton.height);
+    context.fillStyle = "red";
+    context.font = "24px Arial";
+    context.fill();
+    context.stroke();
+    context.fillStyle = "white";
+    context.fillText("SPAWN (S)", spawnButton.x + 100, spawnButton.y + 40); 
 
     // Draw messages	
     context.beginPath();
     context.fillStyle = 'red';
     context.textAlign = 'center';
     context.textBaseline = 'middle';
+    context.font = "32px Arial";
     context.fillText(statusMessage, canvas.width/2, canvas.height/2);
     if(statusMessageTimeout > 0) {
         statusMessageTimeout--;
@@ -753,10 +826,7 @@ if (gameTimer < 100) // Enemies don't spawn until after 100 frames
 
 // Spawn Enemies
 if(Math.random() < spawnInfluence && enemies.length <= (killCount / 3)+1) {
-    var enemyX = Math.random() * (canvas.width - gridSize);
-    var enemyY = 0;
-    var enemyPath = AStar({ i: Math.floor(enemyY / gridSize), j: Math.floor(enemyX / gridSize) }, { i: gridRows - 1, j: gridColumns - 1 });
-    enemies.push(new Enemy(enemyX, enemyY, enemyPath));
+    spawnEnemy();
  }
 
 // MESSAGES TO THE PLAYER
