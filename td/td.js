@@ -8,7 +8,7 @@ var towers = [];
 var projectiles = [];
 var addTowerButton; // Define Add Tower button
 var upgradeButton; // Define Upgrade button
-var spawnButton; // Define Upgrade button
+var spawnButton; // Define Spawn button
 var upgradePrice = 50;
 var upgradeMultiplier = 0.25;
 var isUpgraded = false;
@@ -207,30 +207,6 @@ canvas.addEventListener('mousemove', function(event) {
     hoveredGridSquare = { x: gridX, y: gridY };
 });
 
-/*
-//upgrade clicker
-canvas.addEventListener('click', function(event) {
-    var rect = canvas.getBoundingClientRect();
-    var x = event.clientX - rect.left;
-    var y = event.clientY - rect.top;
-
-    // Check if the click is within the range of any tower
-    for (var i = 0; i < towers.length; i++) {
-        var tower = towers[i];
-        var distance = Math.sqrt(
-            Math.pow(x - (tower.x + gridSize / 2), 2) +
-            Math.pow(y - (tower.y + gridSize / 2), 2)
-        );
-
-        if (distance <= tower.range) {
-            // Clicked on a tower, upgrade it
-            tower.upgrade();
-            break; // Stop checking other towers
-        }
-    }
-}, false);
-*/
-
 }
 
 //make a grid
@@ -352,19 +328,7 @@ function Enemy(x, y) {
 
             if (distanceToNextCellCenter < this.speed) {
                 this.path.shift();
-            } /*else {
-                // If the enemy moves too far from the center, change direction
-                //console.log("Trying to move closer to center");
-                // Calculate the direction towards the center of the next cell
-                var dx = ((nextStep.j * gridSize + gridSize / 2) - 30) - this.x;
-                var dy = ((nextStep.i * gridSize + gridSize / 2) - 30) - this.y;
-                var angle = Math.atan2(dy, dx);
-
-                // Move towards the center of the next cell
-                this.x += Math.cos(angle) * this.speed;
-                this.y += Math.sin(angle) * this.speed;
-            }*/
-
+            } 
         }
     }
     
@@ -383,10 +347,6 @@ function Enemy(x, y) {
                 var nextStep = this.path[0];
                 var targetX = nextStep.j * gridSize;
                 var targetY = nextStep.i * gridSize;
-            
-                // Highlight the target square with a colored border
-                //context.fillStyle = "rgba(255, 0, 0, 0.5)"; // Red with 50% opacity
-                //context.fillRect(targetX, targetY, gridSize, gridSize);
             
                 
                 if (targetY > gridY) this.direction = 'down';
@@ -420,11 +380,13 @@ function Tower(x, y){
     this.timeToFire = this.firingDelay;
     this.upgradeLevel = 0; // Initial upgrade level
     this.upgradeCost = 100; // Cost for the first upgrade
+	this.damage = 1; // initial damage
 
 Tower.prototype.upgrade = function() {
     if (money >= this.upgradeCost) {
         this.firingDelay *= 0.8; // Decrease firing delay (increase firing rate)
         this.range *= 1.1; // Increase range
+	    this.damage *= 1.1 // Increase damage
         money -= this.upgradeCost;
         this.upgradeLevel++;
         this.upgradeCost *= 1.5; // Increase upgrade cost for the next level
@@ -454,7 +416,7 @@ Tower.prototype.upgrade = function() {
                     context.lineTo(enemy.x + gridSize/2, enemy.y + gridSize/2);  // Enemy center
                     context.lineWidth = 4;
                     context.stroke();
-                    enemy.hp--;                    
+                    enemy.hp = enemy.hp - this.damage;                    
     //console.log("Fired. Enemy HP now" + enemy.hp);
                     			// If enemy's HP reached zero, delete it
                     if (enemy.hp <= 0){
