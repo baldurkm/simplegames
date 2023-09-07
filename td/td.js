@@ -912,8 +912,8 @@ if (ShowSpree > 0)
     if(statusMessageTimeout > 0) {
         statusMessageTimeout--;
 	context.beginPath();
-	context.fillStyle = "rgba(64, 64, 64, 0.1)"; // grat with 10% opacity
-        context.fillRect(0, (canvas.height/2)-100, canvas.width, (canvas.height/2)+100);
+	context.fillStyle = "rgba(64, 64, 64, 0.2)"; // gray with 10% opacity
+        context.fillRect(0, (canvas.height/2)-50, canvas.width, 100);
     } else {
         statusMessage = '';
     }
