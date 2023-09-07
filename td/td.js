@@ -812,7 +812,7 @@ if (gameTimer < 100) // Enemies don't spawn until after 100 frames
     spawnInfluence = 0;
     context.beginPath();
     context.fillStyle = "red";
-    context.font = "32px Arial";
+    context.font = "32px Impact";
     context.textAlign = 'center';
     context.fillText("ENEMIES ARRIVING IN " + String(Math.trunc((100-gameTimer)/30)+1), canvas.width/2, 360);
     //context.fillText("B for Build, U for Upgrade ", 360, 420);
@@ -832,7 +832,7 @@ if (gameTimer > 100 && gameTimer < 200) // messaging
         context.fillRect(0, 310, canvas.width, 140);
     context.beginPath();
     context.fillStyle = "red";
-    context.font = "32px Arial";
+    context.font = "32px Impact";
     context.textAlign = 'center';
     context.fillText("YOU HAVE 1 LIFE.", canvas.width/2, 360)
     context.fillText("GOOD LUCK", canvas.width/2, 420);
@@ -846,8 +846,8 @@ if (killCount % 100 === 0 && killCount > 1) // messaging
 if (ShowSpree > 0)
 {
     context.beginPath();
-    context.fillStyle = "red";
-    context.font = "48px Arial";
+    context.fillStyle = "white";
+    context.font = "48px Impact";
     context.textAlign = 'center';
     context.fillText(Spree + " KILLS", canvas.width/2, 360)
     ShowSpree--;
@@ -871,16 +871,16 @@ if (killCount % 1000 === 0 && killCount > 1) // messaging
         context.fillRect(0, 0, canvas.width, 60);
      context.beginPath();
      context.fillStyle = "white";
-     context.font = "32px Arial";
+     context.font = "32px Impact";
      context.textAlign = 'left';
-     context.fillText("CASH: " + money, 10, 40);
+     context.fillText("CASH: " + Math.trunc(money), 10, 30);
      context.textAlign = 'center';
-     context.fillText("KILLS: " + killCount, 360, 40);
+     context.fillText("KILLS: " + killCount, 360, 30);
      //context.fillText("MOBS: " + enemies.length, 360, 40);
-     context.font = "18px Arial";
+     context.font = "18px Impact";
      context.textAlign = 'right';
-     context.fillText("SPAWNRATE: " + Math.trunc((spawnInfluence)*100) + "%", 710, 30);
-     context.fillText("Game Timer: " + (Math.trunc(gameTimer/30)), 710, 50);
+     context.fillText("SPAWNRATE: " + Math.trunc((spawnInfluence)*100) + "%", 710, 20);
+     context.fillText("Game Timer: " + (Math.trunc(gameTimer/30)), 710, 40);
 
 	    // Draw messages	
 
@@ -888,7 +888,7 @@ if (killCount % 1000 === 0 && killCount > 1) // messaging
     context.fillStyle = 'red';
     context.textAlign = 'center';
     context.textBaseline = 'middle';
-    context.font = "32px Arial";
+    context.font = "32px Impact";
     context.fillText(statusMessage, canvas.width/2, canvas.height/2);
     if(statusMessageTimeout > 0) {
         statusMessageTimeout--;
