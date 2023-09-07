@@ -806,6 +806,9 @@ for (var i in towers) {
 spawnInfluence = 0.01 + (0.00075 * killCount);
 if (gameTimer < 100) // Enemies don't spawn until after 100 frames
 {
+	context.beginPath();
+	context.fillStyle = "rgba(64, 64, 64, 0.2)"; // gray with 10% opacity
+        context.fillRect(0, 310, canvas.width, 100);
     spawnInfluence = 0;
     context.beginPath();
     context.fillStyle = "red";
@@ -824,6 +827,9 @@ if(Math.random() < spawnInfluence && enemies.length <= (killCount / 3)+1) {
 // MESSAGES TO THE PLAYER
 if (gameTimer > 100 && gameTimer < 200) // messaging
 { 
+	context.beginPath();
+	context.fillStyle = "rgba(64, 64, 64, 0.2)"; // gray with 10% opacity
+        context.fillRect(0, 310, canvas.width, 140);
     context.beginPath();
     context.fillStyle = "red";
     context.font = "32px Arial";
