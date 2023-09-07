@@ -902,9 +902,7 @@ if (ShowSpree > 0)
      context.fillText("Game Timer: " + (Math.trunc(gameTimer/30)), 710, 60);
 
 	    // Draw messages	
-	context.beginPath();
-	context.fillStyle = "rgba(64, 64, 64, 0.1)"; // grat with 10% opacity
-        context.fillRect(0, (canvas.height/2)-100, canvas.width, (canvas.height/2)+100);
+
     context.beginPath();
     context.fillStyle = 'red';
     context.textAlign = 'center';
@@ -913,6 +911,9 @@ if (ShowSpree > 0)
     context.fillText(statusMessage, canvas.width/2, canvas.height/2);
     if(statusMessageTimeout > 0) {
         statusMessageTimeout--;
+	context.beginPath();
+	context.fillStyle = "rgba(64, 64, 64, 0.1)"; // grat with 10% opacity
+        context.fillRect(0, (canvas.height/2)-100, canvas.width, (canvas.height/2)+100);
     } else {
         statusMessage = '';
     }
