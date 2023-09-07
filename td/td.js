@@ -701,18 +701,7 @@ var gameLoop = setInterval(function(){
     context.fillStyle = "white";
     context.fillText("SPAWN (S)", spawnButton.x + 100, spawnButton.y + 40); 
 
-    // Draw messages	
-    context.beginPath();
-    context.fillStyle = 'red';
-    context.textAlign = 'center';
-    context.textBaseline = 'middle';
-    context.font = "32px Arial";
-    context.fillText(statusMessage, canvas.width/2, canvas.height/2);
-    if(statusMessageTimeout > 0) {
-        statusMessageTimeout--;
-    } else {
-        statusMessage = '';
-    }
+
 
 	// Draw grid
 // Draw grid
@@ -778,6 +767,7 @@ for(var i in enemies) {
 
 
     // Tower firing and drawing
+context.strokeStyle = 'red';
 for (var i in towers) {
     var tower = towers[i];
     if (tower.timeToFire <= 0) {
@@ -910,6 +900,22 @@ if (ShowSpree > 0)
      context.textAlign = 'right';
      context.fillText("SPAWNRATE: " + Math.trunc((spawnInfluence)*100) + "%", 710, 40);
      context.fillText("Game Timer: " + (Math.trunc(gameTimer/30)), 710, 60);
+
+	    // Draw messages	
+	context.beginPath();
+	context.fillStyle = "rgba(64, 64, 64, 0.1)"; // grat with 10% opacity
+        context.fillRect(0, (canvas.height/2)-100, canvas.width, (canvas.height/2)+100);
+    context.beginPath();
+    context.fillStyle = 'red';
+    context.textAlign = 'center';
+    context.textBaseline = 'middle';
+    context.font = "32px Arial";
+    context.fillText(statusMessage, canvas.width/2, canvas.height/2);
+    if(statusMessageTimeout > 0) {
+        statusMessageTimeout--;
+    } else {
+        statusMessage = '';
+    }
      
      
 
