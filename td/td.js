@@ -812,7 +812,7 @@ if (gameTimer < 100) // Enemies don't spawn until after 100 frames
     context.font = "32px Arial";
     context.textAlign = 'center';
     context.fillText("ENEMIES ARRIVING IN " + String(Math.trunc((100-gameTimer)/30)+1), 360, 360);
-    context.fillText("B for Build, U for Upgrade ", 360, 420);
+    //context.fillText("B for Build, U for Upgrade ", 360, 420);
 }
 
 
@@ -828,8 +828,8 @@ if (gameTimer > 100 && gameTimer < 200) // messaging
     context.fillStyle = "red";
     context.font = "32px Arial";
     context.textAlign = 'center';
-    context.fillText("You have 1 life. Good luck.", 360, 360)
-    context.fillText("B for Build, U for Upgrade ", 360, 420);
+    context.fillText("YOU HAVE 1 LIFE.", 360, 360)
+    context.fillText("GOOD LUCK", 360, 420);
 }
 
 if (killCount % 100 === 0 && killCount > 1) // messaging
@@ -845,6 +845,16 @@ if (ShowSpree > 0)
     context.textAlign = 'center';
     context.fillText(Spree + " KILLS", 360, 360)
     ShowSpree--;
+}
+
+if (killCount % 1000 === 0 && killCount > 1) // messaging
+{
+	statusMessage = 'A HUGE WAVE OF ENEMIES SPAWNED';
+        statusMessageTimeout = 120;
+	for (let i = 0; i < (killCount / 10); i++) {
+	spawnEnemy();
+
+	}
 }
 
 
