@@ -420,7 +420,7 @@ Tower.prototype.upgrade = function() {
     if (money >= this.upgradeCost) {
         this.firingDelay *= 0.8; // Decrease firing delay (increase firing rate)
         this.range *= 1.1; // Increase range
-	    this.damage *= 1.1 // Increase damage
+	this.damage *= 1.1 // Increase damage
         money -= this.upgradeCost;
         this.upgradeLevel++;
         this.upgradeCost *= 1.5; // Increase upgrade cost for the next level
@@ -791,51 +791,6 @@ for (var i in towers) {
         context.fillText("$" + Math.trunc(tower.upgradeCost), tower.x + gridSize / 2, tower.y + gridSize - 40);
     }
 }
-/*
-    // Projectile movement and drawing
-    for (var i in projectiles){
-        var projectile = projectiles[i];
-        var enemy = projectile.target;
-        var dx = enemy.x+30 - projectile.x;
-        var dy = enemy.y+30 - projectile.y;
-        var distance = Math.sqrt(dx * dx + dy * dy);
-        var velocityX = (dx / distance) * projectile.speed;
-        var velocityY = (dy / distance) * projectile.speed;
-		projectile.life--;
-
-		if(distance < 30 || enemy.hp <= 0){
-			// Decrease enemy's HP
-			enemy.hp--;
-
-			// If enemy's HP reached zero, delete it
-			if (enemy.hp <= 0){
-				var enemyIndex = enemies.indexOf(enemy);
-				if (enemyIndex > -1){
-					enemies.splice(enemyIndex, 1);
-					// Award for killing an enemy
-					money += 20;
-					killCount++;  // Increase kill count when enemy is destroyed
-				}
-			}
-			// Remove the projectile
-			projectiles.splice(i, 1);
-			break; // This break will prevent other projectiles from erroneously registering a hit on the same enemy in this loop iteration
-		   } else {
-            // Move the projectile
-            projectile.x += velocityX;
-            projectile.y += velocityY;
-            // Draw the projectile
-            context.fillStyle = "black";
-            context.fillRect(projectile.x, projectile.y, 5, 5);
-        }  
-		
-		if(projectile.life <= 0){
-			projectiles.splice(i, 1);
-		}		
-    }
-
-*/
-
 
 	// Exponential Spawn rate
 //spawnInfluence = 0.01 * Math.exp(killCount / 25.0);
@@ -843,9 +798,9 @@ for (var i in towers) {
 spawnInfluence = 0.01 + (0.00065 * killCount);
 if (gameTimer < 100) // Enemies don't spawn until after 100 frames
 {
-	context.beginPath();
-	context.fillStyle = "rgba(64, 64, 64, 0.2)"; // gray with 10% opacity
-        context.fillRect(0, 310, canvas.width, 100);
+     context.beginPath();
+    context.fillStyle = "rgba(64, 64, 64, 0.2)"; // gray with 10% opacity
+    context.fillRect(0, 310, canvas.width, 100);
     spawnInfluence = 0;
     context.beginPath();
     context.fillStyle = "red";
