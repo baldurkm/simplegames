@@ -1,4 +1,5 @@
 // Game variables
+
 var canvas = document.getElementById("gameCanvas");
 var context = canvas.getContext("2d");
 var statusMessage = '';
@@ -9,6 +10,7 @@ var projectiles = [];
 var addTowerButton; // Define Add Tower button
 var upgradeButton; // Define Upgrade button
 var spawnButton; // Define Spawn button
+
 var upgradePrice = 50;
 var upgradeMultiplier = 0.25;
 var isUpgraded = false;
@@ -27,9 +29,16 @@ var Spree = 0;
 var ShowSpree = 0;
 
 
+
 var towerImage = new Image();
+var towerImageFiring = new Image();
 var backgroundTextureImage = new Image();
 var backgroundTexturePattern;
+var tileSize = 32; // Tile size in pixels
+var mapWidth = 780; // Width of the game map
+var mapHeight = 920; // Height of the game map
+var terrainTypes = ['grass', 'desert', 'badlands'];
+
 
 // Add event listener for the page load event
 window.addEventListener('load', function() {
@@ -40,30 +49,55 @@ window.addEventListener('load', function() {
     addEventListeners();
 });
 
-function initializeGame() {
-  // Create a background texture pattern
-  backgroundTextureImage.onload = function() {
-    backgroundTexturePattern = context.createPattern(backgroundTextureImage, 'repeat');
-    // Start the game loop after the background texture pattern has been created
-    
-  };
 
-  backgroundTextureImage.src = 'grass.jpg';
+
+
+function initializeGame() {
+    // Create a background texture pattern once the image is loaded
+    backgroundTextureImage.onload = function() {
+        var patternCanvas = document.createElement('canvas');
+        var patternContext = patternCanvas.getContext('2d');
+
+        patternCanvas.width = mapWidth;
+        patternCanvas.height = mapHeight;
+
+        // Randomly select tiles from the tileset and fill the map
+        for (var y = 0; y < mapHeight; y += tileSize) {
+            for (var x = 0; x < mapWidth; x += tileSize) {
+                var tileX = Math.floor(Math.random() * (backgroundTextureImage.width / tileSize));
+                var tileY = Math.floor(Math.random() * (backgroundTextureImage.height / tileSize));
+
+                patternContext.drawImage(backgroundTextureImage, tileX * tileSize, tileY * tileSize, tileSize, tileSize, x, y, tileSize, tileSize);
+            }
+        }
+
+        backgroundTexturePattern = context.createPattern(patternCanvas, 'no-repeat');
+        // Start the game loop after the background texture pattern has been created
+        // You can place this here or wherever you start your game loop.
+    };
+
+    // Set the source of the tileset image
+    var randomTerrainType = terrainTypes[Math.floor(Math.random() * terrainTypes.length)];    
+    backgroundTextureImage.src = randomTerrainType + '.png';
+
+    // Load other game assets (e.g., tower image)
     towerImage.src = 'tower.png';
+    towerImageFiring.src = 'towerFiring.png';
+
+        // Define Add Tower button
+        addTowerButton = {x: mapWidth - 250, y: mapHeight - 120, width: 200, height: 80};
+        // Upgrade button variables
+        upgradeButton = {x: mapWidth - 485, y: mapHeight - 120, width: 200, height: 80};
+        // Spawn button variables
+        spawnButton = {x: mapWidth - 720, y: mapHeight - 120, width: 200, height: 80};
 
     // Set canvas size
-    canvas.width = 780;
-    canvas.height = 920;
+    canvas.width = mapWidth;
+    canvas.height = mapHeight;
 
-    // Define Add Tower button
-    addTowerButton = {x: canvas.width - 250, y: canvas.height - 120, width: 200, height: 80};
 
-    // Upgrade button variables
-    upgradeButton = {x: canvas.width - 485, y: canvas.height - 120, width: 200, height: 80};
-
-    // Spawn button variables
-    spawnButton = {x: canvas.width -  720, y: canvas.height - 120, width: 200, height: 80};
 }
+
 
 //ADD EVENT LISTENERS
 function addEventListeners() {
@@ -411,8 +445,9 @@ Tower.prototype.upgrade = function() {
                 if(distance < this.range) {
 	//console.log("In range, range = " + this.range);
                     // Draw a line between tower and enemy within range
+                    context.drawImage(towerImageFiring, this.x, this.y, gridSize, gridSize); // Draw tower image
                     context.beginPath();
-                    context.moveTo(this.x + gridSize/2, this.y + gridSize/2);  // Tower center
+                    context.moveTo(this.x + gridSize/2, this.y + gridSize/2 - 15);  // Tower center
                     context.lineTo(enemy.x + gridSize/2, enemy.y + gridSize/2);  // Enemy center
                     context.lineWidth = 4;
                     context.stroke();
@@ -631,7 +666,7 @@ var gameLoop = setInterval(function(){
             context.fillRect(j * gridSize, i * gridSize, gridSize, gridSize);
         }
     }
-
+    
     // Draw Add Tower button
     context.beginPath();
     context.textAlign = 'center';
@@ -732,6 +767,7 @@ for(var i in enemies) {
 context.strokeStyle = 'red';
 for (var i in towers) {
     var tower = towers[i];
+    context.drawImage(towerImage, tower.x, tower.y, gridSize, gridSize); // Draw tower image
     if (tower.timeToFire <= 0) {
         tower.fire(); 
         tower.timeToFire = tower.firingDelay;
@@ -739,8 +775,8 @@ for (var i in towers) {
         tower.timeToFire--;
     }
     
-    // Draw tower image
-    context.drawImage(towerImage, tower.x, tower.y, gridSize, gridSize);
+    
+    
     
     // Draw upgrade level text
     context.font = "16px Arial";
