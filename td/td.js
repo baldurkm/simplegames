@@ -39,6 +39,9 @@ var mapWidth = 780; // Width of the game map
 var mapHeight = 920; // Height of the game map
 var terrainTypes = ['grass', 'desert', 'badlands'];
 
+var buttonBackground = new Image();
+buttonBackground.src = 'buttonBackground.jpg';
+
 
 // Add event listener for the page load event
 window.addEventListener('load', function() {
@@ -112,9 +115,9 @@ function addEventListeners() {
         if (event.key == 'S' || event.key == 's') {
             spawnEnemy();
         }
-        if (event.key == 'X') {
-            money = money + 100;
-        }
+        //if (event.key == 'X') {
+        //    money = money + 100;
+        //}
     });
 
     // Catch click to add tower
@@ -667,11 +670,14 @@ var gameLoop = setInterval(function(){
         }
     }
     
+	// Draw button background
+	context.drawImage(buttonBackground, 0, 780)
+	
     // Draw Add Tower button
     context.beginPath();
     context.textAlign = 'center';
     context.rect(addTowerButton.x, addTowerButton.y, addTowerButton.width, addTowerButton.height);
-    context.fillStyle = "orange";
+    context.fillStyle = "rgba(20, 160, 20, 1)";
     context.font = "24px Arial";
     context.fill();
     context.stroke();
@@ -681,7 +687,7 @@ var gameLoop = setInterval(function(){
     // Draw Upgrade button
     context.beginPath();
     context.rect(upgradeButton.x, upgradeButton.y, upgradeButton.width, upgradeButton.height);
-    context.fillStyle = "blue";
+    context.fillStyle = "rgba(25, 25, 155, 1)";
     context.font = "24px Arial";
     context.fill();
     context.stroke();
@@ -691,7 +697,7 @@ var gameLoop = setInterval(function(){
     // Draw Spawn button
     context.beginPath();
     context.rect(spawnButton.x, spawnButton.y, spawnButton.width, spawnButton.height);
-    context.fillStyle = "red";
+    context.fillStyle = "rgba(190, 0, 0, 1)";
     context.font = "24px Arial";
     context.fill();
     context.stroke();
@@ -821,7 +827,7 @@ if (gameTimer > 100 && gameTimer < 200) // messaging
 { 
 	context.beginPath();
 	context.fillStyle = "rgba(64, 64, 64, 0.2)"; // gray with 10% opacity
-        context.fillRect(0, 310, canvas.width, 140);
+        context.fillRect(0, 310, canvas.width, 160);
     context.beginPath();
     context.fillStyle = "red";
     context.font = "32px Impact";
