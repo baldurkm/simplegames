@@ -839,7 +839,8 @@ for (var i in towers) {
 
 	// Exponential Spawn rate
 //spawnInfluence = 0.01 * Math.exp(killCount / 25.0);
-spawnInfluence = 0.01 + (0.00075 * killCount);
+// ************************* SPAWN RATE
+spawnInfluence = 0.01 + (0.00065 * killCount);
 if (gameTimer < 100) // Enemies don't spawn until after 100 frames
 {
 	context.beginPath();
