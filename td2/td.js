@@ -1,0 +1,857 @@
+// Game variables
+var canvas = document.getElementById("gameCanvas");
+var context = canvas.getContext("2d");
+var offsetY = 0; // Offset for vertical scrolling
+var offsetX = 0; // Offset for horizontal scrolling
+var statusMessage = '';
+var statusMessageTimeout = 0;
+var enemies = [];
+var gameTimer = 0;
+var backgroundTextureImage = new Image();
+var backgroundTexturePattern;
+var hoveredGridSquare = null;
+
+var tileSize = 32; // Tile size in pixels
+var mapWidth = 18040; // Width of the game map
+var mapHeight = 9000; // Height of the game map
+
+var upgradeMode = false;
+var buildMode = false;
+var towerToPlace = '';
+let buildings = {};
+
+
+var money = 1000;
+var killCount = 0;
+var spawnInfluence = 0;
+
+let keyStates = {};
+
+var CCounter = 0;
+
+    //make a grid
+    var grid = [];
+    var gridSize = 60;
+    var gridRows = Math.floor((mapWidth) / gridSize); 
+    var gridColumns = Math.floor(mapHeight / gridSize);
+    console.log("Grid dimensions: ", gridRows,", ",gridColumns)
+
+// Add event listener for the page load event
+window.addEventListener('load', function() {
+    // Initialize canvas and game-related elements
+    initializeGame(); // SHOULD THIS BE A MAIN MENU?
+    // Add event listeners for button clicks
+    addEventListeners(); // SHOULD THIS BE IN INIT GAME?
+});
+
+// Variables for menu and buttons
+var BUTTON_WIDTH = 192;
+var BUTTON_HEIGHT = 64;
+var BUTTON_SPACING = 20;
+var menuWidth = 256;
+var menuHeight = 720;
+var buttonImages = [];
+var depressedButtonImages = [];
+var buttonNames = ["build", "upgrade", "spawn", "map"];
+var menuBackgroundImage = new Image();
+menuBackgroundImage.src = "menu_background.png";
+
+var subMenuNames = ["laser", "bomb", "frost", "base", "back"];
+var subMenuImages = [];
+var depressedSubMenuImages = [];
+
+// Preload button images
+for (let i = 0; i < buttonNames.length; i++) {
+    let buttonImage = new Image();
+    buttonImage.src = buttonNames[i] + ".png";
+    buttonImages.push(buttonImage);
+
+    let depressedButtonImage = new Image();
+    depressedButtonImage.src = buttonNames[i] + "_depressed.png";
+    depressedButtonImages.push(depressedButtonImage);
+}
+
+// Preload submenu button images
+for (let i = 0; i < subMenuNames.length; i++) {
+    let buttonImage = new Image();
+    buttonImage.src = subMenuNames[i] + ".png";
+    subMenuImages.push(buttonImage);
+
+    let depressedButtonImage = new Image();
+    depressedButtonImage.src = subMenuNames[i] + "_depressed.png";
+    depressedSubMenuImages.push(depressedButtonImage);
+}
+
+let isSubMenuActive = false;
+
+function handleMenuClick(e) {
+    var mousePos = getMousePos(canvas, e);
+    var x = canvas.width - menuWidth / 2 - BUTTON_WIDTH / 2;
+    var names = isSubMenuActive ? subMenuNames : buttonNames;
+    var initialY = (menuHeight - (names.length * BUTTON_HEIGHT) - ((names.length - 1) * BUTTON_SPACING)) / 2;
+
+    for (let i = 0; i < names.length; i++) {
+        var y = initialY + i * (BUTTON_HEIGHT + BUTTON_SPACING);
+        if (mousePos.x >= x && mousePos.x <= x + BUTTON_WIDTH && mousePos.y >= y && mousePos.y <= y + BUTTON_HEIGHT) {
+            if (isSubMenuActive) {
+                context.drawImage(depressedSubMenuImages[i], x, y, BUTTON_WIDTH, BUTTON_HEIGHT);
+                if (names[i] === "back") {
+                    isSubMenuActive = false;
+                }
+                else if (names[i] === "base") {
+                    buildMode = true;
+                    towerToPlace = 'base';
+                }
+            } else {
+                context.drawImage(depressedButtonImages[i], x, y, BUTTON_WIDTH, BUTTON_HEIGHT);
+                if (names[i] === "build") {
+                    isSubMenuActive = true;
+                }
+            }
+            return;
+        }
+    }
+}
+
+function drawMenu() {
+    context.drawImage(menuBackgroundImage, canvas.width - menuWidth, 0, menuWidth, menuHeight);
+
+    var x = canvas.width - menuWidth / 2 - BUTTON_WIDTH / 2;
+    var names = isSubMenuActive ? subMenuNames : buttonNames;
+    var images = isSubMenuActive ? subMenuImages : buttonImages;
+    var initialY = (menuHeight - (names.length * BUTTON_HEIGHT) - ((names.length - 1) * BUTTON_SPACING)) / 2;
+
+    for (let i = 0; i < names.length; i++) {
+        var y = initialY + i * (BUTTON_HEIGHT + BUTTON_SPACING);
+        context.drawImage(images[i], x, y, BUTTON_WIDTH, BUTTON_HEIGHT);
+    }
+}
+
+
+// Utility function to get mouse position
+function getMousePos(canvas, e) {
+    var rect = canvas.getBoundingClientRect();
+    return {
+        x: e.clientX - rect.left,
+        y: e.clientY - rect.top
+    };
+}
+
+// Event listener for user mouse click
+canvas.addEventListener("click", handleMenuClick, false);
+
+
+// FPS COUNTER
+
+var frame = 0; 
+var lastUpdateTime = Date.now();
+var fps = 0;
+
+function animate() {
+  frame++;
+
+  var currentTime = Date.now();
+
+  if (currentTime - lastUpdateTime >= 1000) {
+    fps = frame;
+    frame = 0;
+    lastUpdateTime = currentTime;
+  }
+
+  context.textAlign = 'left';
+  context.fillStyle = "red";
+  context.font = "20px Arial";
+
+  // Display the FPS in the top left corner
+  context.fillText("FPS: " + fps, 50 , canvas.height - 50);
+
+  // Rest of your rendering code below
+  // ...
+
+  requestAnimationFrame(animate);
+}
+
+animate();
+
+
+// Include CDN link in your HTML
+// <script src="https://cdnjs.cloudflare.com/ajax/libs/simplex-noise/2.3.0/simplex-noise.min.js"></script>
+
+const simplex = new SimplexNoise();
+
+var terrainTypesImages = {
+  'grass': loadImage('grass.png'),
+  'desert': loadImage('desert.png'),
+  'badlands': loadImage('badlands.png')
+};
+
+function initializeGame() {
+    // Load all textures
+    console.log("Loading all textures");
+    for(let type in terrainTypesImages) {
+        terrainTypesImages[type].src = type + '.png';
+        console.log(terrainTypesImages[type].src);
+    }
+    
+backgroundTextureImage.onload = function() {
+
+var noiseScale = 0.001
+    for (var y = 0; y < mapHeight; y += tileSize) {
+       // console.log("Running outer for loop");
+        for (var x = 0; x < mapWidth; x += tileSize) {
+       //     console.log("Running inner for loop");
+            var noiseValue = simplex.noise2D(x * noiseScale, y * noiseScale);
+            var terrainType;
+
+            if(noiseValue < -0.5) {
+                terrainType = 'desert';
+            } else if (noiseValue < 0) {
+                terrainType = 'badlands';
+            } else {
+                terrainType = 'grass';
+            }
+
+            var tileX = Math.floor(Math.random() * (terrainTypesImages[terrainType].width / tileSize));
+            var tileY = Math.floor(Math.random() * (terrainTypesImages[terrainType].height / tileSize));
+
+            patternContext.drawImage(terrainTypesImages[terrainType], tileX * tileSize, tileY * tileSize, tileSize, tileSize, x, y, tileSize, tileSize);
+        }
+    }
+
+    backgroundTexturePattern = context.createPattern(patternCanvas, 'no-repeat');
+
+};
+
+var patternCanvas = document.createElement('canvas');
+var patternContext = patternCanvas.getContext('2d');
+
+patternCanvas.width = mapWidth;
+patternCanvas.height = mapHeight;
+
+
+
+    // Now this is outside of the onload function
+    backgroundTextureImage.src = patternCanvas.toDataURL();
+    // Load all textures
+    for(let type in terrainTypesImages) {
+        terrainTypesImages[type].src = type + '.png';
+        terrainTypesImages[type].onload = function() {
+            console.log(type + '.png has been loaded successfully');
+        };
+        terrainTypesImages[type].onerror = function() {
+            console.log('Error loading ' + type + '.png');
+        };
+    }
+
+
+  canvas.width = 1280;
+  canvas.height = 720;
+}
+
+
+
+function loadImage(src) {
+  const img = new Image();
+  img.src = src;
+  return img;
+}
+
+
+
+//ADD EVENT LISTENERS
+function addEventListeners() {
+    // ACTION KEYS
+    document.addEventListener('keydown', function(event) {
+
+        if (event.key == 'G' || event.key == 'g') {
+            spawnEnemy();
+        }
+        if (event.key == 'X') {
+        //    money = money + 100;
+        }
+
+        // Add event listener to build or upgrade buildings
+document.addEventListener('keydown', function(event) {
+    if (event.key == 'B' || event.key == 'b') {
+        money = buildBuilding('base', hoveredGridSquare, money);
+    }
+    if (event.key == 'U' || event.key == 'u') {
+        money = upgradeBuilding(hoveredGridSquare, money);
+    }
+    //...
+});
+
+
+    });
+
+// Move the screen
+    // On keydown, change the state to true
+window.addEventListener('keydown', event => {
+    keyStates[event.key] = true;
+});
+
+// On keyup, change the state back to false
+window.addEventListener('keyup', event => {
+    keyStates[event.key] = false;
+});
+
+// Check for the key states
+setInterval(() => {
+    const canvasScrollSpeed = 10;
+    if (keyStates['ArrowRight'] || keyStates['KeyD']) {
+        // Scroll right.
+        offsetX += canvasScrollSpeed;
+    } 
+    if (keyStates['ArrowLeft'] || keyStates['KeyA']) {
+        // Scroll left.
+        offsetX -= canvasScrollSpeed;
+    } 
+    if (keyStates['ArrowDown'] || keyStates['KeyS']) {
+        // Scroll down.
+        offsetY += canvasScrollSpeed;
+    } 
+    if (keyStates['ArrowUp'] || keyStates['KeyW']) {
+        // Scroll up.
+        offsetY -= canvasScrollSpeed;
+    }
+}, 1000/60); // Framerate of 60fps
+
+    //MOVE SCREEN
+     // Set this to the speed you want for scrolling
+    // Add keydown event listener to move canvas on arrow key press.
+
+    // Find out where the mouse is
+    canvas.addEventListener('mousemove', function(event) {
+        var rect = canvas.getBoundingClientRect();
+        var x = event.clientX - rect.left + offsetX;
+        var y = event.clientY - rect.top + offsetY;
+    
+        // Calculate the grid coordinates based on the mouse position
+        var gridX = Math.floor(x / gridSize);
+        var gridY = Math.floor(y / gridSize);
+    
+        // Update the hoveredGridSquare
+        hoveredGridSquare = { x: gridX, y: gridY };
+    });
+    
+
+}
+
+
+
+// Initialize the grid with zeros
+for(var i = 0; i < gridRows; i++){
+    grid[i] = [];
+    for(var j = 0; j < gridColumns; j++){
+        grid[i][j] = 0;
+    }
+}
+
+// Just spawn a basic enemy anywhere on the map
+function spawnEnemy() {
+    var enemyX = Math.random() * (canvas.width - gridSize);
+    var enemyY = Math.random() * (canvas.height - gridSize);
+    var enemyPath = AStar({ i: Math.round(enemyY / gridSize), j: Math.round(enemyX / gridSize) }, { i: gridRows - 1, j: gridColumns - 1 });
+    enemies.push(new Enemy(enemyX, enemyY, enemyPath));
+}
+
+// ***********************************
+// HERE IS THE BUILDING CODE
+// ***********************************
+// define a directory of building types, levels, and their corresponding image sources
+const buildingImgSources = {
+    base: {
+        maxLvl: 3,
+        img: ["base1.png", "base2.png", "base3.png"]
+    },
+    hive: {
+        maxLvl: 1,
+        img: ["hive1.png"]
+    },
+    iceTower: {
+        maxLvl: 3,
+        img: ["iceTower1.png", "iceTower2.png", "iceTower3.png"]
+    },
+    laserTower: {
+        maxLvl: 3,
+        img: ["laserTower1.png", "laserTower2.png", "laserTower3.png"]
+    },
+    bombTower: {
+        maxLvl: 3,
+        img: ["bombTower1.png", "bombTower2.png", "bombTower3.png"]
+    },
+    fence: {
+        maxLvl: 1,
+        img: ["fence1.png"]
+    }
+};
+
+class Building {
+    constructor(x, y, type){
+        this.x = x;
+        this.y = y;
+        this.type = type;
+        this.level = 1;
+        this.maxLevel = buildingImgSources[this.type].maxLvl;
+        this.ready = false;
+        this.image = new Image();
+        this.image.onload = () => { this.ready = true; };
+        this.updateImage();
+    }
+
+    updateImage() {
+        if (this.level <= buildingImgSources[this.type].maxLvl) {
+            this.image.src = buildingImgSources[this.type].img[this.level - 1];
+        }
+    }
+
+    upgrade(money){
+        const cost = this.calculateCost();
+        if(money < cost){
+            console.log("Not enough money to upgrade")
+            return false;
+        }
+        if(this.level >= this.maxLevel) {
+            console.log(`${this.type} has reached maximum level`);
+            return false;
+        }
+        money -= cost;
+        this.level++;
+        this.updateImage();
+        console.log(`Building upgraded to level ${this.level}.`);
+        return true;
+    }
+
+    calculateCost() {
+        // Implement your cost calculation logic here.
+        // I'm just returning a mock value here for demonstration purposes.
+        return 100;
+    }
+
+    draw() {
+        //console.log('Ready status:', this.ready);
+       // console.log('Image src:', this.image.src);
+        if (this.ready) {
+            //console.log("this.image: " + this.image + " this.x: " + this.x + " this.y: " + this.y + " offsetX: " + offsetX + " offsetY: " + offsetY + " gridSize: " + gridSize)
+            context.drawImage(this.image, this.x * gridSize - offsetX, this.y * gridSize - offsetY, gridSize, gridSize);
+        } else {
+            console.error('Waiting for image to load');
+        }
+    }
+
+    }
+
+
+// a directory of building types and maximum levels
+const buildingTypes = {
+    base: 3,
+    hive: 1,
+    iceTower: 3,
+    laserTower: 3,
+    cannonTower: 3,
+    fence: 1
+};
+
+
+// build building
+function buildBuilding(type, hoveredGridSquare, money) {
+    if (hoveredGridSquare !== null) {
+        let newBuilding = new Building(hoveredGridSquare.x, hoveredGridSquare.y, type);
+
+        const cost = newBuilding.calculateCost();
+        if (money < cost) {
+            console.log("Not enough money to build");
+            return money;
+        }
+        money -= cost;
+        buildings[`${hoveredGridSquare.x},${hoveredGridSquare.y}`] = newBuilding;
+        console.log(`A ${type} building was built.`);
+    }
+    return money;
+}
+
+
+function upgradeBuilding(hoveredGridSquare, money) {
+    if (hoveredGridSquare !== null) {
+        var key = `${hoveredGridSquare.x},${hoveredGridSquare.y}`
+        if (buildings[key]) {
+            const upgradeCost = buildings[key].calculateUpgradeCost();
+            if (money < upgradeCost) {
+                console.log("Not enough money to upgrade");
+                return money;
+            }
+            money -= upgradeCost;
+            buildings[key].upgrade();
+            console.log(`Upgraded the building at ${key}.`);
+        }
+    }
+    return money;
+}
+
+
+// main enemy
+// Enemy constructor
+function Enemy(x, y) {
+    this.x = x;
+    this.y = y;
+    this.speed = 3;
+    this.hp = 3;
+    this.direction = 'down';
+    this.justChangedDirection = false;
+    this.pathUpdateFrequency = 1000; // update path every 1000 game loops
+    this.pathUpdateCountdown = this.pathUpdateFrequency; // countdown to next path update
+    this.path = [];
+    //this.Image = new Image();
+    //this.Image.src = 'orc.png';
+
+    this.spriteSheet = new Image();
+    this.spriteSheet.src = 'es' + (Math.floor(Math.random() * 6) + 1) + '.png'; // Set the path to your sprite sheet
+    this.frameWidth = 20; // Width of each frame
+    this.frameHeight = 20; // Height of each frame
+    this.totalFrames = 3; // Total number of frames in the sprite sheet
+    this.currentFrame = 0; // Current frame index
+    this.frameUpdateInterval = 5; // Interval to update frames (adjust as needed)
+
+    this.draw = function() {
+        context.drawImage(
+            this.spriteSheet, 
+            this.currentFrame * this.frameWidth,
+            this.frameHeight,
+            this.frameWidth,
+            this.frameHeight,
+            this.x - offsetX, 
+            this.y - offsetY, 
+            gridSize * 1.25, 
+            gridSize * 1.25
+        );
+    };
+    
+    function isWalkable(gridX, gridY) {
+        // Check if the cell is within the bounds of the grid.
+        if (gridX < 0 || gridX >= gridColumns || gridY < 0 || gridY >= gridRows) {
+            return false; // Cell is out of bounds, considered blocked.
+        }
+    
+        // Check if the cell is blocked by a tower.
+        return grid[gridY][gridX] === 0; // 0 represents a walkable cell, 1 represents a tower.
+    }
+    
+    // ENEMY MOVEMENT
+    this.move = function() {
+        //calculating the enemy's position in the grid considering offsets.
+        var gridX = Math.floor((this.x + offsetX) / gridSize);
+        var gridY = Math.floor((this.y + offsetY) / gridSize);
+    
+        if (!this.path.length || this.justChangedDirection || --this.pathUpdateCountdown <= 0) {
+            this.justChangedDirection = false;
+            var startNode = { i: gridY, j: gridX, f: 0, g: 0, h: 0 };
+            var endNode = { i: gridRows - 1, j: gridColumns - 1, f: 0, g: 0, h: 0 };
+            this.path = AStar(startNode, endNode);
+            this.pathUpdateCountdown = this.pathUpdateFrequency;
+        }
+    
+        if (this.path && this.path.length > 0) {
+            var nextStep = this.path[0];      
+    
+        if (this.path.length > 0) {
+            var nextStep = this.path[0];
+    
+            if (nextStep.i > gridY) this.direction = 'down';
+            else if (nextStep.i < gridY) this.direction = 'up';
+            else if (nextStep.j > (gridX)) this.direction = 'right';
+            else if (nextStep.j < (gridX)) this.direction = 'left';
+        }
+
+        if (gridX === nextStep.j && gridY === nextStep.i) {
+            // Check if the enemy is close to the center of the next cell
+            var distanceToNextCellCenter = Math.sqrt((this.x - nextStep.j * gridSize) ** 2 + (this.y - nextStep.i * gridSize) ** 2);
+            //console.log(distanceToNextCellCenter);
+
+            if (distanceToNextCellCenter < this.speed) {
+                this.path.shift();
+            } 
+        }
+    }
+    
+        // Move the enemy in the current direction
+        if (this.direction === "right") this.x += this.speed;
+        else if (this.direction === "left") this.x -= this.speed;
+        else if (this.direction === "up") this.y -= this.speed;
+        else if (this.direction === "down") this.y += this.speed;
+    
+        if (gameTimer % this.frameUpdateInterval === 0) {
+            this.currentFrame = (this.currentFrame + 1) % this.totalFrames;
+        }
+
+            //DEBUGGING
+            if (this.path && this.path.length > 0) {
+                var nextStep = this.path[0];
+                var targetX = nextStep.j * gridSize;
+                var targetY = nextStep.i * gridSize;
+            
+                
+                if (targetY > gridY) this.direction = 'down';
+                else if (targetY < gridY) this.direction = 'up';
+                else if (targetX > gridX) this.direction = 'right';
+                else if (targetX < gridX) this.direction = 'left';
+            
+                if (gridX === nextStep.j && gridY === nextStep.i) this.path.shift();
+            }
+
+
+    };
+    
+    
+}
+
+
+
+
+
+// **************************************************
+// THIS IS THE AI AND PATHFINDING SECTION OF THE CODE
+// **************************************************
+//heuristic 
+function heuristic(a, b, start) {
+    //console.log("Heuristic value check. a:",a," b:",b," start:",start," i:",i," j:",j)
+    if (a.i !== start.i || a.j !== start.j){
+        //console.log("Current grid is ",grid[a.i][a.j])
+        if (grid[a.i][a.j] === 1) {
+            //console.log("NON-TRAVERSABLE");// print to console
+            
+            return Infinity; // a tile marked as a tower is now non-traversable
+        }
+    }
+    
+    return Math.abs(a.i - b.i) + Math.abs(a.j - b.j);
+}
+  
+// Function to get the neighboring grid cells
+function getNeighbors(grid, node) {
+    var i = node.i;
+    var j = node.j;
+    var neighbors = [];
+  
+    if (i < gridRows-1 && grid[i+1][j] != 1) neighbors.push({i: i+1, j: j});
+    if (j < gridColumns-1 && grid[i][j+1] != 1) neighbors.push({i: i, j: j+1});
+    if (i > 0 && grid[i-1][j] != 1) neighbors.push({i: i-1, j: j});
+    if (j > 0 && grid[i][j-1] != 1) neighbors.push({i: i, j: j-1});
+  
+    //console.log("Neighbors: ",neighbors)
+    return neighbors;
+}
+
+
+function removeFromArray(arr, node) {
+    for(var i = arr.length; i--;){
+        if(arr[i] === node){
+            arr.splice(i, 1);
+        }
+    }
+}
+ 
+function findInArray(arr, node) {
+    for(var i = 0; i < arr.length; i++){
+        if(arr[i].i === node.i && arr[i].j === node.j){
+            return arr[i];
+        }
+    }
+    return null;
+}
+
+// Function AStar
+function AStar(start, goal){
+    
+    var openList = [];
+    var closedList = [];
+    openList.push(start);
+ 
+    while(openList.length > 0) {
+        // Best next option
+        var lowInd = 0;
+        for(var i=0; i<openList.length; i++) {
+            if(openList[i].f < openList[lowInd].f) { 
+                lowInd = i; 
+            }
+        }
+        var currentNode = openList[lowInd];
+ 
+        // End case
+        if(currentNode.i === goal.i && currentNode.j === goal.j) {
+            var curr = currentNode;
+            var ret = [];
+            while(curr.parent) {
+                ret.push(curr);
+                curr = curr.parent;
+            }
+            return ret.reverse();
+        }
+ 
+        // Normal case
+        removeFromArray(openList, currentNode);
+        closedList.push(currentNode);
+ 
+        var neighbors = getNeighbors(grid, currentNode);
+        
+        for(var i=0; i<neighbors.length;i++) {
+            var neighbor = neighbors[i];
+            // Not a valid node
+            if(findInArray(closedList, neighbor) || grid[neighbor.i][neighbor.j] === 1) {
+                continue;
+            }
+ 
+            var gScore = currentNode.g + 1; // 1 is the distance from a node to it's neighbor
+            var gScoreIsBest = false;
+ 
+            if(!findInArray(openList, neighbor)) {
+                // This the first time we have arrived at this node, it must be the best
+                gScoreIsBest = true;
+                neighbor.h = heuristic(neighbor, goal, start);
+                openList.push(neighbor);
+            }
+            else if(gScore < neighbor.g) {
+                // We have already seen the node, but last time it had a worse g (distance from start)
+                gScoreIsBest = true;
+            }
+ 
+            if(gScoreIsBest) {
+                // Found an optimal (so far) path to this node.	 Take score for node to see how good it is.	
+                neighbor.parent = currentNode;
+                neighbor.g = gScore;
+                neighbor.f = neighbor.g + neighbor.h;
+            }
+        }
+    }
+ 
+    // No result was found - empty array signifies failure to find path
+    return [];
+}
+
+//*******************************************************************************************
+//***********************THIS IS WHERE THE GAME LOOP STARTS.*********************************
+//*******************************************************************************************
+
+var gameLoop = setInterval(function(){
+    // Updated game loop
+    gameTimer += 1;
+    context.clearRect(0, 0, canvas.width, canvas.height);
+
+
+    
+// Draw the background texture for each tile
+for (var i = Math.floor((offsetY / gridSize)); i < Math.min(gridRows, Math.ceil((offsetY + canvas.height) / gridSize)); i++) {
+    for (var j = Math.floor((offsetX / gridSize)); j < Math.min(gridColumns, Math.ceil((offsetX + canvas.width) / gridSize)); j++) {
+        // Get repeatable texture
+        context.fillStyle = backgroundTexturePattern;
+
+        context.save();
+        context.translate(-offsetX, -offsetY);
+        context.fillRect(j * gridSize, i * gridSize, gridSize, gridSize);
+        context.restore();
+        
+        //CCounter += 1;
+    }
+}
+
+
+//console.log("Drew " + CCounter + " grid squares");
+//CCounter = 0;
+
+// Draw grid
+if (buildMode || upgradeMode) {
+for (var i = Math.floor((offsetY / gridSize)); i < Math.min(gridRows, Math.ceil((offsetY + canvas.height) / gridSize)); i++) {
+    for (var j = Math.floor((offsetX / gridSize)); j < Math.min(gridColumns, Math.ceil((offsetX + canvas.width) / gridSize)); j++) {
+        context.lineWidth = 1;
+        context.strokeStyle = "lightgrey";
+        context.strokeRect(j * gridSize - offsetX, i * gridSize - offsetY, gridSize, gridSize);
+
+        // Display numbers on each grid tile
+        /*context.textAlign = 'center';
+        context.fillStyle = "black";
+        context.font = "10px Arial";
+        context.fillText((i*gridColumns)+j+1, j*gridSize - offsetX + gridSize/2, i*gridSize - offsetY + gridSize/2);
+*/
+
+        // Check if this grid square matches the hoveredGridSquare
+        if (hoveredGridSquare && j === hoveredGridSquare.x && i === hoveredGridSquare.y) {
+            context.lineWidth = 1;
+            context.fillStyle = "rgba(255, 255, 0, 0.3)"; // Yellow highlight
+            context.fillRect(j * gridSize - offsetX, i * gridSize - offsetY, gridSize, gridSize);
+        }
+    }
+}
+}
+
+// Draw buildings
+Object.values(buildings).forEach((building) => {
+    building.draw();
+});
+
+//Draw menu
+drawMenu();
+
+
+//Move and draw enemies
+for(var i in enemies) {
+    var enemy = enemies[i];
+    //console.log("Enemy moving ",enemy)
+
+    enemy.move();
+    enemy.draw();
+    
+    // Draw Path
+    /*context.strokeStyle = 'red';
+    //console.log("Attempting to draw path, ", enemy.path)
+    enemy.path.forEach((point) => {
+        // Highlight the square in green
+        context.fillStyle = "rgba(0, 255, 0, 0.5)"; // Green with 50% opacity
+        context.fillRect(point.j * gridSize, point.i * gridSize, gridSize, gridSize);
+    });*/
+
+    // Check for lose condition
+    /*if (enemy.y + gridSize >= canvas.height - 150) {
+        statusMessage = 'Game Over.';
+        statusMessageTimeout = 9999;
+        clearInterval(gameLoop);  // End the game loop
+        //return;  // If you want to stop execution after losing
+    }*/
+}
+
+     //Draw money and kills
+	context.beginPath();
+	context.fillStyle = "rgba(64, 64, 64, 0.2)"; // gray with 10% opacity
+        context.fillRect(0, 0, canvas.width, 60);
+     context.beginPath();
+     context.fillStyle = "white";
+     context.font = "32px Impact";
+     context.textAlign = 'left';
+     context.fillText("CASH: " + Math.trunc(money), 10, 30);
+     context.textAlign = 'center';
+     context.fillText("KILLS: " + killCount, 360, 30);
+     //context.fillText("MOBS: " + enemies.length, 360, 40);
+     context.font = "18px Impact";
+     context.textAlign = 'right';
+     context.fillText("SPAWNRATE: " + Math.trunc((spawnInfluence)*100) + "%", 710, 20);
+     context.fillText("Game Timer: " + (Math.trunc(gameTimer/30)), 710, 40);
+
+	    // Draw messages	
+
+    context.beginPath();
+    context.fillStyle = 'red';
+    context.textAlign = 'center';
+    context.textBaseline = 'middle';
+    context.font = "32px Impact";
+    context.fillText(statusMessage, canvas.width/2, canvas.height/2);
+    if(statusMessageTimeout > 0) {
+        statusMessageTimeout--;
+	context.beginPath();
+	context.fillStyle = "rgba(64, 64, 64, 0.2)"; // gray with 10% opacity
+        context.fillRect(0, (canvas.height/2)-50, canvas.width, 100);
+    } else {
+        statusMessage = '';
+    }
+     
+     
+
+ 
+ }, 30);

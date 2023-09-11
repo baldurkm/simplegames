@@ -1,0 +1,21 @@
+body {
+  text-align: center;
+}
+
+#gameCanvas {
+  border: 1px solid blue;
+}
+
+#menuCanvas {
+  border: 1px solid blue;
+}
+
+
+
+@media (max-width: 480px) {
+  #gameCanvas {
+    width: 100%;
+    height: auto;
+    max-width: 780px
+  }
+}
