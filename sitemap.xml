@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset
+      xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9
+            http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">
+
+<url>
+  <loc>https://www.simplegames.click/</loc>
+  <lastmod>2023-09-13T12:40:25+00:00</lastmod>
+  <priority>1.00</priority>
+</url>
+<url>
+  <loc>https://www.simplegames.click/td/td.html</loc>
+  <lastmod>2023-09-13T12:40:25+00:00</lastmod>
+  <priority>0.80</priority>
+</url>
+<url>
+  <loc>https://www.simplegames.click/space%20invaders.html</loc>
+  <lastmod>2023-09-13T12:40:25+00:00</lastmod>
+  <priority>0.80</priority>
+</url>
+<url>
+  <loc>https://www.simplegames.click/flappy/flappy.html</loc>
+  <lastmod>2023-09-13T12:40:25+00:00</lastmod>
+  <priority>0.80</priority>
+</url>
+<url>
+  <loc>https://www.simplegames.click/solitaire/index.html</loc>
+  <lastmod>2023-09-13T12:40:25+00:00</lastmod>
+  <priority>0.80</priority>
+</url>
+<url>
+  <loc>https://www.simplegames.click/hangman.html</loc>
+  <lastmod>2023-09-13T12:40:25+00:00</lastmod>
+  <priority>0.80</priority>
+</url>
+<url>
+  <loc>https://www.simplegames.click/pong.html</loc>
+  <lastmod>2023-09-13T12:40:25+00:00</lastmod>
+  <priority>0.80</priority>
+</url>
+<url>
+  <loc>https://www.simplegames.click/minesweeper.html</loc>
+  <lastmod>2023-09-13T12:40:25+00:00</lastmod>
+  <priority>0.80</priority>
+</url>
+<url>
+  <loc>https://www.simplegames.click/tetris.html</loc>
+  <lastmod>2023-09-13T12:40:25+00:00</lastmod>
+  <priority>0.80</priority>
+</url>
+<url>
+  <loc>https://www.simplegames.click/snake.html</loc>
+  <lastmod>2023-09-13T12:40:25+00:00</lastmod>
+  <priority>0.80</priority>
+</url>
+<url>
+  <loc>https://www.simplegames.click/2048.html</loc>
+  <lastmod>2023-09-13T12:40:25+00:00</lastmod>
+  <priority>0.80</priority>
+</url>
+<url>
+  <loc>https://www.simplegames.click/tic.html</loc>
+  <lastmod>2023-09-13T12:40:25+00:00</lastmod>
+  <priority>0.80</priority>
+</url>
+<url>
+  <loc>https://www.simplegames.click/pacman-js/index.html</loc>
+  <lastmod>2023-09-13T12:40:25+00:00</lastmod>
+  <priority>0.80</priority>
+</url>
+<url>
+  <loc>https://www.simplegames.click/chess-ai/index.html</loc>
+  <lastmod>2023-09-13T12:40:25+00:00</lastmod>
+  <priority>0.80</priority>
+</url>
+
+
+</urlset>
