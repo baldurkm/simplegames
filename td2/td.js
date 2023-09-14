@@ -83,6 +83,57 @@ for (let i = 0; i < subMenuNames.length; i++) {
 
 let isSubMenuActive = false;
 
+// Event listener for keyboard input
+window.addEventListener('keydown', function(event) {
+    if (!isSubMenuActive) {
+        switch (event.key) {
+            case 'b': 
+            case 'B': 
+                isSubMenuActive = true;
+                break;
+            case 'u':
+            case 'U':
+                upgradeMode = !upgradeMode;
+                break;
+            case 'm':
+            case 'M':
+                mapMode = !mapMode;
+                break;
+            default:
+                return;
+        }
+    } else {
+        switch (event.key) {
+            case 'l': 
+            case 'L': 
+                towerToPlace = 'laserTower';
+                buildMode = true;
+                break;
+            case 'b':
+            case 'B':
+                towerToPlace = 'bombTower';
+                buildMode = true;
+                break;
+            case 'f':
+            case 'F':
+                towerToPlace = 'iceTower';
+                buildMode = true;
+                break;
+            case 'h':
+            case 'H':
+                towerToPlace = 'base';
+                buildMode = true;
+                break;
+            case 'Esc': 
+            case 'Escape':
+                isSubMenuActive = false;
+                break;
+            default:
+                return;
+        }
+    }
+});
+
 // HANDLE MENU CLICKS
 function handleMenuClick(e) {
     var mousePos = getMousePos(canvas, e);
@@ -314,11 +365,11 @@ function addEventListeners() {
         //    money = money + 100;
         }
         // Add event listener to build or upgrade buildings
-            if ((event.key == 'B' || event.key == 'b') && !bPressed) {
+            if ((event.key == 'X' || event.key == 'x') && !bPressed) {
                 createHiveNearBase(money);
                 bPressed = true;
             }
-                if (event.key == 'B' || event.key == 'b') {
+                if (event.key == 'X' || event.key == 'x') {
                     bPressed = false;
                 }
 
@@ -480,8 +531,46 @@ class Building {
         this.image = new Image();
         this.image.onload = () => { this.ready = true; };
         this.updateImage();
-    }
 
+
+    if (type === 'bombTower' || type === 'laserTower' || type === 'iceTower') {
+        this.bombFire = this.bombFire.bind(this);
+        this.laserFire = this.laserFire.bind(this);
+        this.iceFire = this.iceFire.bind(this);
+
+    // Determine type of fire and target
+        switch (this.type) {
+            case 'bombTower':
+                this.fire = this.bombFire;
+                this.firingDelay = 40;
+                this.timeToFire = this.firingDelay;
+                break;
+            case 'laserTower':
+                this.fire = this.laserFire;
+                this.firingDelay = 10;
+                this.range = 350;
+                this.damage = 0.5;
+                this.timeToFire = this.firingDelay;
+                break;
+            case 'iceTower':
+                this.fire = this.iceFire;
+                this.firingDelay = 10;
+                this.range = 250;
+                this.damage = 1;
+                this.slow = 0.8
+                this.timeToFire = this.firingDelay;
+                break;
+            default:
+                console.error('Unknown tower type');
+        }
+    } else {
+        // This will define an empty function for 'base' type buildings
+        this.fire = () => {};
+    }
+}
+
+    
+    //methods
     updateImage() {
         if (this.level <= buildingImgSources[this.type].maxLvl) {
             this.image.src = buildingImgSources[this.type].img[this.level - 1];
@@ -528,6 +617,133 @@ class Building {
         }
     }
 
+    bombFire() {
+        //console.log(`Bomb fire at position: (${target.x}, ${target.y})`);
+    }
+    // LAS FIRE FUNCTION 
+    laserFire() {
+        	//console.log("Start of this.fire function");
+            if (this.timeToFire <= 0) {
+                console.log("Cooldown elapsed, laser tower firing");
+                        for (var j in enemies) {
+                //console.log("Fire loop for enemy #" + JSON.stringify(enemies[j]));
+                            var enemy = enemies[j];
+                            var dx = (this.x * gridSize ) - (enemy.x + gridSize / 2);  // Calculate enemy center X
+                            var dy = (this.y * gridSize ) - (enemy.y + gridSize / 2);  // Calculate enemy center Y
+                            var distance = Math.sqrt(dx * dx + dy * dy);
+                //console.log("Checking range. Distance is " + distance + ". Range is " + this.range );
+
+              /* context.beginPath();
+                context.moveTo(this.x * gridSize, this.y * gridSize);
+                // Draw the line to the enemy's position
+                context.lineTo(enemy.x + gridSize / 2, enemy.y + gridSize / 2);
+                context.stroke();*/
+
+                            if(distance < this.range) {
+                //console.log("In range, range = " + this.range);
+                                // Draw a line between tower and enemy within range
+                                //context.drawImage(towerImageFiring, this.x, this.y, gridSize, gridSize); // Draw tower image
+                                context.beginPath();
+                                context.strokeStyle = 'red';
+                                context.moveTo((this.x * gridSize) - offsetX + 32, (this.y * gridSize) - offsetY + 32);  // Tower center
+                                context.lineTo((enemy.x) - offsetX + 32, (enemy.y) - offsetY + 32);  // Enemy center
+                                context.lineWidth = 4;
+                                context.stroke();
+                                enemy.hp = enemy.hp - this.damage;                    
+                //console.log("Fired. Enemy HP now" + enemy.hp);
+                                            // If enemy's HP reached zero, delete it
+                                if (enemy.hp <= 0){
+                                    var enemyIndex = enemies.indexOf(enemy);
+                                    if (enemyIndex > -1){
+                                        enemies.splice(enemyIndex, 1);
+                                        // Award for killing an enemy
+                                        money += 20;
+                                        killCount++;  // Increase kill count when enemy is destroyed
+                                    }
+                                }
+                    
+                                //projectiles.push(new Projectile(this.x + gridSize / 2, this.y + gridSize / 2, enemy));
+            
+                                this.timeToFire = this.firingDelay;
+                                break;
+                            }
+                        }
+                    } else {
+                        this.timeToFire--;
+                    }
+                }
+        
+    
+
+    iceFire() {
+                	//console.log("Start of this.fire function");
+                    if (this.timeToFire <= 0) {
+                        console.log("Cooldown elapsed, ice Tower firing");
+                                for (var j in enemies) {
+                        //console.log("Fire loop for enemy #" + JSON.stringify(enemies[j]));
+                                    var enemy = enemies[j];
+                                    var dx = (this.x * gridSize ) - (enemy.x + gridSize / 2);  // Calculate enemy center X
+                                    var dy = (this.y * gridSize ) - (enemy.y + gridSize / 2);  // Calculate enemy center Y
+                                    var distance = Math.sqrt(dx * dx + dy * dy);
+                        //console.log("Checking range. Distance is " + distance + ". Range is " + this.range );
+        
+                      /* context.beginPath();
+                        context.moveTo(this.x * gridSize, this.y * gridSize);
+                        // Draw the line to the enemy's position
+                        context.lineTo(enemy.x + gridSize / 2, enemy.y + gridSize / 2);
+                        context.stroke();*/
+        
+                                    if(distance < this.range) {
+                        //console.log("In range, range = " + this.range);
+                                        // Draw a line between tower and enemy within range
+                                        //context.drawImage(towerImageFiring, this.x, this.y, gridSize, gridSize); // Draw tower image
+                                        context.beginPath();
+                                        context.strokeStyle = 'blue';
+                                        context.moveTo((this.x * gridSize) - offsetX + 32, (this.y * gridSize) - offsetY + 32);  // Tower center
+                                        context.lineTo((enemy.x) - offsetX + 32, (enemy.y) - offsetY + 32);  // Enemy center
+                                        context.lineWidth = 4;
+                                        context.stroke();
+                                        enemy.hp = enemy.hp - this.damage;                    
+                                        enemy.speed = enemy.speed * this.slow;
+                        //console.log("Fired. Enemy HP now" + enemy.hp);
+                                                    // If enemy's HP reached zero, delete it
+                                        if (enemy.hp <= 0){
+                                            var enemyIndex = enemies.indexOf(enemy);
+                                            if (enemyIndex > -1){
+                                                enemies.splice(enemyIndex, 1);
+                                                // Award for killing an enemy
+                                                money += 20;
+                                                killCount++;  // Increase kill count when enemy is destroyed
+                                            }
+                                        }
+                            
+                                        //projectiles.push(new Projectile(this.x + gridSize / 2, this.y + gridSize / 2, enemy));
+                    
+                                        this.timeToFire = this.firingDelay;
+                                        break;
+                                    }
+                                }
+                            } else {
+                                this.timeToFire--;
+                            }
+    }
+
+    /*fire() {
+        switch(this.type) {
+            case 'bomb':
+                this.bombFire();
+                break;
+            case 'laser':
+                this.laserFire();
+                break;
+            case 'ice':
+                this.iceFire();
+                break;
+            default:
+                console.error('Fire method not assigned');
+        }
+    }*/
+
     }
 
 
@@ -537,7 +753,7 @@ const buildingTypes = {
     hive: 1,
     iceTower: 3,
     laserTower: 3,
-    cannonTower: 3,
+    bombTower: 3,
     fence: 1
 };
 
@@ -629,13 +845,22 @@ function createHiveNearBase(money) {
 }
 
 
+// Bomb constructor
+function Bomb(x, y, target){
+    this.x = x;
+    this.y = y;
+    this.speed = 30;
+    this.target = target;
+    this.life = 500; // Life of the bomb. This could be adjusted based on the desired decay speed.
+}
+
 // main enemy
 // Enemy constructor
 function Enemy(x, y) {
     this.x = x;
     this.y = y;
     this.speed = 3;
-    this.hp = 3;
+    this.hp = 7;
     this.direction = 'down';
     this.justChangedDirection = false;
     this.pathUpdateFrequency = 1000; // update path every 1000 game loops
@@ -944,9 +1169,13 @@ for (var i = Math.floor((offsetY / gridSize)); i < Math.min(gridRows, Math.ceil(
 }
 }
 
-// Draw buildings
+// Draw buildings and fire
 Object.values(buildings).forEach((building) => {
     building.draw();
+    if(typeof building.fire === 'function') {
+        // Only call .fire if it's defined as a function on the building object
+        building.fire();
+    }
 });
 
 //Draw menu
