@@ -23,7 +23,7 @@ let buildings = {};
 
 var mapMode = false;
 
-var money = 10000;
+var money = 1000;
 var killCount = 0;
 var spawnInfluence = 0;
 
@@ -57,10 +57,10 @@ var depressedButtonImages = [];
 var buttonNames = ["build", "upgrade", "spawn", "map"];
 var menuBackgroundImage = new Image();
 menuBackgroundImage.src = "menu_background.png";
-var subMenuNames = ["laser", "bomb", "frost", "base", "back"];
+var subMenuNames = ["laser", "bomb", "frost", "base", "fence", "back"];
 var subMenuImages = [];
 var depressedSubMenuImages = [];
-var submenuPrices = [100, 100, 100, 100, 0];
+var submenuPrices = [0, 0, 0, 0, 0];
 
 
 // Preload button images
@@ -102,6 +102,12 @@ window.addEventListener('keydown', function(event) {
             case 'M':
                 mapMode = !mapMode;
                 break;
+            case 'Esc': 
+            case 'Escape':
+                upgradeMode = false;
+                mapMode = false;
+                buildMode = false;
+                break;
             default:
                 return;
         }
@@ -126,6 +132,11 @@ window.addEventListener('keydown', function(event) {
             case 'H':
                 towerToPlace = 'base';
                 buildMode = true;
+                break;
+            case 'e':
+            case 'E':
+                    towerToPlace = 'fence';
+                    buildMode = true;
                 break;
             case 'Esc': 
             case 'Escape':
@@ -169,6 +180,10 @@ function handleMenuClick(e) {
                     buildMode = true;
                     towerToPlace = 'bombTower';
                 }
+                else if (names[i] === "fence") {
+                    buildMode = true;
+                    towerToPlace = 'fence';
+                }
             } else {
                 context.drawImage(depressedButtonImages[i], x, y, BUTTON_WIDTH, BUTTON_HEIGHT);
                 if (names[i] === "build") {
@@ -207,7 +222,7 @@ function drawMenu() {
             var rectWidth = context.measureText("$" + prices[i]).width;
             var rectHeight = parseInt(context.font, 10); // height of rectangle based on font size
                 
-            context.font = "20px Arial"; // Change the font size and name to your preference
+            context.font = "20px Impact"; // Change the font size and name to your preference
             
             // Fill the rectangle with black color
             context.fillStyle = "black";
@@ -277,7 +292,7 @@ function animate() {
 
   context.textAlign = 'left';
   context.fillStyle = "red";
-  context.font = "20px Arial";
+  context.font = "20px Impact";
 
   // Display the FPS in the top left corner
   context.fillText("FPS: " + fps, 50 , canvas.height - 50);
@@ -384,9 +399,7 @@ function addEventListeners() {
             const hives = generateHiveList(buildings);
             spawnEnemy(hives);
         }
-        if (event.key == 'X') {
-        //    money = money + 100;
-        }
+
         // Add event listener to build or upgrade buildings
             if ((event.key == 'X' || event.key == 'x') && !bPressed) {
                 createHiveNearBase(money);
@@ -396,9 +409,9 @@ function addEventListeners() {
                     bPressed = false;
                 }
 
-    if (event.key == 'U' || event.key == 'u') {
+    /*if (event.key == 'U' || event.key == 'u') {
         money = upgradeBuilding(hoveredGridSquare, money);
-    }
+    }*/
     //...
 });
 
@@ -499,7 +512,7 @@ function spawnEnemy(hives) {
     // Choose a random hive from the hives array
     let hiveIndex = Math.floor(Math.random() * hives.length);
     let hive = hives[hiveIndex];
-    console.log("Chose hive" + JSON.stringify(hive));
+    //console.log("Chose hive" + JSON.stringify(hive));
 
     var enemyX = hive.x;
     var enemyY = hive.y;
@@ -507,8 +520,8 @@ function spawnEnemy(hives) {
     var end = getNearestBaseCoordinates(enemyX, enemyY);
     var enemyPath = AStar(start, end);
     enemies.push(new Enemy(enemyX * gridSize, enemyY *  gridSize, enemyPath));
-    console.log("enemyX: " + enemyX + " enemyY: " + enemyY);
-    console.log("Spawned enemy at " + JSON.stringify(start) + ". Walking to" + JSON.stringify(end));
+    //console.log("enemyX: " + enemyX + " enemyY: " + enemyY);
+    //console.log("Spawned enemy at " + JSON.stringify(start) + ". Walking to" + JSON.stringify(end));
 }
 
 
@@ -555,17 +568,22 @@ class Building {
         this.image.onload = () => { this.ready = true; };
         this.updateImage();
 
+        this.cost = Building.cost(type);
+
 
     if (type === 'bombTower' || type === 'laserTower' || type === 'iceTower') {
         this.bombFire = this.bombFire.bind(this);
         this.laserFire = this.laserFire.bind(this);
         this.iceFire = this.iceFire.bind(this);
 
+
+        
     // Determine type of fire and target
         switch (this.type) {
             case 'bombTower':
                 this.fire = this.bombFire;
                 this.firingDelay = 200;
+                
                 this.range = 750;
                 this.damage = 4;
                 this.timeToFire = this.firingDelay;
@@ -573,6 +591,7 @@ class Building {
             case 'laserTower':
                 this.fire = this.laserFire;
                 this.firingDelay = 10;
+
                 this.range = 350;
                 this.damage = 0.5;
                 this.timeToFire = this.firingDelay;
@@ -580,6 +599,7 @@ class Building {
             case 'iceTower':
                 this.fire = this.iceFire;
                 this.firingDelay = 10;
+
                 this.range = 250;
                 this.damage = 1;
                 this.slow = 0.8
@@ -592,10 +612,35 @@ class Building {
         // This will define an empty function for 'base' type buildings
         this.fire = () => {};
     }
-}
 
     
+}
+
+static cost(type){
+    switch(type){
+        case 'bombTower':
+            return 300;
+        case 'laserTower':
+            return 100;
+        case 'iceTower':
+            return 200;
+        case 'base':
+            return 500;
+        case 'fence':
+            return 10;
+        default:
+            console.error('Unknown tower type');
+            return null;
+    }
+}
+
+ 
+    
     //methods
+    generateIncome() {
+        return 100 * this.level; // just an example, adjust as per your game economy.
+    }
+
     updateImage() {
         if (this.level <= buildingImgSources[this.type].maxLvl) {
             this.image.src = buildingImgSources[this.type].img[this.level - 1];
@@ -620,9 +665,7 @@ class Building {
     }
 
     calculateCost() {
-        // Implement your cost calculation logic here.
-        // I'm just returning a mock value here for demonstration purposes.
-        return 100;
+        return this.cost;
     }
 
     calculateUpgradeCost() {
@@ -644,13 +687,13 @@ class Building {
 
     bombFire() {
         if (this.timeToFire <= 0) {
-            console.log("Cooldown elapsed, bomb tower firing");
+            //console.log("Cooldown elapsed, bomb tower firing");
             for (var j in enemies) {
                 var enemy = enemies[j];
                 var dx = (this.x * gridSize ) - (enemy.x + gridSize / 2);  // Calculate enemy center X
                 var dy = (this.y * gridSize ) - (enemy.y + gridSize / 2);  // Calculate enemy center Y
                 var distance = Math.sqrt(dx * dx + dy * dy);
-                console.log("Checking range. Distance is " + distance + ". Range is " + this.range );
+                //console.log("Checking range. Distance is " + distance + ". Range is " + this.range );
                 if(distance < this.range) {
                     projectiles.push(new Projectile(this.x * gridSize, this.y * gridSize, enemy));
                     this.timeToFire = this.firingDelay;
@@ -663,11 +706,12 @@ class Building {
     }
 
 
+
     // LASER FIRE FUNCTION 
     laserFire() {
         	//console.log("Start of this.fire function");
             if (this.timeToFire <= 0) {
-                console.log("Cooldown elapsed, laser tower firing");
+                //console.log("Cooldown elapsed, laser tower firing");
                         for (var j in enemies) {
                 //console.log("Fire loop for enemy #" + JSON.stringify(enemies[j]));
                             var enemy = enemies[j];
@@ -721,7 +765,7 @@ class Building {
     iceFire() {
                 	//console.log("Start of this.fire function");
                     if (this.timeToFire <= 0) {
-                        console.log("Cooldown elapsed, ice Tower firing");
+                        //console.log("Cooldown elapsed, ice Tower firing");
                                 for (var j in enemies) {
                         //console.log("Fire loop for enemy #" + JSON.stringify(enemies[j]));
                                     var enemy = enemies[j];
@@ -826,11 +870,14 @@ function buildBuilding(type, money) {
         if (hoveredGridSquare !== null) {
             newBuilding = new Building(hoveredGridSquare.x, hoveredGridSquare.y, type);
             const cost = newBuilding.calculateCost();
+            console.log("Cost is " + cost);
             if (remainingMoney < cost) {
                 console.log("Not enough money to build");
                 return remainingMoney;
             }
+            console.log("Going to deduct cost. Money = " + remainingMoney);
             remainingMoney -= cost;
+            console.log("Money now " + remainingMoney)
             buildings[`${hoveredGridSquare.x},${hoveredGridSquare.y}`] = newBuilding;
             if (type !== 'base') {
                 grid[i][j] = 1; // Set grid value to 1 if the building is not a base
@@ -1033,7 +1080,7 @@ function heuristic(a, b, start) {
     if (a.i !== start.i || a.j !== start.j){
         //console.log("Current grid is ",grid[a.i][a.j])
         if (grid[a.i][a.j] === 1) {
-            console.log("NON-TRAVERSABLE: " + grid[a.i][a.j]);// print to console
+            //console.log("NON-TRAVERSABLE: " + grid[a.i][a.j]);// print to console
             
             return Infinity; // a tile marked as a tower is now non-traversable
         }
@@ -1143,13 +1190,14 @@ function AStar(start, goal){
     return [];
 }
 
-// Projectile constructor
+// Bomb constructor
 function Projectile(x, y, target){
     this.x = x;
     this.y = y;
     this.speed = 20;
     this.target = target;
     this.life = 300; // Life of the projectile. This could be adjusted based on the desired decay speed.
+    this.damage = 7
 }
 
 //*******************************************************************************************
@@ -1221,6 +1269,42 @@ for (var i = Math.floor((offsetY / gridSize)); i < Math.min(gridRows, Math.ceil(
 }
 }
 
+// SHOW COST TOOLTIP
+if (upgradeMode)
+{
+    if (hoveredGridSquare !== null) {
+        var key = `${hoveredGridSquare.x},${hoveredGridSquare.y}`
+        if (buildings[key]) {
+            const upgradeCost = buildings[key].calculateUpgradeCost();
+
+            // Assuming ctx is your canvas context
+            // Set styles for the box
+            context.fillStyle = "#333";
+            context.strokeStyle = '#fff';
+
+            // Calculate position for the box 
+            var boxX = hoveredGridSquare.x * gridSize;
+            var boxY = hoveredGridSquare.y * gridSize+64;
+
+            // Set properties for the textbox
+            context.font = '20px Impact';
+            var text = "$" + upgradeCost;
+            var textWidth = context.measureText(text).width;
+
+            // Draw the box
+            context.fillRect(boxX, boxY, textWidth + 10, 30);
+            context.strokeRect(boxX, boxY, textWidth + 10, 30);
+
+            // Set styles for the text
+            context.fillStyle = "#fff";
+
+            // Draw the text
+            context.fillText(text, boxX + 5, boxY + 18);
+        }
+    }
+}
+
+
 // Draw buildings and fire
 Object.values(buildings).forEach((building) => {
     building.draw();
@@ -1230,7 +1314,20 @@ Object.values(buildings).forEach((building) => {
     }
 });
 
+//passive income every 10 sec
+if (gameTimer % 300 === 0) {
+var incomePerTick = 0;
+for (var key in buildings) {
+    if (buildings.hasOwnProperty(key) && buildings[key].type === 'base') {
+        incomePerTick += buildings[key].generateIncome();
+    }
+}
+// Add the generated income to the player's total income
+money += incomePerTick;
+}
+
 //Draw menu
+submenuPrices = [Building.cost("laserTower"), Building.cost("bombTower"), Building.cost("iceTower"), Building.cost("base"), Building.cost("fence"), 0];
 drawMenu();
 
     // Projectile movement and drawing
@@ -1244,20 +1341,39 @@ drawMenu();
         var velocityY = (dy / distance) * projectile.speed;
 		projectile.life--;
 
-		if(distance < 30 || enemy.hp <= 0){
-			// Decrease enemy's HP
-			enemy.hp--;
+        if(distance < 10){
+            //console.log("Bomb just hit an enemy!");
 
-			// If enemy's HP reached zero, delete it
-			if (enemy.hp <= 0){
-				var enemyIndex = enemies.indexOf(enemy);
-				if (enemyIndex > -1){
-					enemies.splice(enemyIndex, 1);
-					// Award for killing an enemy
-					money += 20;
-					killCount++;  // Increase kill count when enemy is destroyed
-				}
-			}
+            context.beginPath();
+            context.arc(projectile.x - offsetX, projectile.y - offsetY, 50, 0, Math.PI * 2, true); 
+            context.fillStyle = "red";
+            context.fill();
+
+            // If we hit an enemy, iterate through all other enemies and check if splash damage should apply
+            var splashRadius = 100;  // Set this to whatever your desired splash radius is
+            for(var j in enemies){
+                var otherEnemy = enemies[j];
+                var splashDx = otherEnemy.x - enemy.x;
+                var splashDy = otherEnemy.y - enemy.y;
+                var splashDistance = Math.sqrt(splashDx * splashDx + splashDy * splashDy);
+
+                if(splashDistance <= splashRadius){
+                    otherEnemy.hp -= projectile.damage;  // Apply damage
+                    //console.log("Damaged another enemy");
+                }
+            }            
+
+            enemy.hp -= projectile.damage; // initial enemy damage, outside the radius
+
+            if (enemy.hp <= 0){
+                var enemyIndex = enemies.indexOf(enemy);
+                if (enemyIndex > -1){
+                    enemies.splice(enemyIndex, 1);
+                    money += 20;
+                    killCount++;
+                }
+            }
+
 			// Remove the projectile
 			projectiles.splice(i, 1);
 			break; // This break will prevent other projectiles from erroneously registering a hit on the same enemy in this loop iteration
@@ -1267,7 +1383,7 @@ drawMenu();
             projectile.y += velocityY;
             // Draw the projectile
             context.beginPath();
-            context.arc(projectile.x, projectile.y, 10, 0, Math.PI * 2, false);  // Change the "10" to your desired radius
+            context.arc(projectile.x - offsetX, projectile.y - offsetY, 10, 0, Math.PI * 2, false);  // Change the "10" to your desired radius
             context.fillStyle = "black";
             context.fill();
 
@@ -1277,6 +1393,38 @@ drawMenu();
 			projectiles.splice(i, 1);
 		}		
     }
+
+    const hives = generateHiveList(buildings);
+    
+if(hives.length === 0)
+{
+    console.log("No hives. Looking for a base. Number of buildings:" + Object.values(buildings).length);
+    //console.log("Buildings: " + JSON.stringify(buildings));
+
+    let containsBase = false;
+    let buildingValues = Object.values(buildings);
+    for(let i=0; i<buildingValues.length; i++){
+        //console.log("Cheking: " + JSON.stringify(buildingValues[i]) + ". Type is " + JSON.stringify(buildingValues[i].type));
+        if(buildingValues[i].type === 'base'){
+            console.log("At least one base building has been built.");
+            createHiveNearBase(money);
+            console.log("Hives now " + hives.length);
+            containsBase = true;
+            break;
+        }
+    }
+}
+
+    
+
+    // Spawn enemies
+    
+spawnInfluence = (0.001 * (10+killCount) * (hives.length)/2);
+if(Math.random() < spawnInfluence && enemies.length <= (killCount / 3)+1) {
+
+spawnEnemy(hives);
+
+}
 
 //Move and draw enemies
 for(var i in enemies) {
