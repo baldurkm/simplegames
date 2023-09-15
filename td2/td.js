@@ -10,6 +10,7 @@ var gameTimer = 0;
 var backgroundTextureImage = new Image();
 var backgroundTexturePattern;
 var hoveredGridSquare = null;
+var projectiles = [];
 
 var tileSize = 32; // Tile size in pixels
 var mapWidth = 18040; // Width of the game map
@@ -542,7 +543,9 @@ class Building {
         switch (this.type) {
             case 'bombTower':
                 this.fire = this.bombFire;
-                this.firingDelay = 40;
+                this.firingDelay = 200;
+                this.range = 750;
+                this.damage = 4;
                 this.timeToFire = this.firingDelay;
                 break;
             case 'laserTower':
@@ -618,9 +621,27 @@ class Building {
     }
 
     bombFire() {
-        //console.log(`Bomb fire at position: (${target.x}, ${target.y})`);
+        if (this.timeToFire <= 0) {
+            console.log("Cooldown elapsed, bomb tower firing");
+            for (var j in enemies) {
+                var enemy = enemies[j];
+                var dx = (this.x * gridSize ) - (enemy.x + gridSize / 2);  // Calculate enemy center X
+                var dy = (this.y * gridSize ) - (enemy.y + gridSize / 2);  // Calculate enemy center Y
+                var distance = Math.sqrt(dx * dx + dy * dy);
+                console.log("Checking range. Distance is " + distance + ". Range is " + this.range );
+                if(distance < this.range) {
+                    projectiles.push(new Projectile(this.x * gridSize, this.y * gridSize, enemy));
+                    this.timeToFire = this.firingDelay;
+                    break;
+                }
+            }
+        } else {
+            this.timeToFire--;
+        }
     }
-    // LAS FIRE FUNCTION 
+
+
+    // LASER FIRE FUNCTION 
     laserFire() {
         	//console.log("Start of this.fire function");
             if (this.timeToFire <= 0) {
@@ -662,7 +683,7 @@ class Building {
                                     }
                                 }
                     
-                                //projectiles.push(new Projectile(this.x + gridSize / 2, this.y + gridSize / 2, enemy));
+                                
             
                                 this.timeToFire = this.firingDelay;
                                 break;
@@ -1100,6 +1121,15 @@ function AStar(start, goal){
     return [];
 }
 
+// Projectile constructor
+function Projectile(x, y, target){
+    this.x = x;
+    this.y = y;
+    this.speed = 20;
+    this.target = target;
+    this.life = 300; // Life of the projectile. This could be adjusted based on the desired decay speed.
+}
+
 //*******************************************************************************************
 //***********************THIS IS WHERE THE GAME LOOP STARTS.*********************************
 //*******************************************************************************************
@@ -1181,6 +1211,50 @@ Object.values(buildings).forEach((building) => {
 //Draw menu
 drawMenu();
 
+    // Projectile movement and drawing
+    for (var i in projectiles){
+        var projectile = projectiles[i];
+        var enemy = projectile.target;
+        var dx = enemy.x - projectile.x;
+        var dy = enemy.y - projectile.y;
+        var distance = Math.sqrt(dx * dx + dy * dy);
+        var velocityX = (dx / distance) * projectile.speed;
+        var velocityY = (dy / distance) * projectile.speed;
+		projectile.life--;
+
+		if(distance < 30 || enemy.hp <= 0){
+			// Decrease enemy's HP
+			enemy.hp--;
+
+			// If enemy's HP reached zero, delete it
+			if (enemy.hp <= 0){
+				var enemyIndex = enemies.indexOf(enemy);
+				if (enemyIndex > -1){
+					enemies.splice(enemyIndex, 1);
+					// Award for killing an enemy
+					money += 20;
+					killCount++;  // Increase kill count when enemy is destroyed
+				}
+			}
+			// Remove the projectile
+			projectiles.splice(i, 1);
+			break; // This break will prevent other projectiles from erroneously registering a hit on the same enemy in this loop iteration
+		   } else {
+            // Move the projectile
+            projectile.x += velocityX;
+            projectile.y += velocityY;
+            // Draw the projectile
+            context.beginPath();
+            context.arc(projectile.x, projectile.y, 10, 0, Math.PI * 2, false);  // Change the "10" to your desired radius
+            context.fillStyle = "black";
+            context.fill();
+
+        }  
+		
+		if(projectile.life <= 0){
+			projectiles.splice(i, 1);
+		}		
+    }
 
 //Move and draw enemies
 for(var i in enemies) {
