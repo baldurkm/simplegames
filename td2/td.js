@@ -49,7 +49,7 @@ window.addEventListener('load', function() {
 // Variables for menu and buttons
 var BUTTON_WIDTH = 192;
 var BUTTON_HEIGHT = 64;
-var BUTTON_SPACING = 20;
+var BUTTON_SPACING = 30;
 var menuWidth = 256;
 var menuHeight = 720;
 var buttonImages = [];
@@ -60,6 +60,8 @@ menuBackgroundImage.src = "menu_background.png";
 var subMenuNames = ["laser", "bomb", "frost", "base", "back"];
 var subMenuImages = [];
 var depressedSubMenuImages = [];
+var submenuPrices = [100, 100, 100, 100, 0];
+
 
 // Preload button images
 for (let i = 0; i < buttonNames.length; i++) {
@@ -186,21 +188,41 @@ function handleMenuClick(e) {
 }
 
 // DRAW THE MENU
-
 function drawMenu() {
     context.drawImage(menuBackgroundImage, canvas.width - menuWidth, 0, menuWidth, menuHeight);
 
     var x = canvas.width - menuWidth / 2 - BUTTON_WIDTH / 2;
     var names = isSubMenuActive ? subMenuNames : buttonNames;
     var images = isSubMenuActive ? subMenuImages : buttonImages;
+    var prices = isSubMenuActive ? submenuPrices : [];
     var initialY = (menuHeight - (names.length * BUTTON_HEIGHT) - ((names.length - 1) * BUTTON_SPACING)) / 2;
 
     for (let i = 0; i < names.length; i++) {
         var y = initialY + i * (BUTTON_HEIGHT + BUTTON_SPACING);
         context.drawImage(images[i], x, y, BUTTON_WIDTH, BUTTON_HEIGHT);
+        
+        if (isSubMenuActive) {
+            var priceTagX = x + BUTTON_WIDTH - 64; // Positioned to the right of the button
+            var priceTagY = y + BUTTON_HEIGHT + 0; // Vertically centered with the button
+            var rectWidth = context.measureText("$" + prices[i]).width;
+            var rectHeight = parseInt(context.font, 10); // height of rectangle based on font size
+                
+            context.font = "20px Arial"; // Change the font size and name to your preference
+            
+            // Fill the rectangle with black color
+            context.fillStyle = "black";
+            context.fillRect(priceTagX - 5, priceTagY - rectHeight, rectWidth + 10, rectHeight + 10);
+            
+            // Draw a white rectangle border around the text
+            context.strokeStyle = "white"; // Set stroke color to white
+            context.strokeRect(priceTagX - 5, priceTagY - rectHeight, rectWidth + 10, rectHeight + 10);
+        
+            // Change the color of the text to white
+            context.fillStyle = "white";
+            context.fillText("$" + prices[i], priceTagX, priceTagY);
+        }
     }
 }
-
 
 // Utility function to get mouse position
 function getMousePos(canvas, e) {
