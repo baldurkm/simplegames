@@ -694,14 +694,14 @@ static cost(type){
                 var dy = (this.y * gridSize ) - (enemy.y + gridSize / 2);  // Calculate enemy center Y
                 var distance = Math.sqrt(dx * dx + dy * dy);
                 //console.log("Checking range. Distance is " + distance + ". Range is " + this.range );
-                if(distance < this.range) {
+                    if(distance < this.range) {
                     projectiles.push(new Projectile(this.x * gridSize, this.y * gridSize, enemy));
                     this.timeToFire = this.firingDelay;
                     break;
                 }
             }
         } else {
-            this.timeToFire--;
+            this.timeToFire = this.timeToFire - (1 * this.level);
         }
     }
 
@@ -736,7 +736,7 @@ static cost(type){
                                 context.lineTo((enemy.x) - offsetX + 32, (enemy.y) - offsetY + 32);  // Enemy center
                                 context.lineWidth = 4;
                                 context.stroke();
-                                enemy.hp = enemy.hp - this.damage;                    
+                                enemy.hp = enemy.hp - (this.damage * this.level);                    
                 //console.log("Fired. Enemy HP now" + enemy.hp);
                                             // If enemy's HP reached zero, delete it
                                 if (enemy.hp <= 0){
@@ -756,7 +756,7 @@ static cost(type){
                             }
                         }
                     } else {
-                        this.timeToFire--;
+                        this.timeToFire = this.timeToFire - (1 * this.level)
                     }
                 }
         
@@ -811,7 +811,7 @@ static cost(type){
                                     }
                                 }
                             } else {
-                                this.timeToFire--;
+                                this.timeToFire = this.timeToFire - (1 * this.level)
                             }
     }
 
