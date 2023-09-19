@@ -262,10 +262,26 @@ function drawMenu() {
     var prices = isSubMenuActive ? submenuPrices : [];
     var initialY = (menuHeight - (names.length * BUTTON_HEIGHT) - ((names.length - 1) * BUTTON_SPACING)) / 2;
 
+    context.beginPath;
+    context.fillStyle = "white";
+    context.font = "36px Impact";
+    context.textAlign = 'left';
+    context.fillText("MONEY: " + Math.trunc(money), 1075, 660);
+    
+    if (!isSubMenuActive) {
+        context.font = "18px Impact";
+        context.fillText("KILLS: " + killCount, 1100, 620);
+        //context.fillText("MOBS: " + enemies.length, 360, 40);
+        context.fillText("SPAWNRATE: " + Math.trunc((spawnInfluence)*100) + "%", 1100, 590);
+        context.fillText("Game Timer: " + (Math.trunc(gameTimer/30)), 1100, 560);
+    }
+    context.font = "16px Impact"; // Change the font size and name to your preference
     for (let i = 0; i < names.length; i++) {
+        
         var y = initialY + i * (BUTTON_HEIGHT + BUTTON_SPACING);
         context.drawImage(images[i], x, y, BUTTON_WIDTH, BUTTON_HEIGHT);
-        
+
+
         if (isSubMenuActive) {
             var priceTagX = x + BUTTON_WIDTH - 64; // Positioned to the right of the button
             var priceTagY = y + BUTTON_HEIGHT + 0; // Vertically centered with the button
@@ -286,7 +302,13 @@ function drawMenu() {
             context.fillStyle = "white";
             context.fillText("$" + prices[i], priceTagX, priceTagY);
         }
+
     }
+    //context.beginPath();
+	//context.fillStyle = "rgba(64, 64, 64, 0.2)"; // gray with 10% opacity
+    //context.fillRect(0, 0, canvas.width, 60);
+
+
 }
 
 // Utility function to get mouse position
@@ -1015,8 +1037,6 @@ function Enemy(x, y) {
     this.pathUpdateFrequency = 1000; // update path every 1000 game loops
     this.pathUpdateCountdown = this.pathUpdateFrequency; // countdown to next path update
     this.path = [];
-    //this.Image = new Image();
-    //this.Image.src = 'orc.png';
 
     this.spriteSheet = new Image();
     this.spriteSheet.src = 'es' + (Math.floor(Math.random() * 6) + 1) + '.png'; // Set the path to your sprite sheet
@@ -1026,10 +1046,25 @@ function Enemy(x, y) {
     this.currentFrame = 0; // Current frame index
     this.frameUpdateInterval = 5; // Interval to update frames (adjust as needed)
 
-    this.draw = function() {
+    // Attack animation frames
+    this.attackFrames = 8;
+    this.currentAttackFrame = 4;
+    this.attackFrameUpdateInterval = 4; // Interval to update attack frames
+
+    this.isAttacking = false; // Variable to store attack state
+
+    // Add a new method for initiating attack
+    this.initiateAttack = function() {
+    this.isAttacking = true;
+    this.currentAttackFrame = 4; // Start from 4th frame for attack animation
+}
+
+
+this.draw = function() {
+    if (this.isAttacking) {
         context.drawImage(
             this.spriteSheet, 
-            this.currentFrame * this.frameWidth,
+            this.currentAttackFrame * this.frameWidth,
             this.frameHeight,
             this.frameWidth,
             this.frameHeight,
@@ -1038,18 +1073,59 @@ function Enemy(x, y) {
             gridSize * 1.0, 
             gridSize * 1.0
         );
-    };
-    
-    function isWalkable(gridX, gridY) {
-        // Check if the cell is within the bounds of the grid.
-        if (gridX < 0 || gridX >= gridColumns || gridY < 0 || gridY >= gridRows) {
-            return false; // Cell is out of bounds, considered blocked.
+        
+        if (gameTimer % this.attackFrameUpdateInterval === 0) {
+            this.currentAttackFrame = (this.currentAttackFrame + 1) % this.attackFrames;
+            console.log(JSON.stringify(this.currentAttackFrame));
+
+            // Reset attacking state and currentFrame after the last attack frame
+            if(this.currentAttackFrame === this.attackFrames) {
+                this.isAttacking = false;
+                this.currentAttackFrame = 4;
+                }
+            }
+        } else {
+            // Draw regular frames
+            context.drawImage(
+                this.spriteSheet, 
+                this.currentFrame * this.frameWidth,
+                this.frameHeight,
+                this.frameWidth,
+                this.frameHeight,
+                this.x - offsetX, 
+                this.y - offsetY, 
+                gridSize * 1.0, 
+                gridSize * 1.0
+            );
+            
+            if (gameTimer % this.frameUpdateInterval === 0) {
+                this.currentFrame = (this.currentFrame + 1) % this.totalFrames;
+            }
         }
-    
-        // Check if the cell is blocked by a tower.
-        return grid[gridY][gridX] === 0; // 0 represents a walkable cell, 1 represents a tower.
-    }
-    
+
+        let nearestBase = getNearestBaseCoordinates(this.x + offsetX, this.y + offsetY);
+
+        
+//        console.log("NearestBase I: " + nearestBase.i + "NearestBase J" + nearestBase.j);
+//        let distanceToNearestBase = Math.sqrt((this.x + offsetX - nearestBase.j * gridSize) ** 2 + (this.y + offsetY - nearestBase.i * gridSize) ** 2);
+//        console.log(JSON.stringify(distanceToNearestBase));
+        let someCriteriaForAttack = true; // TODO: Define this criteria
+        //let attackThreshold = 10; // distance to attack
+        // Add criteria for initiating the attack: if enemy is close to the base
+        //console.log("this.x/gridSize = " + this.x/gridSize + "this.y/gridSize = " + this.y/gridSize);
+        if (someCriteriaForAttack && Math.abs(nearestBase.j - this.x/gridSize) <= 2 && Math.abs(nearestBase.i - this.y/gridSize) <= 1) {
+            console.log("Initiating attack");
+            this.isAttacking = true;
+            this.speed = 1;
+            return; // Stop moving and initiate attack animation
+        } else {
+            this.isAttacking = false;
+        }
+        
+    };
+
+
+      
     // ENEMY MOVEMENT
     this.move = function () {
         var gridX = Math.round((this.x) / gridSize);
@@ -1511,22 +1587,8 @@ for(var i in enemies) {
     }*/
 }
 
-     //Draw money and kills
-	context.beginPath();
-	context.fillStyle = "rgba(64, 64, 64, 0.2)"; // gray with 10% opacity
-        context.fillRect(0, 0, canvas.width, 60);
-     context.beginPath();
-     context.fillStyle = "white";
-     context.font = "32px Impact";
-     context.textAlign = 'left';
-     context.fillText("CASH: " + Math.trunc(money), 10, 30);
-     context.textAlign = 'center';
-     context.fillText("KILLS: " + killCount, 360, 30);
-     //context.fillText("MOBS: " + enemies.length, 360, 40);
-     context.font = "18px Impact";
-     context.textAlign = 'right';
-     context.fillText("SPAWNRATE: " + Math.trunc((spawnInfluence)*100) + "%", 710, 20);
-     context.fillText("Game Timer: " + (Math.trunc(gameTimer/30)), 710, 40);
+     //Menu elements
+
 
 	    // Draw messages	
 
