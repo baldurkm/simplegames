@@ -19,7 +19,7 @@ var mapHeight = 9000; // Height of the game map
 var upgradeMode = false;
 var buildMode = false;
 var towerToPlace = '';
-let buildings = {};
+let buildings = [];
 
 var mapMode = false;
 
@@ -628,6 +628,8 @@ const buildingImgSources = {
     }
 };
 
+
+
 class Building {
     constructor(x, y, type){
         this.x = x;
@@ -639,8 +641,10 @@ class Building {
         this.image = new Image();
         this.image.onload = () => { this.ready = true; };
         this.updateImage();
+        this.hp = 20;
 
         this.cost = Building.cost(type);
+        buildings.push(this);
 
 
     if (type === 'bombTower' || type === 'laserTower' || type === 'iceTower') {
@@ -713,6 +717,19 @@ static cost(type){
         return 100 * this.level; // just an example, adjust as per your game economy.
     }
 
+    takeDamage(buildings) {
+        this.hp -= 1;
+        console.log("Took damage. HP now " + this.hp);
+    
+        if (this.hp <= 0) {
+            const index = buildings.indexOf(this);
+            //if (index !== -1) {
+                buildings.splice(index, 1);
+                console.log("Removing building:" + JSON.stringify(index))
+            //}
+        }
+    }
+
     updateImage() {
         if (this.level <= buildingImgSources[this.type].maxLvl) {
             this.image.src = buildingImgSources[this.type].img[this.level - 1];
@@ -757,6 +774,31 @@ static cost(type){
         if (this.ready) {
             //console.log("this.image: " + this.image + " this.x: " + this.x + " this.y: " + this.y + " offsetX: " + offsetX + " offsetY: " + offsetY + " gridSize: " + gridSize)
             context.drawImage(this.image, this.x * gridSize - offsetX, this.y * gridSize - offsetY, gridSize, gridSize);
+            // health bar for bases
+            if (this.type === 'base') {
+                const maxHealth = 20; // Assuming 100 is the maximum health
+                const barWidth = gridSize;
+                const barHeight = 5;
+                const barX = this.x * gridSize - offsetX;
+                const barY = this.y * gridSize - offsetY - 10; // 10 units above the building
+                const healthRatio = this.hp / maxHealth;
+    
+                // Background of health bar
+                context.fillStyle = 'black';
+                context.fillRect(barX, barY, barWidth, barHeight);
+    
+                // Actual health level
+                if (this.hp > 10) {
+                context.fillStyle = 'green';
+            }
+            if (this.hp > 4 && this.hp < 11) {
+                context.fillStyle = 'yellow';
+            }
+            if (this.hp < 5) {
+                context.fillStyle = 'red';
+            }
+                context.fillRect(barX, barY, barWidth * healthRatio, barHeight);
+            }
         } else {
             console.error('Waiting for image to load');
         }
@@ -786,25 +828,14 @@ static cost(type){
 
     // LASER FIRE FUNCTION 
     laserFire() {
-        	//console.log("Start of this.fire function");
             if (this.timeToFire <= 0) {
-                //console.log("Cooldown elapsed, laser tower firing");
                         for (var j in enemies) {
-                //console.log("Fire loop for enemy #" + JSON.stringify(enemies[j]));
                             var enemy = enemies[j];
                             var dx = (this.x * gridSize ) - (enemy.x + gridSize / 2);  // Calculate enemy center X
                             var dy = (this.y * gridSize ) - (enemy.y + gridSize / 2);  // Calculate enemy center Y
                             var distance = Math.sqrt(dx * dx + dy * dy);
-                //console.log("Checking range. Distance is " + distance + ". Range is " + this.range );
-
-              /* context.beginPath();
-                context.moveTo(this.x * gridSize, this.y * gridSize);
-                // Draw the line to the enemy's position
-                context.lineTo(enemy.x + gridSize / 2, enemy.y + gridSize / 2);
-                context.stroke();*/
-
                             if(distance < this.range) {
-                //console.log("In range, range = " + this.range);
+
                                 // Draw a line between tower and enemy within range
                                 //context.drawImage(towerImageFiring, this.x, this.y, gridSize, gridSize); // Draw tower image
                                 context.beginPath();
@@ -821,7 +852,7 @@ static cost(type){
                                     if (enemyIndex > -1){
                                         enemies.splice(enemyIndex, 1);
                                         // Award for killing an enemy
-                                        money += 20;
+                                        money += 5;
                                         killCount++;  // Increase kill count when enemy is destroyed
                                     }
                                 }
@@ -891,22 +922,6 @@ static cost(type){
                                 this.timeToFire = this.timeToFire - (1 * this.level)
                             }
     }
-
-    /*fire() {
-        switch(this.type) {
-            case 'bomb':
-                this.bombFire();
-                break;
-            case 'laser':
-                this.laserFire();
-                break;
-            case 'ice':
-                this.iceFire();
-                break;
-            default:
-                console.error('Fire method not assigned');
-        }
-    }*/
 
     }
 
@@ -1049,7 +1064,7 @@ function Enemy(x, y) {
     // Attack animation frames
     this.attackFrames = 8;
     this.currentAttackFrame = 4;
-    this.attackFrameUpdateInterval = 4; // Interval to update attack frames
+    this.attackFrameUpdateInterval = 6; // Interval to update attack frames
 
     this.isAttacking = false; // Variable to store attack state
 
@@ -1076,12 +1091,16 @@ this.draw = function() {
         
         if (gameTimer % this.attackFrameUpdateInterval === 0) {
             this.currentAttackFrame = (this.currentAttackFrame + 1) % this.attackFrames;
-            console.log(JSON.stringify(this.currentAttackFrame));
+            //console.log(JSON.stringify(this.currentAttackFrame));
 
             // Reset attacking state and currentFrame after the last attack frame
-            if(this.currentAttackFrame === this.attackFrames) {
-                this.isAttacking = false;
-                this.currentAttackFrame = 4;
+            if(this.currentAttackFrame === this.attackFrames - 1) {
+                // HERE IS THE TAKEDAMAGE CODE
+                let nearestBase = getNearestBaseCoordinates(this.x + offsetX, this.y + offsetY);
+                buildings[nearestBase.closestBaseKey].takeDamage(buildings);
+                //console.log("takeDamage called");
+                //this.isAttacking = false;
+                //this.currentAttackFrame = 4;
                 }
             }
         } else {
@@ -1104,7 +1123,6 @@ this.draw = function() {
         }
 
         let nearestBase = getNearestBaseCoordinates(this.x + offsetX, this.y + offsetY);
-
         
 //        console.log("NearestBase I: " + nearestBase.i + "NearestBase J" + nearestBase.j);
 //        let distanceToNearestBase = Math.sqrt((this.x + offsetX - nearestBase.j * gridSize) ** 2 + (this.y + offsetY - nearestBase.i * gridSize) ** 2);
@@ -1200,7 +1218,7 @@ function getNearestBaseCoordinates(enemyX, enemyY) {
         //console.log("Closest Base Key: " + closestBaseKey);
         //console.log("Closest Base X: " + closestBaseX);
         //console.log("Closest Base Y: " + closestBaseY);
-        return { i: closestBaseY, j: closestBaseX };
+        return { i: closestBaseY, j: closestBaseX, closestBaseKey };
     }
 }
 
@@ -1554,11 +1572,13 @@ if(hives.length === 0)
 
     // Spawn enemies
     
-spawnInfluence = (0.001 * (10+killCount) * (hives.length)/2);
+spawnInfluence = (0.001 * (10+killCount) * (hives.length)/4);
 if(Math.random() < spawnInfluence && enemies.length <= (killCount / 3)+1) {
-
 spawnEnemy(hives);
+}
 
+if(spawnInfluence > hives.length) {
+createHiveNearBase(money);
 }
 
 //Move and draw enemies
