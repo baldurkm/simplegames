@@ -29,6 +29,8 @@ var spawnInfluence = 0;
 
 let keyStates = {};
 
+var displayStartMenu = true;
+
 var CCounter = 0;
 
     //make a grid
@@ -44,6 +46,9 @@ window.addEventListener('load', function() {
     initializeGame(); // SHOULD THIS BE A MAIN MENU?
     // Add event listeners for button clicks
     addEventListeners(); // SHOULD THIS BE IN INIT GAME?
+
+    offsetX = 4000;
+    offsetY = 6000;
 });
 
 // Variables for menu and buttons
@@ -202,8 +207,53 @@ function handleMenuClick(e) {
     }
 }
 
+// START MENU
+// Add an image button to your start menu
+var startButtonImage = new Image();
+startButtonImage.src = "check.png";
+var depressedStartButtonImage = new Image();
+depressedStartButtonImage.src = "check_depressed.png";
+
+var startButtonPos = {x: 600, y: 500};
+var startButtonDim = {width: 64, height: 64};
+
+// Load event listener for start button click
+canvas.addEventListener('mousedown', function(e) {
+    var mousePos = getMousePos(canvas, e);
+    if (mousePos.x >= startButtonPos.x && mousePos.x <= startButtonPos.x + startButtonDim.width && mousePos.y >= startButtonPos.y && mousePos.y <= startButtonPos.y + startButtonDim.height) {
+        displayStartMenu = false;
+        context.drawImage(depressedStartButtonImage, startButtonPos.x, startButtonPos.y, startButtonDim.width, startButtonDim.height);
+    }
+});
+
+function drawStartMenu() {
+    context.globalAlpha = 0.5;
+    context.fillStyle = 'black';
+    context.fillRect(100, 200, 720, 400);
+    context.globalAlpha = 1.0;
+    
+    context.lineWidth = 3;
+    context.strokeStyle = 'white';
+    context.strokeRect(100, 200, 720, 400);
+    
+    context.font = '24px Impact';
+    context.textAlign = 'left';
+    context.fillStyle = 'white';
+    context.fillText('Build bases and defend them against the hives that spawn.', 120, 220);
+    context.fillText('Each base will give you income depending on its level.', 120, 250);
+    context.fillText('Using your income, build towers to defend your bases.', 120, 280);
+    context.fillText('Upgrade your towers to improve their effectiveness.', 120, 310);
+    context.fillText('Do your best and see how far you can get.', 120, 340);
+    context.fillText('Press the button to begin.', 120, 400);
+
+    context.drawImage(startButtonImage, startButtonPos.x, startButtonPos.y, startButtonDim.width, startButtonDim.height);
+
+
+}
+
 // DRAW THE MENU
 function drawMenu() {
+    context.lineWidth = 2;
     context.drawImage(menuBackgroundImage, canvas.width - menuWidth, 0, menuWidth, menuHeight);
 
     var x = canvas.width - menuWidth / 2 - BUTTON_WIDTH / 2;
@@ -222,7 +272,7 @@ function drawMenu() {
             var rectWidth = context.measureText("$" + prices[i]).width;
             var rectHeight = parseInt(context.font, 10); // height of rectangle based on font size
                 
-            context.font = "20px Impact"; // Change the font size and name to your preference
+            context.font = "16px Impact"; // Change the font size and name to your preference
             
             // Fill the rectangle with black color
             context.fillStyle = "black";
@@ -647,8 +697,9 @@ static cost(type){
         }
     }
 
-    upgrade(money){
-        const cost = this.calculateCost();
+    upgrade(){
+        let remainingMoney = money;
+        let cost = this.calculateUpgradeCost();
         if(money < cost){
             console.log("Not enough money to upgrade")
             return false;
@@ -657,10 +708,14 @@ static cost(type){
             console.log(`${this.type} has reached maximum level`);
             return false;
         }
-        money -= cost;
+        console.log("Money before: " + money);
+        remainingMoney -= cost;
+        console.log("Remaining money: " + remainingMoney);
         this.level++;
         this.updateImage();
         console.log(`Building upgraded to level ${this.level}.`);
+        money = remainingMoney;
+        console.log(money);
         return true;
     }
 
@@ -671,7 +726,7 @@ static cost(type){
     calculateUpgradeCost() {
         // Implement your cost calculation logic here.
         // I'm just returning a mock value here for demonstration purposes.
-        return 100;
+        return this.cost * this.level;
     }
 
     draw() {
@@ -894,7 +949,7 @@ function buildBuilding(type, money) {
 
 
 //Upgrade building
-function upgradeBuilding(hoveredGridSquare, money) {
+function upgradeBuilding(hoveredGridSquare) {
     let remainingMoney = money;
     if (hoveredGridSquare !== null) {
         var key = `${hoveredGridSquare.x},${hoveredGridSquare.y}`
@@ -902,6 +957,10 @@ function upgradeBuilding(hoveredGridSquare, money) {
             const upgradeCost = buildings[key].calculateUpgradeCost();
             if (remainingMoney < upgradeCost) {
                 console.log("Not enough money to upgrade");
+                return remainingMoney;
+            }
+            if(buildings[key].level >= buildings[key].maxLevel){
+                console.log(`Cannot upgrade the building at ${key}. It already at max level.`);
                 return remainingMoney;
             }
             remainingMoney -= upgradeCost;
@@ -1486,7 +1545,10 @@ for(var i in enemies) {
         statusMessage = '';
     }
      
-
+    if(displayStartMenu == true)
+    {
+     drawStartMenu();
+    }
 
  
  }, 30);
