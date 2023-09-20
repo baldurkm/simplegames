@@ -1,257 +1,546 @@
 // Game variables
-
 var canvas = document.getElementById("gameCanvas");
 var context = canvas.getContext("2d");
+var offsetY = 0; // Offset for vertical scrolling
+var offsetX = 0; // Offset for horizontal scrolling
 var statusMessage = '';
 var statusMessageTimeout = 0;
 var enemies = [];
-var towers = [];
-var projectiles = [];
-var addTowerButton; // Define Add Tower button
-var upgradeButton; // Define Upgrade button
-var spawnButton; // Define Spawn button
-
-var upgradePrice = 50;
-var upgradeMultiplier = 0.25;
-var isUpgraded = false;
-var money = 250;
-var killCount = 0; 
-var spawnMultiFactor = 0.2; //spawn rate multiplier
-var spawnLnFactor = 1; // spawn rate ln factor
-var spawnInfluence = 0.01;
-var lastSpawnedOnKillCount = 0;  // Keep track of the kill count on the last spawn of breaker enemy
-var gamePaused = false;
-var addTowerMode = false;
 var gameTimer = 0;
-var hoveredGridSquare = null;
-var upgradeMode = false;
-var Spree = 0;
-var ShowSpree = 0;
-
-
-
-var towerImage = new Image();
-var towerImageFiring = new Image();
 var backgroundTextureImage = new Image();
 var backgroundTexturePattern;
+var hoveredGridSquare = null;
+var projectiles = [];
+
 var tileSize = 32; // Tile size in pixels
-var mapWidth = 780; // Width of the game map
-var mapHeight = 920; // Height of the game map
-var terrainTypes = ['grass', 'desert', 'badlands'];
+var mapWidth = 18040; // Width of the game map
+var mapHeight = 9000; // Height of the game map
 
-var buttonBackground = new Image();
-buttonBackground.src = 'buttonBackground.jpg';
+var upgradeMode = false;
+var buildMode = false;
+var towerToPlace = '';
+let buildings = [];
 
+var mapMode = false;
+
+var money = 1000;
+var killCount = 0;
+var spawnInfluence = 0;
+
+let keyStates = {};
+
+var displayStartMenu = true;
+
+var CCounter = 0;
+
+    //make a grid
+    var grid = [];
+    var gridSize = 60;
+    var gridRows = Math.floor((mapWidth) / gridSize); 
+    var gridColumns = Math.floor(mapHeight / gridSize);
+    console.log("Grid dimensions: ", gridRows,", ",gridColumns)
 
 // Add event listener for the page load event
 window.addEventListener('load', function() {
     // Initialize canvas and game-related elements
-    initializeGame();
-
+    initializeGame(); // SHOULD THIS BE A MAIN MENU?
     // Add event listeners for button clicks
-    addEventListeners();
+    addEventListeners(); // SHOULD THIS BE IN INIT GAME?
+
+    offsetX = 4000;
+    offsetY = 6000;
 });
 
+// Variables for menu and buttons
+var BUTTON_WIDTH = 192;
+var BUTTON_HEIGHT = 64;
+var BUTTON_SPACING = 30;
+var menuWidth = 256;
+var menuHeight = 720;
+var buttonImages = [];
+var depressedButtonImages = [];
+var buttonNames = ["build", "upgrade", "spawn", "map"];
+var menuBackgroundImage = new Image();
+menuBackgroundImage.src = "menu_background.png";
+var subMenuNames = ["laser", "bomb", "frost", "base", "fence", "back"];
+var subMenuImages = [];
+var depressedSubMenuImages = [];
+var submenuPrices = [0, 0, 0, 0, 0];
 
 
+// Preload button images
+for (let i = 0; i < buttonNames.length; i++) {
+    let buttonImage = new Image();
+    buttonImage.src = buttonNames[i] + ".png";
+    buttonImages.push(buttonImage);
 
-function initializeGame() {
-    // Create a background texture pattern once the image is loaded
-    backgroundTextureImage.onload = function() {
-        var patternCanvas = document.createElement('canvas');
-        var patternContext = patternCanvas.getContext('2d');
+    let depressedButtonImage = new Image();
+    depressedButtonImage.src = buttonNames[i] + "_depressed.png";
+    depressedButtonImages.push(depressedButtonImage);
+}
+// Preload submenu button images
+for (let i = 0; i < subMenuNames.length; i++) {
+    let buttonImage = new Image();
+    buttonImage.src = subMenuNames[i] + ".png";
+    subMenuImages.push(buttonImage);
 
-        patternCanvas.width = mapWidth;
-        patternCanvas.height = mapHeight;
+    let depressedButtonImage = new Image();
+    depressedButtonImage.src = subMenuNames[i] + "_depressed.png";
+    depressedSubMenuImages.push(depressedButtonImage);
+}
 
-        // Randomly select tiles from the tileset and fill the map
-        for (var y = 0; y < mapHeight; y += tileSize) {
-            for (var x = 0; x < mapWidth; x += tileSize) {
-                var tileX = Math.floor(Math.random() * (backgroundTextureImage.width / tileSize));
-                var tileY = Math.floor(Math.random() * (backgroundTextureImage.height / tileSize));
+let isSubMenuActive = false;
 
-                patternContext.drawImage(backgroundTextureImage, tileX * tileSize, tileY * tileSize, tileSize, tileSize, x, y, tileSize, tileSize);
-            }
+// Event listener for keyboard input
+window.addEventListener('keydown', function(event) {
+    if (!isSubMenuActive) {
+        switch (event.key) {
+            case 'b': 
+            case 'B': 
+                isSubMenuActive = true;
+                break;
+            case 'u':
+            case 'U':
+                upgradeMode = !upgradeMode;
+                break;
+            case 'm':
+            case 'M':
+                mapMode = !mapMode;
+                break;
+            case 'Esc': 
+            case 'Escape':
+                upgradeMode = false;
+                mapMode = false;
+                buildMode = false;
+                break;
+            default:
+                return;
         }
+    } else {
+        switch (event.key) {
+            case 'l': 
+            case 'L': 
+                towerToPlace = 'laserTower';
+                buildMode = true;
+                break;
+            case 'b':
+            case 'B':
+                towerToPlace = 'bombTower';
+                buildMode = true;
+                break;
+            case 'f':
+            case 'F':
+                towerToPlace = 'iceTower';
+                buildMode = true;
+                break;
+            case 'h':
+            case 'H':
+                towerToPlace = 'base';
+                buildMode = true;
+                break;
+            case 'e':
+            case 'E':
+                    towerToPlace = 'fence';
+                    buildMode = true;
+                break;
+            case 'Esc': 
+            case 'Escape':
+                isSubMenuActive = false;
+                break;
+            default:
+                return;
+        }
+    }
+});
 
-        backgroundTexturePattern = context.createPattern(patternCanvas, 'no-repeat');
-        // Start the game loop after the background texture pattern has been created
-        // You can place this here or wherever you start your game loop.
-    };
+// HANDLE MENU CLICKS
+function handleMenuClick(e) {
+    var mousePos = getMousePos(canvas, e);
+    var x = canvas.width - menuWidth / 2 - BUTTON_WIDTH / 2;
+    var names = isSubMenuActive ? subMenuNames : buttonNames;
+    var initialY = (menuHeight - (names.length * BUTTON_HEIGHT) - ((names.length - 1) * BUTTON_SPACING)) / 2;
 
-    // Set the source of the tileset image
-    var randomTerrainType = terrainTypes[Math.floor(Math.random() * terrainTypes.length)];    
-    backgroundTextureImage.src = randomTerrainType + '.png';
+    for (let i = 0; i < names.length; i++) {
+        var y = initialY + i * (BUTTON_HEIGHT + BUTTON_SPACING);
+        if (mousePos.x >= x && mousePos.x <= x + BUTTON_WIDTH && mousePos.y >= y && mousePos.y <= y + BUTTON_HEIGHT) {
+            if (isSubMenuActive) {
+                context.drawImage(depressedSubMenuImages[i], x, y, BUTTON_WIDTH, BUTTON_HEIGHT);
+                if (names[i] === "back") {
+                    isSubMenuActive = false;
+                    buildMode = false;
+                }
+                else if (names[i] === "base") {
+                    buildMode = true;
+                    towerToPlace = 'base';
+                }
+                else if (names[i] === "frost") {
+                    buildMode = true;
+                    towerToPlace = 'iceTower';
+                }
+                else if (names[i] === "laser") {
+                    buildMode = true;
+                    towerToPlace = 'laserTower';
+                }
+                else if (names[i] === "bomb") {
+                    buildMode = true;
+                    towerToPlace = 'bombTower';
+                }
+                else if (names[i] === "fence") {
+                    buildMode = true;
+                    towerToPlace = 'fence';
+                }
+            } else {
+                context.drawImage(depressedButtonImages[i], x, y, BUTTON_WIDTH, BUTTON_HEIGHT);
+                if (names[i] === "build") {
+                    isSubMenuActive = true;
+                }
+                else if (names[i] === "upgrade") {
+                    upgradeMode = !upgradeMode;
+                }
+            else if (names[i] === "map") {
+                mapMode = !mapMode;
+            }
 
-    // Load other game assets (e.g., tower image)
-    towerImage.src = 'tower.png';
-    towerImageFiring.src = 'towerFiring.png';
+            }
+            return;
+        }
+    }
+}
 
-        // Define Add Tower button
-        addTowerButton = {x: mapWidth - 250, y: mapHeight - 120, width: 200, height: 80};
-        // Upgrade button variables
-        upgradeButton = {x: mapWidth - 485, y: mapHeight - 120, width: 200, height: 80};
-        // Spawn button variables
-        spawnButton = {x: mapWidth - 720, y: mapHeight - 120, width: 200, height: 80};
+// START MENU
+// Add an image button to your start menu
+var startButtonImage = new Image();
+startButtonImage.src = "check.png";
+var depressedStartButtonImage = new Image();
+depressedStartButtonImage.src = "check_depressed.png";
 
-    // Set canvas size
-    canvas.width = mapWidth;
-    canvas.height = mapHeight;
+var startButtonPos = {x: 600, y: 500};
+var startButtonDim = {width: 64, height: 64};
+
+// Load event listener for start button click
+canvas.addEventListener('mousedown', function(e) {
+    var mousePos = getMousePos(canvas, e);
+    if (mousePos.x >= startButtonPos.x && mousePos.x <= startButtonPos.x + startButtonDim.width && mousePos.y >= startButtonPos.y && mousePos.y <= startButtonPos.y + startButtonDim.height) {
+        displayStartMenu = false;
+        context.drawImage(depressedStartButtonImage, startButtonPos.x, startButtonPos.y, startButtonDim.width, startButtonDim.height);
+    }
+});
+
+function drawStartMenu() {
+    context.globalAlpha = 0.5;
+    context.fillStyle = 'black';
+    context.fillRect(100, 200, 720, 400);
+    context.globalAlpha = 1.0;
+    
+    context.lineWidth = 3;
+    context.strokeStyle = 'white';
+    context.strokeRect(100, 200, 720, 400);
+    
+    context.font = '24px Impact';
+    context.textAlign = 'left';
+    context.fillStyle = 'white';
+    context.fillText('Build bases and defend them against the hives that spawn.', 120, 220);
+    context.fillText('Each base will give you income depending on its level.', 120, 250);
+    context.fillText('Using your income, build towers to defend your bases.', 120, 280);
+    context.fillText('Upgrade your towers to improve their effectiveness.', 120, 310);
+    context.fillText('Do your best and see how far you can get.', 120, 340);
+    context.fillText('Press the button to begin.', 120, 400);
+
+    context.drawImage(startButtonImage, startButtonPos.x, startButtonPos.y, startButtonDim.width, startButtonDim.height);
 
 
 }
 
+// DRAW THE MENU
+function drawMenu() {
+    context.lineWidth = 2;
+    context.drawImage(menuBackgroundImage, canvas.width - menuWidth, 0, menuWidth, menuHeight);
 
-//ADD EVENT LISTENERS
-function addEventListeners() {
-    // Press keys
-    document.addEventListener('keydown', function(event) {
-        if (event.key == 'B' || event.key == 'b') {
-            addTowerMode = !addTowerMode;  // Toggle addTowerMode on 'B' key press
-        }
-        if (event.key == 'U' || event.key == 'u') {
-            upgradeMode = !upgradeMode;  // Toggle upgrademode
-        }
-        if (event.key == 'S' || event.key == 's') {
-            spawnEnemy();
-        }
-        //if (event.key == 'X') {
-        //    money = money + 100;
-        //}
-    });
+    var x = canvas.width - menuWidth / 2 - BUTTON_WIDTH / 2;
+    var names = isSubMenuActive ? subMenuNames : buttonNames;
+    var images = isSubMenuActive ? subMenuImages : buttonImages;
+    var prices = isSubMenuActive ? submenuPrices : [];
+    var initialY = (menuHeight - (names.length * BUTTON_HEIGHT) - ((names.length - 1) * BUTTON_SPACING)) / 2;
 
-    // Catch click to add tower
-    canvas.addEventListener('click', function(event) {
-        var rect = canvas.getBoundingClientRect();
-        var x = event.clientX - rect.left;
-        var y = event.clientY - rect.top;
+    context.beginPath;
+    context.fillStyle = "white";
+    context.font = "36px Impact";
+    context.textAlign = 'left';
+    context.fillText("MONEY: " + Math.trunc(money), 1075, 660);
+    
+    if (!isSubMenuActive) {
+        context.font = "18px Impact";
+        context.fillText("KILLS: " + killCount, 1100, 620);
+        //context.fillText("MOBS: " + enemies.length, 360, 40);
+        context.fillText("SPAWNRATE: " + Math.trunc((spawnInfluence)*100) + "%", 1100, 590);
+        context.fillText("Game Timer: " + (Math.trunc(gameTimer/30)), 1100, 560);
+    }
+    context.font = "16px Impact"; // Change the font size and name to your preference
+    for (let i = 0; i < names.length; i++) {
+        
+        var y = initialY + i * (BUTTON_HEIGHT + BUTTON_SPACING);
+        context.drawImage(images[i], x, y, BUTTON_WIDTH, BUTTON_HEIGHT);
 
-        if (addTowerMode) {
-            placeTower(x, y);
-        } else {
-            // Check if Add Tower button is clicked
-            if (x >= addTowerButton.x && x <= addTowerButton.x + addTowerButton.width &&
-                y >= addTowerButton.y && y <= addTowerButton.y + addTowerButton.height) {
-                addTower();
+
+        if (isSubMenuActive) {
+            var priceTagX = x + BUTTON_WIDTH - 64; // Positioned to the right of the button
+            var priceTagY = y + BUTTON_HEIGHT + 0; // Vertically centered with the button
+            var rectWidth = context.measureText("$" + prices[i]).width;
+            var rectHeight = parseInt(context.font, 10); // height of rectangle based on font size
+                
+            context.font = "16px Impact"; // Change the font size and name to your preference
+            
+            // Fill the rectangle with black color
+            context.fillStyle = "black";
+            context.fillRect(priceTagX - 5, priceTagY - rectHeight, rectWidth + 10, rectHeight + 10);
+            
+            // Draw a white rectangle border around the text
+            context.strokeStyle = "white"; // Set stroke color to white
+            context.strokeRect(priceTagX - 5, priceTagY - rectHeight, rectWidth + 10, rectHeight + 10);
+        
+            // Change the color of the text to white
+            context.fillStyle = "white";
+            context.fillText("$" + prices[i], priceTagX, priceTagY);
+        }
+
+    }
+    //context.beginPath();
+	//context.fillStyle = "rgba(64, 64, 64, 0.2)"; // gray with 10% opacity
+    //context.fillRect(0, 0, canvas.width, 60);
+
+
+}
+
+// Utility function to get mouse position
+function getMousePos(canvas, e) {
+    var rect = canvas.getBoundingClientRect();
+    return {
+        x: e.clientX - rect.left,
+        y: e.clientY - rect.top
+    };
+}
+
+// Event listener for user mouse click
+canvas.addEventListener("click", handleMenuClick, false);
+
+
+canvas.addEventListener('click', handleMouseClickInBuildMode);
+
+function handleMouseClickInBuildMode(e) {
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+
+    if (buildMode && hoveredGridSquare && x < canvas.width - menuWidth) {
+        if (towerToPlace) {
+            const onConfirmLocation = buildBuilding(towerToPlace, money);
+            money = onConfirmLocation(hoveredGridSquare);
+        }
+    }
+    if (upgradeMode && hoveredGridSquare && x < canvas.width - menuWidth) {
+            money = upgradeBuilding(hoveredGridSquare);
+      
+    }
+}
+
+
+
+// FPS COUNTER
+
+var frame = 0; 
+var lastUpdateTime = Date.now();
+var fps = 0;
+
+function animate() {
+  frame++;
+
+  var currentTime = Date.now();
+
+  if (currentTime - lastUpdateTime >= 1000) {
+    fps = frame;
+    frame = 0;
+    lastUpdateTime = currentTime;
+  }
+
+  context.textAlign = 'left';
+  context.fillStyle = "red";
+  context.font = "20px Impact";
+
+  // Display the FPS in the top left corner
+  context.fillText("FPS: " + fps, 50 , canvas.height - 50);
+
+  // Rest of your rendering code below
+  // ...
+
+  requestAnimationFrame(animate);
+}
+
+animate();
+
+
+// Include CDN link in your HTML
+// <script src="https://cdnjs.cloudflare.com/ajax/libs/simplex-noise/2.3.0/simplex-noise.min.js"></script>
+
+const simplex = new SimplexNoise();
+
+var terrainTypesImages = {
+  'grass': loadImage('grass.png'),
+  'desert': loadImage('desert.png'),
+  'badlands': loadImage('badlands.png')
+};
+
+function initializeGame() {
+    // Load all textures
+    console.log("Loading all textures");
+    for(let type in terrainTypesImages) {
+        terrainTypesImages[type].src = type + '.png';
+        console.log(terrainTypesImages[type].src);
+    }
+    
+backgroundTextureImage.onload = function() {
+
+var noiseScale = 0.001
+    for (var y = 0; y < mapHeight; y += tileSize) {
+       // console.log("Running outer for loop");
+        for (var x = 0; x < mapWidth; x += tileSize) {
+       //     console.log("Running inner for loop");
+            var noiseValue = simplex.noise2D(x * noiseScale, y * noiseScale);
+            var terrainType;
+
+            if(noiseValue < -0.5) {
+                terrainType = 'desert';
+            } else if (noiseValue < 0) {
+                terrainType = 'badlands';
+            } else {
+                terrainType = 'grass';
             }
-        }
 
-    if (upgradeMode) {
-        // Find the nearest tower for upgrade
-        var nearestTower = null;
-        var nearestDistance = Infinity;
+            var tileX = Math.floor(Math.random() * (terrainTypesImages[terrainType].width / tileSize));
+            var tileY = Math.floor(Math.random() * (terrainTypesImages[terrainType].height / tileSize));
 
-        for (var i = 0; i < towers.length; i++) {
-            var tower = towers[i];
-            var distance = Math.sqrt(
-                Math.pow(x - (tower.x + gridSize / 2), 2) +
-                Math.pow(y - (tower.y + gridSize / 2), 2)
-            );
-
-            if (distance <= tower.range && distance < nearestDistance) {
-                nearestTower = tower;
-                nearestDistance = distance;
-            }
-        }
-
-        // Upgrade the nearest tower
-        if (nearestTower) {
-            nearestTower.upgrade();
-            nearestTower.selectedForUpgrade = false; // Deselect the tower
-            upgradeMode = false; // Exit upgrade mode
+            patternContext.drawImage(terrainTypesImages[terrainType], tileX * tileSize, tileY * tileSize, tileSize, tileSize, x, y, tileSize, tileSize);
         }
     }
 
-    else if (x >= spawnButton.x && x <= spawnButton.x + spawnButton.width &&
-        y >= spawnButton.y && y <= spawnButton.y + spawnButton.height)
-        {
-            spawnEnemy();
+    backgroundTexturePattern = context.createPattern(patternCanvas, 'no-repeat');
+
+};
+
+var patternCanvas = document.createElement('canvas');
+var patternContext = patternCanvas.getContext('2d');
+
+patternCanvas.width = mapWidth;
+patternCanvas.height = mapHeight;
+
+
+
+    // Now this is outside of the onload function
+    backgroundTextureImage.src = patternCanvas.toDataURL();
+    // Load all textures
+    for(let type in terrainTypesImages) {
+        terrainTypesImages[type].src = type + '.png';
+        terrainTypesImages[type].onload = function() {
+            console.log(type + '.png has been loaded successfully');
+        };
+        terrainTypesImages[type].onerror = function() {
+            console.log('Error loading ' + type + '.png');
+        };
+    }
+
+
+  canvas.width = 1280;
+  canvas.height = 720;
+}
+
+
+
+function loadImage(src) {
+  const img = new Image();
+  img.src = src;
+  return img;
+}
+
+
+let bPressed = false;
+//ADD EVENT LISTENERS
+function addEventListeners() {
+    // ACTION KEYS
+    document.addEventListener('keydown', function(event) {
+
+        if (event.key == 'G' || event.key == 'g') {
+            const hives = generateHiveList(buildings);
+            spawnEnemy(hives);
         }
 
-    
-
-    }, false);
-
-    // Compatibility for touch devices
-    canvas.addEventListener('touchstart', function(event) {
-        event.preventDefault();
-        var rect = canvas.getBoundingClientRect();
-        var touch = event.touches[0];
-
-        var x = touch.clientX - rect.left;
-        var y = touch.clientY - rect.top;
-
-        // Check if Add Tower button is clicked
-        if (x >= addTowerButton.x && x <= addTowerButton.x + addTowerButton.width &&
-            y >= addTowerButton.y && y <= addTowerButton.y + addTowerButton.height) {
-            addTowerMode = !addTowerMode;
-        } else if (addTowerMode) {
-            placeTower(x, y);
-        }
-        else if (upgradeMode) {
-            if (upgradeMode) {
-                // Find the nearest tower for upgrade
-                var nearestTower = null;
-                var nearestDistance = Infinity;
-        
-                for (var i = 0; i < towers.length; i++) {
-                    var tower = towers[i];
-                    var distance = Math.sqrt(
-                        Math.pow(x - (tower.x + gridSize / 2), 2) +
-                        Math.pow(y - (tower.y + gridSize / 2), 2)
-                    );
-        
-                    if (distance <= tower.range && distance < nearestDistance) {
-                        nearestTower = tower;
-                        nearestDistance = distance;
-                    }
-                }
-        
-                // Upgrade the nearest tower
-                if (nearestTower) {
-                    nearestTower.upgrade();
-                    nearestTower.selectedForUpgrade = false; // Deselect the tower
-                    upgradeMode = false; // Exit upgrade mode
-                }
+        // Add event listener to build or upgrade buildings
+            if ((event.key == 'X' || event.key == 'x') && !bPressed) {
+                createHiveNearBase(money);
+                bPressed = true;
             }
-        }
-        // Check if upgrade button is clicked
-        if (x >= upgradeButton.x && x <= upgradeButton.x + upgradeButton.width &&
-            y >= upgradeButton.y && y <= upgradeButton.y + upgradeButton.height) {
-            upgradeMode = !upgradeMode;
-        } //else if (upgradeMode) {
-           // placeTower(x, y);
-      //  }
+                if (event.key == 'X' || event.key == 'x') {
+                    bPressed = false;
+                }
 
-      if (x >= spawnButton.x && x <= spawnButton.x + spawnButton.width &&
-        y >= spawnButton.y && y <= spawnButton.y + spawnButton.height)
-        {
-            spawnEnemy();
-        }
-
-    }, false);
-
-canvas.addEventListener('mousemove', function(event) {
-    var rect = canvas.getBoundingClientRect();
-    var x = event.clientX - rect.left;
-    var y = event.clientY - rect.top;
-
-    // Calculate the grid coordinates based on the mouse position
-    var gridX = Math.floor(x / gridSize);
-    var gridY = Math.floor(y / gridSize);
-
-    // Update the hoveredGridSquare
-    hoveredGridSquare = { x: gridX, y: gridY };
+    /*if (event.key == 'U' || event.key == 'u') {
+        money = upgradeBuilding(hoveredGridSquare, money);
+    }*/
+    //...
 });
+
+// Move the screen
+    // On keydown, change the state to true
+window.addEventListener('keydown', event => {
+    keyStates[event.key] = true;
+});
+
+// On keyup, change the state back to false
+window.addEventListener('keyup', event => {
+    keyStates[event.key] = false;
+});
+
+// Check for the key states
+setInterval(() => {
+    const canvasScrollSpeed = 10;
+    if (keyStates['ArrowRight'] || keyStates['KeyD']) {
+        // Scroll right.
+        offsetX += canvasScrollSpeed;
+    } 
+    if (keyStates['ArrowLeft'] || keyStates['KeyA']) {
+        // Scroll left.
+        offsetX -= canvasScrollSpeed;
+    } 
+    if (keyStates['ArrowDown'] || keyStates['KeyS']) {
+        // Scroll down.
+        offsetY += canvasScrollSpeed;
+    } 
+    if (keyStates['ArrowUp'] || keyStates['KeyW']) {
+        // Scroll up.
+        offsetY -= canvasScrollSpeed;
+    }
+}, 1000/60); // Framerate of 60fps
+
+    //MOVE SCREEN
+     // Set this to the speed you want for scrolling
+    // Add keydown event listener to move canvas on arrow key press.
+
+    // Find out where the mouse is
+    canvas.addEventListener('mousemove', function(event) {
+        var rect = canvas.getBoundingClientRect();
+        var x = event.clientX - rect.left + offsetX;
+        var y = event.clientY - rect.top + offsetY;
+    
+        // Calculate the grid coordinates based on the mouse position
+        var gridX = Math.floor(x / gridSize);
+        var gridY = Math.floor(y / gridSize);
+    
+        // Update the hoveredGridSquare
+        hoveredGridSquare = { x: gridX, y: gridY };
+    });
+    
 
 }
 
-//make a grid
-var grid = [];
-var gridSize = 60;
-var gridRows = Math.floor((canvas.height - 120) / gridSize); 
-var gridColumns = Math.floor(canvas.width / gridSize);
-//console.log("Grid dimensions: ", gridRows,", ",gridColumns)
+
 
 // Initialize the grid with zeros
 for(var i = 0; i < gridRows; i++){
@@ -262,28 +551,503 @@ for(var i = 0; i < gridRows; i++){
 }
 
 
-// Add event listener for upgrade button click
-canvas.addEventListener('click', function(event) {
-    var rect = canvas.getBoundingClientRect();
-    var x = event.clientX - rect.left;
-    var y = event.clientY - rect.top;
 
-    // Check if the click is on the upgrade button
-    if (
-        x >= upgradeButton.x &&
-        x <= upgradeButton.x + upgradeButton.width &&
-        y >= upgradeButton.y &&
-        y <= upgradeButton.y + upgradeButton.height
-    ) {
-        upgradeMode = !upgradeMode; // Toggle upgrade mode
-    }
-}, false);
-
+/*
+// Just spawn a basic enemy anywhere on the map
 function spawnEnemy() {
     var enemyX = Math.random() * (canvas.width - gridSize);
-    var enemyY = 0;
-    var enemyPath = AStar({ i: Math.round(enemyY / gridSize), j: Math.round(enemyX / gridSize) }, { i: gridRows - 1, j: gridColumns - 1 });
+    var enemyY = Math.random() * (canvas.height - gridSize);
+    var start = { i: Math.round(enemyY / gridSize), j: Math.round(enemyX / gridSize) };
+    var end = getNearestBaseCoordinates(enemyX, enemyY);
+    var enemyPath = AStar(start, end);
     enemies.push(new Enemy(enemyX, enemyY, enemyPath));
+    console.log("Spawned enemy at " + start + ". Walking to" + end + ". Taking route: " + enemyPath);
+}*/
+//Generate a list of hives
+function generateHiveList(buildings) {
+    const hives = [];
+    for (let key in buildings) {
+        if (buildings[key].type === 'hive') {
+            hives.push(buildings[key]);
+        }
+    }
+    return hives;
+}
+
+// Spawn an enemy at a hive
+function spawnEnemy(hives) {
+    if (!hives.length) {
+        console.log("No hives present to spawn enemy");
+        return;
+    }
+
+    // Choose a random hive from the hives array
+    let hiveIndex = Math.floor(Math.random() * hives.length);
+    let hive = hives[hiveIndex];
+    //console.log("Chose hive" + JSON.stringify(hive));
+
+    var enemyX = hive.x;
+    var enemyY = hive.y;
+    var start = { i: enemyY, j: enemyX };
+    var end = getNearestBaseCoordinates(enemyX, enemyY);
+    var enemyPath = AStar(start, end);
+    enemies.push(new Enemy(enemyX * gridSize, enemyY *  gridSize, enemyPath));
+    //console.log("enemyX: " + enemyX + " enemyY: " + enemyY);
+    //console.log("Spawned enemy at " + JSON.stringify(start) + ". Walking to" + JSON.stringify(end));
+}
+
+
+// ***********************************
+// HERE IS THE BUILDING CODE
+// ***********************************
+// define a directory of building types, levels, and their corresponding image sources
+const buildingImgSources = {
+    base: {
+        maxLvl: 3,
+        img: ["base1.png", "base2.png", "base3.png"]
+    },
+    hive: {
+        maxLvl: 1,
+        img: ["hive1.png"]
+    },
+    iceTower: {
+        maxLvl: 3,
+        img: ["iceTower1.png", "iceTower2.png", "iceTower3.png"]
+    },
+    laserTower: {
+        maxLvl: 3,
+        img: ["laserTower1.png", "laserTower2.png", "laserTower3.png"]
+    },
+    bombTower: {
+        maxLvl: 3,
+        img: ["bombTower1.png", "bombTower2.png", "bombTower3.png"]
+    },
+    fence: {
+        maxLvl: 1,
+        img: ["fence1.png"]
+    }
+};
+
+
+
+class Building {
+    constructor(x, y, type){
+        this.x = x;
+        this.y = y;
+        this.type = type;
+        this.level = 1;
+        this.maxLevel = buildingImgSources[this.type].maxLvl;
+        this.ready = false;
+        this.image = new Image();
+        this.image.onload = () => { this.ready = true; };
+        this.updateImage();
+        this.hp = 20;
+
+        this.cost = Building.cost(type);
+
+
+
+    if (type === 'bombTower' || type === 'laserTower' || type === 'iceTower') {
+        this.bombFire = this.bombFire.bind(this);
+        this.laserFire = this.laserFire.bind(this);
+        this.iceFire = this.iceFire.bind(this);
+
+
+        
+    // Determine type of fire and target
+        switch (this.type) {
+            case 'bombTower':
+                this.fire = this.bombFire;
+                this.firingDelay = 200;
+                
+                this.range = 750;
+                this.damage = 3;
+                this.timeToFire = this.firingDelay;
+                break;
+            case 'laserTower':
+                this.fire = this.laserFire;
+                this.firingDelay = 10;
+
+                this.range = 350;
+                this.damage = 0.3;
+                this.timeToFire = this.firingDelay;
+                break;
+            case 'iceTower':
+                this.fire = this.iceFire;
+                this.firingDelay = 10;
+
+                this.range = 250;
+                this.damage = 0.5;
+                this.slow = 0.8
+                this.timeToFire = this.firingDelay;
+                break;
+            default:
+                console.error('Unknown tower type');
+        }
+    } else {
+        // This will define an empty function for 'base' type buildings
+        this.fire = () => {};
+    }
+
+    
+}
+
+static cost(type){
+    switch(type){
+        case 'bombTower':
+            return 300;
+        case 'laserTower':
+            return 100;
+        case 'iceTower':
+            return 200;
+        case 'base':
+            return 500;
+        case 'fence':
+            return 10;
+        default:
+            console.error('Unknown tower type');
+            return null;
+    }
+}
+
+ 
+    
+    //methods
+    generateIncome() {
+        return 100 * this.level; // just an example, adjust as per your game economy.
+    }
+
+    takeDamage(buildings) {
+        this.hp -= 1;
+        console.log("Took damage. HP now " + this.hp);
+    
+        if (this.hp <= 0) {
+            const index = buildings.indexOf(this);
+            //if (index !== -1) {
+                buildings.splice(index, 1);
+                console.log("Removing building:" + JSON.stringify(index))
+                buildings[index] = 0;
+            //}
+        }
+    }
+
+    updateImage() {
+        if (this.level <= buildingImgSources[this.type].maxLvl) {
+            this.image.src = buildingImgSources[this.type].img[this.level - 1];
+        }
+    }
+
+    upgrade(){
+        let remainingMoney = money;
+        let cost = this.calculateUpgradeCost();
+        if(money < cost){
+            console.log("Not enough money to upgrade")
+            return false;
+        }
+        if(this.level >= this.maxLevel) {
+            console.log(`${this.type} has reached maximum level`);
+            return false;
+        }
+        console.log("Money before: " + money);
+        remainingMoney -= cost;
+        console.log("Remaining money: " + remainingMoney);
+        this.level++;
+        this.updateImage();
+        console.log(`Building upgraded to level ${this.level}.`);
+        money = remainingMoney;
+        console.log(money);
+        return true;
+    }
+
+    calculateCost() {
+        return this.cost;
+    }
+
+    calculateUpgradeCost() {
+        // Implement your cost calculation logic here.
+        // I'm just returning a mock value here for demonstration purposes.
+        return this.cost * this.level * this.level;
+    }
+
+    draw() {
+        //console.log('Ready status:', this.ready);
+       // console.log('Image src:', this.image.src);
+        if (this.ready) {
+            //console.log("this.image: " + this.image + " this.x: " + this.x + " this.y: " + this.y + " offsetX: " + offsetX + " offsetY: " + offsetY + " gridSize: " + gridSize)
+            context.drawImage(this.image, this.x * gridSize - offsetX, this.y * gridSize - offsetY, gridSize, gridSize);
+            // health bar for bases
+            if (this.type === 'base') {
+                const maxHealth = 20; // Assuming 100 is the maximum health
+                const barWidth = gridSize;
+                const barHeight = 5;
+                const barX = this.x * gridSize - offsetX;
+                const barY = this.y * gridSize - offsetY - 10; // 10 units above the building
+                const healthRatio = this.hp / maxHealth;
+    
+                // Background of health bar
+                context.fillStyle = 'black';
+                context.fillRect(barX, barY, barWidth, barHeight);
+    
+                // Actual health level
+                if (this.hp > 10) {
+                context.fillStyle = 'green';
+            }
+            if (this.hp > 4 && this.hp < 11) {
+                context.fillStyle = 'yellow';
+            }
+            if (this.hp < 5) {
+                context.fillStyle = 'red';
+            }
+                context.fillRect(barX, barY, barWidth * healthRatio, barHeight);
+            }
+        } else {
+            console.error('Waiting for image to load');
+        }
+    }
+
+    bombFire() {
+        if (this.timeToFire <= 0) {
+            //console.log("Cooldown elapsed, bomb tower firing");
+            for (var j in enemies) {
+                var enemy = enemies[j];
+                var dx = (this.x * gridSize ) - (enemy.x + gridSize / 2);  // Calculate enemy center X
+                var dy = (this.y * gridSize ) - (enemy.y + gridSize / 2);  // Calculate enemy center Y
+                var distance = Math.sqrt(dx * dx + dy * dy);
+                //console.log("Checking range. Distance is " + distance + ". Range is " + this.range );
+                    if(distance < this.range) {
+                    projectiles.push(new Projectile(this.x * gridSize, this.y * gridSize, enemy));
+                    this.timeToFire = this.firingDelay;
+                    break;
+                }
+            }
+        } else {
+            this.timeToFire = this.timeToFire - (1 * this.level);
+        }
+    }
+
+
+
+    // LASER FIRE FUNCTION 
+    laserFire() {
+            if (this.timeToFire <= 0) {
+                        for (var j in enemies) {
+                            var enemy = enemies[j];
+                            var dx = (this.x * gridSize ) - (enemy.x + gridSize / 2);  // Calculate enemy center X
+                            var dy = (this.y * gridSize ) - (enemy.y + gridSize / 2);  // Calculate enemy center Y
+                            var distance = Math.sqrt(dx * dx + dy * dy);
+                            if(distance < this.range) {
+
+                                // Draw a line between tower and enemy within range
+                                //context.drawImage(towerImageFiring, this.x, this.y, gridSize, gridSize); // Draw tower image
+                                context.beginPath();
+                                context.strokeStyle = 'red';
+                                context.moveTo((this.x * gridSize) - offsetX + 32, (this.y * gridSize) - offsetY + 32);  // Tower center
+                                context.lineTo((enemy.x) - offsetX + 32, (enemy.y) - offsetY + 32);  // Enemy center
+                                context.lineWidth = 4;
+                                context.stroke();
+                                enemy.hp = enemy.hp - (this.damage * this.level);                    
+                //console.log("Fired. Enemy HP now" + enemy.hp);
+                                            // If enemy's HP reached zero, delete it
+                                if (enemy.hp <= 0){
+                                    var enemyIndex = enemies.indexOf(enemy);
+                                    if (enemyIndex > -1){
+                                        enemies.splice(enemyIndex, 1);
+                                        // Award for killing an enemy
+                                        money += 5;
+                                        killCount++;  // Increase kill count when enemy is destroyed
+                                    }
+                                }
+                    
+                                
+            
+                                this.timeToFire = this.firingDelay;
+                                break;
+                            }
+                        }
+                    } else {
+                        this.timeToFire = this.timeToFire - (1 * this.level)
+                    }
+                }
+        
+    
+
+    iceFire() {
+                	//console.log("Start of this.fire function");
+                    if (this.timeToFire <= 0) {
+                        //console.log("Cooldown elapsed, ice Tower firing");
+                                for (var j in enemies) {
+                        //console.log("Fire loop for enemy #" + JSON.stringify(enemies[j]));
+                                    var enemy = enemies[j];
+                                    var dx = (this.x * gridSize ) - (enemy.x + gridSize / 2);  // Calculate enemy center X
+                                    var dy = (this.y * gridSize ) - (enemy.y + gridSize / 2);  // Calculate enemy center Y
+                                    var distance = Math.sqrt(dx * dx + dy * dy);
+                        //console.log("Checking range. Distance is " + distance + ". Range is " + this.range );
+        
+                      /* context.beginPath();
+                        context.moveTo(this.x * gridSize, this.y * gridSize);
+                        // Draw the line to the enemy's position
+                        context.lineTo(enemy.x + gridSize / 2, enemy.y + gridSize / 2);
+                        context.stroke();*/
+        
+                                    if(distance < this.range) {
+                        //console.log("In range, range = " + this.range);
+                                        // Draw a line between tower and enemy within range
+                                        //context.drawImage(towerImageFiring, this.x, this.y, gridSize, gridSize); // Draw tower image
+                                        context.beginPath();
+                                        context.strokeStyle = 'blue';
+                                        context.moveTo((this.x * gridSize) - offsetX + 32, (this.y * gridSize) - offsetY + 32);  // Tower center
+                                        context.lineTo((enemy.x) - offsetX + 32, (enemy.y) - offsetY + 32);  // Enemy center
+                                        context.lineWidth = 4;
+                                        context.stroke();
+                                        enemy.hp = enemy.hp - this.damage;                    
+                                        enemy.speed = enemy.speed * this.slow;
+                        //console.log("Fired. Enemy HP now" + enemy.hp);
+                                                    // If enemy's HP reached zero, delete it
+                                        if (enemy.hp <= 0){
+                                            var enemyIndex = enemies.indexOf(enemy);
+                                            if (enemyIndex > -1){
+                                                enemies.splice(enemyIndex, 1);
+                                                // Award for killing an enemy
+                                                money += 5;
+                                                killCount++;  // Increase kill count when enemy is destroyed
+                                            }
+                                        }
+                            
+                                        //projectiles.push(new Projectile(this.x + gridSize / 2, this.y + gridSize / 2, enemy));
+                    
+                                        this.timeToFire = this.firingDelay;
+                                        break;
+                                    }
+                                }
+                            } else {
+                                this.timeToFire = this.timeToFire - (1 * this.level)
+                            }
+    }
+
+    }
+
+
+// a directory of building types and maximum levels
+const buildingTypes = {
+    base: 3,
+    hive: 1,
+    iceTower: 3,
+    laserTower: 3,
+    bombTower: 3,
+    fence: 1
+};
+
+
+// build building function
+function buildBuilding(type, money) {
+    let newBuilding;
+    let remainingMoney = money;
+
+    function onConfirmLocation(hoveredGridSquare) {
+        let i = Math.round(hoveredGridSquare.y);
+        let j = Math.round(hoveredGridSquare.x);
+        //console.log("i set to " + i + ", j set to " + j);
+        
+        if (i >= gridRows || j >= gridColumns) {
+            statusMessage = 'Invalid tower location';
+            statusMessageTimeout = 120;
+            
+            return remainingMoney;
+        } else if (grid[i][j] == 1) {
+            statusMessage = "Can't build a tower on another tower";
+            statusMessageTimeout = 120;
+            
+            return remainingMoney;
+        }
+        
+        if (hoveredGridSquare !== null) {
+            newBuilding = new Building(hoveredGridSquare.x, hoveredGridSquare.y, type);
+            const cost = newBuilding.calculateCost();
+            console.log("Cost is " + cost);
+            if (remainingMoney < cost) {
+                statusMessage = "Insufficient funds.";
+                statusMessageTimeout = 120;
+                return remainingMoney;
+            }
+            //console.log("Going to deduct cost. Money = " + remainingMoney);
+            remainingMoney -= cost;
+            //console.log("Money now " + remainingMoney)
+            buildings[`${hoveredGridSquare.x},${hoveredGridSquare.y}`] = newBuilding;
+            buildings.push(newBuilding);
+            //console.log("Built " + buildings[`${hoveredGridSquare.x},${hoveredGridSquare.y}`]);
+            if (type !== 'base') {
+                grid[i][j] = 1; // Set grid value to 1 if the building is not a base
+            }
+		
+            //console.log(`A ${type} building was built at.` + i + j + ", value set to " + grid[i][j]);
+            buildMode = false;
+
+        }
+        return remainingMoney;
+    }
+		    return onConfirmLocation;
+
+}
+
+
+
+//Upgrade building
+function upgradeBuilding(hoveredGridSquare) {
+    let remainingMoney = money;
+    if (hoveredGridSquare !== null) {
+        var key = `${hoveredGridSquare.x},${hoveredGridSquare.y}`
+        if (buildings[key]) {
+            const upgradeCost = buildings[key].calculateUpgradeCost();
+            if (remainingMoney < upgradeCost) {
+                statusMessage = "Insufficient funds.";
+                statusMessageTimeout = 120;
+                return remainingMoney;
+            }
+            if(buildings[key].level >= buildings[key].maxLevel){
+                statusMessage = "Building already at max level.";
+                statusMessageTimeout = 120;
+                return remainingMoney;
+            }
+            remainingMoney -= upgradeCost;
+            buildings[key].upgrade();
+            //console.log(`Upgraded the building at ${key}.`);
+        }
+    }
+    return remainingMoney;
+}
+
+//Create a hive
+function createHiveNearBase(money) {
+    let randomLocation = getNearestBaseCoordinates(offsetX, offsetY);
+    if (!randomLocation) {
+        //console.log("No base exists");
+        return;
+    }
+    let xStart = Math.max(0, randomLocation.j - 10);
+    let yStart = Math.max(0, randomLocation.i - 10);
+    let xEnd = Math.min(gridColumns - 1, randomLocation.j + 10);
+    let yEnd = Math.min(gridRows - 1, randomLocation.i + 10);
+    let randomI, randomJ;
+    do {
+        randomI = Math.floor(Math.random() * (yEnd - yStart + 1)) + yStart;
+        randomJ = Math.floor(Math.random() * (xEnd - xStart + 1)) + xStart;
+    } while (grid[randomI][randomJ] !== 0);
+    const randomHiveLocation = { x: randomJ, y: randomI };
+    statusMessage = "A hive has spawned.";
+    statusMessageTimeout = 120;
+    console.log("Building hive at " + JSON.stringify(randomHiveLocation));
+    const onConfirmHiveLocation = buildBuilding('hive', money);
+    money = onConfirmHiveLocation(randomHiveLocation);
+}
+
+
+// Bomb constructor
+function Bomb(x, y, target){
+    this.x = x;
+    this.y = y;
+    this.speed = 30;
+    this.target = target;
+    this.life = 500; // Life of the bomb. This could be adjusted based on the desired decay speed.
 }
 
 // main enemy
@@ -291,15 +1055,13 @@ function spawnEnemy() {
 function Enemy(x, y) {
     this.x = x;
     this.y = y;
-    this.speed = 2 + spawnInfluence * 3;
-    this.hp = 3;
+    this.speed = 3;
+    this.hp = 7;
     this.direction = 'down';
     this.justChangedDirection = false;
     this.pathUpdateFrequency = 1000; // update path every 1000 game loops
     this.pathUpdateCountdown = this.pathUpdateFrequency; // countdown to next path update
     this.path = [];
-    //this.Image = new Image();
-    //this.Image.src = 'orc.png';
 
     this.spriteSheet = new Image();
     this.spriteSheet.src = 'es' + (Math.floor(Math.random() * 6) + 1) + '.png'; // Set the path to your sprite sheet
@@ -309,67 +1071,123 @@ function Enemy(x, y) {
     this.currentFrame = 0; // Current frame index
     this.frameUpdateInterval = 5; // Interval to update frames (adjust as needed)
 
-    this.draw = function() {
+    // Attack animation frames
+    this.attackFrames = 8;
+    this.currentAttackFrame = 4;
+    this.attackFrameUpdateInterval = 6; // Interval to update attack frames
+
+    this.isAttacking = false; // Variable to store attack state
+
+    // Add a new method for initiating attack
+    this.initiateAttack = function() {
+    this.isAttacking = true;
+    this.currentAttackFrame = 4; // Start from 4th frame for attack animation
+}
+
+
+this.draw = function() {
+    if (this.isAttacking) {
         context.drawImage(
-            this.spriteSheet, // Image object containing the sprite sheet
-            this.currentFrame * this.frameWidth, // X-coordinate of the frame in the sprite sheet
-            this.frameHeight, // Y-coordinate of the frame (assuming you want the bottom row)
-            this.frameWidth, // Width of the frame
-            this.frameHeight, // Height of the frame
-            this.x, // X-coordinate to draw on the canvas
-            this.y, // Y-coordinate to draw on the canvas
-            gridSize * 1.25, // Width to draw on the canvas
-            gridSize * 1.25 // Height to draw on the canvas
+            this.spriteSheet, 
+            this.currentAttackFrame * this.frameWidth,
+            this.frameHeight,
+            this.frameWidth,
+            this.frameHeight,
+            this.x - offsetX, 
+            this.y - offsetY, 
+            gridSize * 1.0, 
+            gridSize * 1.0
         );
-    };
-    
-    function isWalkable(gridX, gridY) {
-        // Check if the cell is within the bounds of the grid.
-        if (gridX < 0 || gridX >= gridColumns || gridY < 0 || gridY >= gridRows) {
-            return false; // Cell is out of bounds, considered blocked.
+        
+        if (gameTimer % this.attackFrameUpdateInterval === 0) {
+            this.currentAttackFrame = (this.currentAttackFrame + 1) % this.attackFrames;
+            //console.log(JSON.stringify(this.currentAttackFrame));
+
+            // Reset attacking state and currentFrame after the last attack frame
+            if(this.currentAttackFrame === this.attackFrames - 1) {
+                // HERE IS THE TAKEDAMAGE CODE
+                let nearestBase = getNearestBaseCoordinates(this.x + offsetX, this.y + offsetY);
+                buildings[nearestBase.closestBaseKey].takeDamage(buildings);
+                //console.log("takeDamage called");
+                //this.isAttacking = false;
+                //this.currentAttackFrame = 4;
+                }
+            }
+        } else {
+            // Draw regular frames
+            context.drawImage(
+                this.spriteSheet, 
+                this.currentFrame * this.frameWidth,
+                this.frameHeight,
+                this.frameWidth,
+                this.frameHeight,
+                this.x - offsetX, 
+                this.y - offsetY, 
+                gridSize * 1.0, 
+                gridSize * 1.0
+            );
+            
+            if (gameTimer % this.frameUpdateInterval === 0) {
+                this.currentFrame = (this.currentFrame + 1) % this.totalFrames;
+            }
         }
-    
-        // Check if the cell is blocked by a tower.
-        return grid[gridY][gridX] === 0; // 0 represents a walkable cell, 1 represents a tower.
-    }
-    
+
+        let nearestBase = getNearestBaseCoordinates(this.x + offsetX, this.y + offsetY);
+        
+//        console.log("NearestBase I: " + nearestBase.i + "NearestBase J" + nearestBase.j);
+//        let distanceToNearestBase = Math.sqrt((this.x + offsetX - nearestBase.j * gridSize) ** 2 + (this.y + offsetY - nearestBase.i * gridSize) ** 2);
+//        console.log(JSON.stringify(distanceToNearestBase));
+        let someCriteriaForAttack = true; // TODO: Define this criteria
+        //let attackThreshold = 10; // distance to attack
+        // Add criteria for initiating the attack: if enemy is close to the base
+        //console.log("this.x/gridSize = " + this.x/gridSize + "this.y/gridSize = " + this.y/gridSize);
+        if (someCriteriaForAttack && Math.abs(nearestBase.j - this.x/gridSize) <= 2 && Math.abs(nearestBase.i - this.y/gridSize) <= 1) {
+            //console.log("Initiating attack");
+            this.isAttacking = true;
+            this.speed = 1;
+            return; // Stop moving and initiate attack animation
+        } else {
+            this.isAttacking = false;
+        }
+        
+    };
+
+
+      
     // ENEMY MOVEMENT
-    this.move = function() {
+    this.move = function () {
         var gridX = Math.round((this.x) / gridSize);
         var gridY = Math.round((this.y) / gridSize);
     
         if (!this.path.length || this.justChangedDirection || --this.pathUpdateCountdown <= 0) {
             this.justChangedDirection = false;
             var startNode = { i: gridY, j: gridX, f: 0, g: 0, h: 0 };
-            var endNode = { i: gridRows - 1, j: gridColumns - 1, f: 0, g: 0, h: 0 };
+            //console.log("Start Node: "+ JSON.stringify(startNode));
+            var {i: endNodeI, j: endNodeJ} = getNearestBaseCoordinates(this.x + offsetX, this.y + offsetY);
+            //console.log("getNearestBaseCoordinates: " + JSON.stringify(getNearestBaseCoordinates(this.x + offsetX, this.y + offsetY)));
+            var endNode = { i: endNodeI, j: endNodeJ, f: 0, g: 0, h: 0 };
             this.path = AStar(startNode, endNode);
             this.pathUpdateCountdown = this.pathUpdateFrequency;
+            //console.log("Picked path: " + JSON.stringify(this.path));
         }
     
         if (this.path && this.path.length > 0) {
-            var nextStep = this.path[0];      
-    
-        if (this.path.length > 0) {
             var nextStep = this.path[0];
     
             if (nextStep.i > gridY) this.direction = 'down';
             else if (nextStep.i < gridY) this.direction = 'up';
-            else if (nextStep.j > (gridX)) this.direction = 'right';
-            else if (nextStep.j < (gridX)) this.direction = 'left';
-        }
-
-        if (gridX === nextStep.j && gridY === nextStep.i) {
-            // Check if the enemy is close to the center of the next cell
-            var distanceToNextCellCenter = Math.sqrt((this.x - nextStep.j * gridSize) ** 2 + (this.y - nextStep.i * gridSize) ** 2);
-            //console.log(distanceToNextCellCenter);
-
-            if (distanceToNextCellCenter < this.speed) {
-                this.path.shift();
-            } 
-        }
-    }
+            else if (nextStep.j > gridX) this.direction = 'right';
+            else if (nextStep.j < gridX) this.direction = 'left';
     
-        // Move the enemy in the current direction
+            if (gridX === nextStep.j && gridY === nextStep.i) {
+                var distanceToNextCellCenter = Math.sqrt((this.x + offsetX - nextStep.j * gridSize) ** 2 + (this.y + offsetY - nextStep.i * gridSize) ** 2);
+
+                if (distanceToNextCellCenter > this.speed) {
+                    this.path.shift();
+                }
+            }
+        }
+    
         if (this.direction === "right") this.x += this.speed;
         else if (this.direction === "left") this.x -= this.speed;
         else if (this.direction === "up") this.y -= this.speed;
@@ -378,156 +1196,39 @@ function Enemy(x, y) {
         if (gameTimer % this.frameUpdateInterval === 0) {
             this.currentFrame = (this.currentFrame + 1) % this.totalFrames;
         }
-
-            //DEBUGGING
-            if (this.path && this.path.length > 0) {
-                var nextStep = this.path[0];
-                var targetX = nextStep.j * gridSize;
-                var targetY = nextStep.i * gridSize;
-            
-                
-                if (targetY > gridY) this.direction = 'down';
-                else if (targetY < gridY) this.direction = 'up';
-                else if (targetX > gridX) this.direction = 'right';
-                else if (targetX < gridX) this.direction = 'left';
-            
-                if (gridX === nextStep.j && gridY === nextStep.i) this.path.shift();
-            }
-
-
     };
     
     
 }
-// Projectile constructor
-function Projectile(x, y, target){
-    this.x = x;
-    this.y = y;
-    this.speed = 40;
-    this.target = target;
-    this.life = 200; // Life of the projectile. This could be adjusted based on the desired decay speed.
-}
-
-// Tower constructor
-function Tower(x, y){
-    this.x = x;
-    this.y = y;
-    this.range = 200;
-    this.firingDelay = 40;
-    this.timeToFire = this.firingDelay;
-    this.upgradeLevel = 0; // Initial upgrade level
-    this.upgradeCost = 100; // Cost for the first upgrade
-	this.damage = 1; // initial damage
-
-Tower.prototype.upgrade = function() {
-    if (money >= this.upgradeCost) {
-        this.firingDelay *= 0.8; // Decrease firing delay (increase firing rate)
-        this.range *= 1.1; // Increase range
-	this.damage *= 1.1 // Increase damage
-        money -= this.upgradeCost;
-        this.upgradeLevel++;
-        this.upgradeCost *= 1.5; // Increase upgrade cost for the next level
-        
-        // Reset the upgradeMode flag to allow selecting a new tower
-        upgradeMode = false;
-    }
-};
 
 
-    this.fire = function() {
-	//console.log("Start of this.fire function");
-        if (this.timeToFire <= 0) {
-	//console.log("Cooldown elapsed, firing");
-            for (var j in enemies) {
-	//console.log("Fire loop for enemy #" + enemies[j]);
-                var enemy = enemies[j];
-                var dx = this.x - (enemy.x + gridSize / 2);  // Calculate enemy center X
-                var dy = this.y - (enemy.y + gridSize / 2);  // Calculate enemy center Y
-                var distance = Math.sqrt(dx * dx + dy * dy);
-    
-                if(distance < this.range) {
-	//console.log("In range, range = " + this.range);
-                    // Draw a line between tower and enemy within range
-                    context.drawImage(towerImageFiring, this.x, this.y, gridSize, gridSize); // Draw tower image
-                    context.beginPath();
-                    context.moveTo(this.x + gridSize/2, this.y + gridSize/2 - 15);  // Tower center
-                    context.lineTo(enemy.x + gridSize/2, enemy.y + gridSize/2);  // Enemy center
-                    context.lineWidth = 4;
-                    context.stroke();
-                    enemy.hp = enemy.hp - this.damage;                    
-    //console.log("Fired. Enemy HP now" + enemy.hp);
-                    			// If enemy's HP reached zero, delete it
-                    if (enemy.hp <= 0){
-                        var enemyIndex = enemies.indexOf(enemy);
-                        if (enemyIndex > -1){
-                            enemies.splice(enemyIndex, 1);
-                            // Award for killing an enemy
-                            money += 20;
-                            killCount++;  // Increase kill count when enemy is destroyed
-                        }
-                    }
-        
-                    //projectiles.push(new Projectile(this.x + gridSize / 2, this.y + gridSize / 2, enemy));
+// Find the nearest base
+function getNearestBaseCoordinates(enemyX, enemyY) {
+    var closestDistance = Infinity;
+    var closestBaseKey = null;
 
-                    this.timeToFire = this.firingDelay;
-                    break;
-                }
+    for (var key in buildings) {
+        if (buildings[key].type == 'base') {
+            var baseX = buildings[key].x;
+            var baseY = buildings[key].y;
+            var distance = Math.sqrt(Math.pow(baseX - enemyX, 2) + Math.pow(baseY - enemyY, 2));
+
+            if (distance < closestDistance) {
+                closestDistance = distance;
+                closestBaseKey = key;
             }
-        } else {
-            this.timeToFire--;
         }
     }
-}
-// Add tower mode
-function addTower() {
-  addTowerMode = true;
-}
 
-// Place Tower
-function placeTower(x, y) {
-    var i = Math.floor(y / gridSize);
-    var j = Math.floor(x / gridSize);
-    addTowerMode = false;
-
-    if (i >= gridRows || j >= gridColumns) {
-        statusMessage = 'Invalid tower location';
-        statusMessageTimeout = 120;
-    } else if (grid[i][j] == 1) {
-        statusMessage = 'Cant build a tower on another tower';
-        statusMessageTimeout = 120;
-    } else if (money < 50) {
-        statusMessage = 'Insufficient funds';
-        statusMessageTimeout = 120;
+    if (closestBaseKey === null) {
+        return null;
     } else {
-	var originalValue = grid[i][j]; // Store the original value
-        grid[i][j] = 1; // Mark the potential tower location as blocked
-
-    // Check if there is a viable path for enemies on the temporary grid
-    var start = { i: 1, j: 1 }; 
-    var goal = { i: gridRows - 1, j: gridColumns - 1 };
-    var path = AStar(start, goal, grid);
-
-    // Restore the original grid value
-    grid[i][j] = originalValue;
-
-    if (path.length > 0) {
-        // Path exists on the temporary grid, so you can place the tower
-        towers.push(new Tower(j * gridSize, i * gridSize));
-        grid[i][j] = 1;
-        money -= 50;
-    } else {
-        // No viable path, show an error message to the user
-        statusMessage = 'Tower blocks path';
-        statusMessageTimeout = 120;
-    }
-
-        // inform each enemy that a new tower has been placed
-        enemies.forEach(function(enemy) {
-            var gridX = Math.round(enemy.x / gridSize);
-            var gridY = Math.round(enemy.y / gridSize);
-            enemy.justChangedDirection = true;
-            enemy.path = AStar({i: gridY, j: gridX}, {i: gridRows - 1, j: gridColumns - 1});
-        });
+        var closestBaseX = buildings[closestBaseKey].x;
+        var closestBaseY = buildings[closestBaseKey].y;
+        //console.log("Closest Base Key: " + closestBaseKey);
+        //console.log("Closest Base X: " + closestBaseX);
+        //console.log("Closest Base Y: " + closestBaseY);
+        return { i: closestBaseY, j: closestBaseX, closestBaseKey };
     }
 }
 
@@ -542,7 +1243,7 @@ function heuristic(a, b, start) {
     if (a.i !== start.i || a.j !== start.j){
         //console.log("Current grid is ",grid[a.i][a.j])
         if (grid[a.i][a.j] === 1) {
-            //console.log("NON-TRAVERSABLE");// print to console
+            //console.log("NON-TRAVERSABLE: " + grid[a.i][a.j]);// print to console
             
             return Infinity; // a tile marked as a tower is now non-traversable
         }
@@ -652,97 +1353,259 @@ function AStar(start, goal){
     return [];
 }
 
+// Bomb constructor
+function Projectile(x, y, target){
+    this.x = x;
+    this.y = y;
+    this.speed = 20;
+    this.target = target;
+    this.life = 300; // Life of the projectile. This could be adjusted based on the desired decay speed.
+    this.damage = 3
+}
 
 //*******************************************************************************************
 //***********************THIS IS WHERE THE GAME LOOP STARTS.*********************************
 //*******************************************************************************************
 
 var gameLoop = setInterval(function(){
-    // Clear canvas
+    // Updated game loop
     gameTimer += 1;
     context.clearRect(0, 0, canvas.width, canvas.height);
 
-    // Draw the background texture for each tile
-    for (var i = 0; i < gridRows; i++) {
-        for (var j = 0; j < gridColumns; j++) {
+
+    
+// Draw the background texture for each tile
+if (mapMode === false){
+    for (var i = Math.floor((offsetY / gridSize)); i < Math.min(gridRows, Math.ceil((offsetY + canvas.height) / gridSize)); i++) {
+        for (var j = Math.floor((offsetX / gridSize)); j < Math.min(gridColumns, Math.ceil((offsetX + canvas.width) / gridSize)); j++) {
+            // Get repeatable texture
             context.fillStyle = backgroundTexturePattern;
+
+            context.save();
+            context.translate(-offsetX, -offsetY);
             context.fillRect(j * gridSize, i * gridSize, gridSize, gridSize);
+            context.restore();
         }
     }
-    
-	// Draw button background
-	context.drawImage(buttonBackground, 0, 780)
-	
-    // Draw Add Tower button
-    context.beginPath();
-    context.textAlign = 'center';
-    context.rect(addTowerButton.x, addTowerButton.y, addTowerButton.width, addTowerButton.height);
-    context.fillStyle = "rgba(20, 160, 20, 1)";
-    context.font = "24px Arial";
-    context.fill();
-    context.stroke();
-    context.fillStyle = "black";
-    context.fillText("BUILD $50 (B)", addTowerButton.x + 100, addTowerButton.y + 40); 
+} else if (mapMode === true){
+    // Normal scale
+    for (var i = Math.floor(offsetY / gridSize); i < Math.min(gridRows, Math.ceil((offsetY + canvas.height) / gridSize) * 3); i++) {
+        for (var j = Math.floor(offsetX / gridSize); j < Math.min(gridColumns, Math.ceil((offsetX + canvas.width) / gridSize) * 3); j++) {
+            // Get repeatable texture
+            context.fillStyle = backgroundTexturePattern;
 
-    // Draw Upgrade button
-    context.beginPath();
-    context.rect(upgradeButton.x, upgradeButton.y, upgradeButton.width, upgradeButton.height);
-    context.fillStyle = "rgba(25, 25, 155, 1)";
-    context.font = "24px Arial";
-    context.fill();
-    context.stroke();
-    context.fillStyle = "white";
-    context.fillText("UPGRADE (U)", upgradeButton.x + 100, upgradeButton.y + 40); 
-
-    // Draw Spawn button
-    context.beginPath();
-    context.rect(spawnButton.x, spawnButton.y, spawnButton.width, spawnButton.height);
-    context.fillStyle = "rgba(190, 0, 0, 1)";
-    context.font = "24px Arial";
-    context.fill();
-    context.stroke();
-    context.fillStyle = "white";
-    context.fillText("SPAWN (S)", spawnButton.x + 100, spawnButton.y + 40); 
+            context.save();
+            context.scale(0.333, 0.333);  
+            context.translate(-offsetX, -offsetY);
+            context.fillRect(j * gridSize, i * gridSize, gridSize, gridSize);
+            context.restore();
+        }
+    }
+}
 
 
+//console.log("Drew " + CCounter + " grid squares");
+//CCounter = 0;
 
-	// Draw grid
 // Draw grid
-if (addTowerMode || upgradeMode) {
-    for (var i = 0; i < gridRows; i++) {
-        for (var j = 0; j < gridColumns; j++) {
-            context.lineWidth = 1;
-            context.strokeStyle = "lightgrey";
-            context.strokeRect(j * gridSize, i * gridSize, gridSize, gridSize);
+if (buildMode || upgradeMode) {
+for (var i = Math.floor((offsetY / gridSize)); i < Math.min(gridRows, Math.ceil((offsetY + canvas.height) / gridSize)); i++) {
+    for (var j = Math.floor((offsetX / gridSize)); j < Math.min(gridColumns, Math.ceil((offsetX + canvas.width) / gridSize)); j++) {
+        context.lineWidth = 1;
+        context.strokeStyle = "lightgrey";
+        context.strokeRect(j * gridSize - offsetX, i * gridSize - offsetY, gridSize, gridSize);
 
-            // Check if this grid square matches the hoveredGridSquare
-            if (hoveredGridSquare && j === hoveredGridSquare.x && i === hoveredGridSquare.y) {
-                context.lineWidth = 1;
-                context.fillStyle = "rgba(255, 255, 0, 0.3)"; // Yellow highlight
-                context.fillRect(j * gridSize, i * gridSize, gridSize, gridSize);
-            if (addTowerMode)
-            {
-                // Calculate the center of the hovered square
-                var centerX = j * gridSize + gridSize / 2;
-                var centerY = i * gridSize + gridSize / 2;
-            
-                // Set the circle's properties
-                var circleRadius = 200; // Radius of the circle
-            
-                // Draw the circle
-                context.beginPath();
-                context.arc(centerX, centerY, circleRadius, 0, Math.PI * 2); // Create a full circle
-                context.strokeStyle = "yellow"; // Outline color
-                context.lineWidth = 2; // Outline thickness
-                context.stroke();
+        // Display numbers on each grid tile
+        /*context.textAlign = 'center';
+        context.fillStyle = "black";
+        context.font = "10px Arial";
+        context.fillText((i*gridColumns)+j+1, j*gridSize - offsetX + gridSize/2, i*gridSize - offsetY + gridSize/2);
+*/
+
+        // Check if this grid square matches the hoveredGridSquare
+        if (hoveredGridSquare && j === hoveredGridSquare.x && i === hoveredGridSquare.y) {
+            context.lineWidth = 1;
+            context.fillStyle = "rgba(255, 255, 0, 0.3)"; // Yellow highlight
+            context.fillRect(j * gridSize - offsetX, i * gridSize - offsetY, gridSize, gridSize);
+        }
+    }
+}
+}
+
+// SHOW COST TOOLTIP
+if (upgradeMode)
+{
+    if (hoveredGridSquare !== null) {
+        var key = `${hoveredGridSquare.x},${hoveredGridSquare.y}`
+        if (buildings[key]) {
+            const upgradeCost = buildings[key].calculateUpgradeCost();
+
+            // Assuming ctx is your canvas context
+            // Set styles for the box
+	    context.beginPath();
+            context.fillStyle = "#333";
+            context.strokeStyle = '#fff';
+
+            // Calculate position for the box 
+            var boxX = hoveredGridSquare.x * gridSize;
+            var boxY = hoveredGridSquare.y * gridSize+64;
+
+            // Set properties for the textbox
+            context.font = '20px Impact';
+            var text = "$" + upgradeCost;
+            var textWidth = context.measureText(text).width;
+
+            // Draw the box
+            context.fillRect(boxX, boxY, textWidth + 10, 30);
+            context.strokeRect(boxX, boxY, textWidth + 10, 30);
+
+            // Set styles for the text
+            context.fillStyle = "#fff";
+
+            // Draw the text
+            context.fillText(text, boxX + 5, boxY + 18);
+        }
+    }
+}
+
+
+// Draw buildings and fire
+Object.values(buildings).forEach((building) => {
+    if(typeof building.draw === 'function') {
+    building.draw();
+    }
+    if(typeof building.fire === 'function') {
+        // Only call .fire if it's defined as a function on the building object
+        building.fire();
+    }
+});
+
+//passive income every 10 sec
+if (gameTimer % 600 === 0) {
+var incomePerTick = 0;
+for (var key in buildings) {
+    if (buildings.hasOwnProperty(key) && buildings[key].type === 'base') {
+        incomePerTick += buildings[key].generateIncome();
+    }
+}
+// Add the generated income to the player's total income
+money += incomePerTick;
+}
+
+//Draw menu
+submenuPrices = [Building.cost("laserTower"), Building.cost("bombTower"), Building.cost("iceTower"), Building.cost("base"), Building.cost("fence"), 0];
+drawMenu();
+
+    // Projectile movement and drawing
+    for (var i in projectiles){
+        var projectile = projectiles[i];
+        var enemy = projectile.target;
+        var dx = enemy.x - projectile.x;
+        var dy = enemy.y - projectile.y;
+        var distance = Math.sqrt(dx * dx + dy * dy);
+        var velocityX = (dx / distance) * projectile.speed;
+        var velocityY = (dy / distance) * projectile.speed;
+		projectile.life--;
+
+        if(distance < 10){
+            //console.log("Bomb just hit an enemy!");
+
+            context.beginPath();
+            context.arc(projectile.x - offsetX, projectile.y - offsetY, 50, 0, Math.PI * 2, true); 
+            context.fillStyle = "red";
+            context.fill();
+
+            // If we hit an enemy, iterate through all other enemies and check if splash damage should apply
+            var splashRadius = 100;  // Set this to whatever your desired splash radius is
+            for(var j in enemies){
+                var otherEnemy = enemies[j];
+                var splashDx = otherEnemy.x - enemy.x;
+                var splashDy = otherEnemy.y - enemy.y;
+                var splashDistance = Math.sqrt(splashDx * splashDx + splashDy * splashDy);
+
+                if(splashDistance <= splashRadius){
+                    otherEnemy.hp -= projectile.damage;  // Apply damage
+                    //console.log("Damaged another enemy");
+                }
+            }            
+
+            enemy.hp -= projectile.damage; // initial enemy damage, outside the radius
+
+            if (enemy.hp <= 0){
+                var enemyIndex = enemies.indexOf(enemy);
+                if (enemyIndex > -1){
+                    enemies.splice(enemyIndex, 1);
+                    money += 5;
+                    killCount++;
+                }
             }
-            }
+
+			// Remove the projectile
+			projectiles.splice(i, 1);
+			break; // This break will prevent other projectiles from erroneously registering a hit on the same enemy in this loop iteration
+		   } else {
+            // Move the projectile
+            projectile.x += velocityX;
+            projectile.y += velocityY;
+            // Draw the projectile
+            context.beginPath();
+            context.arc(projectile.x - offsetX, projectile.y - offsetY, 10, 0, Math.PI * 2, false);  // Change the "10" to your desired radius
+            context.fillStyle = "black";
+            context.fill();
+
+        }  
+		
+		if(projectile.life <= 0){
+			projectiles.splice(i, 1);
+		}		
+    }
+
+    const hives = generateHiveList(buildings);
+    
+if(hives.length === 0)
+{
+    //console.log("No hives. Looking for a base. Number of buildings:" + Object.values(buildings).length);
+    //console.log("Buildings: " + JSON.stringify(buildings));
+
+    let containsBase = false;
+    let buildingValues = Object.values(buildings);
+    for(let i=0; i<buildingValues.length; i++){
+        //console.log("Cheking: " + JSON.stringify(buildingValues[i]) + ". Type is " + JSON.stringify(buildingValues[i].type));
+        if(buildingValues[i].type === 'base'){
+            //console.log("At least one base building has been built.");
+            createHiveNearBase(money);
+            //console.log("Hives now " + hives.length);
+            containsBase = true;
+            break;
         }
     }
 }
 
     
-// Move and Draw enemies
+
+    // Spawn enemies
+    
+spawnInfluence = (0.01 + (0.001 * killCount));
+if(Math.random() < spawnInfluence) {
+spawnEnemy(hives);
+}
+
+if(spawnInfluence > hives.length) {
+createHiveNearBase(money);
+}
+
+// HUGE WAVES
+if (killCount % 2000 === 0 && killCount > 1) // messaging
+{
+	statusMessage = 'A HUGE WAVE OF ENEMIES SPAWNED';
+        statusMessageTimeout = 120;
+	for (let i = 0; i < (killCount / 20); i++) {
+	spawnEnemy(hives);
+
+	}
+}
+
+//Move and draw enemies
 for(var i in enemies) {
     var enemy = enemies[i];
     //console.log("Enemy moving ",enemy)
@@ -751,134 +1614,25 @@ for(var i in enemies) {
     enemy.draw();
     
     // Draw Path
-    /*context.strokeStyle = 'red';
+    context.strokeStyle = 'red';
     //console.log("Attempting to draw path, ", enemy.path)
-    enemy.path.forEach((point) => {
+    //enemy.path.forEach((point) => {
         // Highlight the square in green
-        context.fillStyle = "rgba(0, 255, 0, 0.5)"; // Green with 50% opacity
-        context.fillRect(point.j * gridSize, point.i * gridSize, gridSize, gridSize);
-    });*/
+    //    context.fillStyle = "rgba(0, 255, 0, 0.5)"; // Green with 50% opacity
+    //    context.fillRect(point.j * gridSize, point.i * gridSize, gridSize, gridSize);
+    //});
 
     // Check for lose condition
-    if (enemy.y + gridSize >= canvas.height - 150) {
+    /*if (enemy.y + gridSize >= canvas.height - 150) {
         statusMessage = 'Game Over.';
         statusMessageTimeout = 9999;
         clearInterval(gameLoop);  // End the game loop
         //return;  // If you want to stop execution after losing
-    }
+    }*/
 }
 
+     //Menu elements
 
-    // Tower firing and drawing
-context.strokeStyle = 'red';
-for (var i in towers) {
-    var tower = towers[i];
-    context.drawImage(towerImage, tower.x, tower.y, gridSize, gridSize); // Draw tower image
-    if (tower.timeToFire <= 0) {
-        tower.fire(); 
-        tower.timeToFire = tower.firingDelay;
-    } else {
-        tower.timeToFire--;
-    }
-    
-    
-    
-    
-    // Draw upgrade level text
-    context.font = "16px Arial";
-    context.fillStyle = "white";
-    context.textAlign = "center";
-    context.fillText("LV " + tower.upgradeLevel, tower.x + gridSize / 2, tower.y + gridSize - 15);
-
-    if (upgradeMode) {
-        // Display upgrade cost
-        context.font = "16px Arial";
-        context.fillStyle = "yellow";
-        context.fillText("$" + Math.trunc(tower.upgradeCost), tower.x + gridSize / 2, tower.y + gridSize - 40);
-    }
-}
-
-	// Exponential Spawn rate
-//spawnInfluence = 0.01 * Math.exp(killCount / 25.0);
-// ************************* SPAWN RATE
-spawnInfluence = 0.01 + (0.00065 * killCount);
-if (gameTimer < 100) // Enemies don't spawn until after 100 frames
-{
-     context.beginPath();
-    context.fillStyle = "rgba(64, 64, 64, 0.2)"; // gray with 10% opacity
-    context.fillRect(0, 310, canvas.width, 100);
-    spawnInfluence = 0;
-    context.beginPath();
-    context.fillStyle = "red";
-    context.font = "32px Impact";
-    context.textAlign = 'center';
-    context.fillText("ENEMIES ARRIVING IN " + String(Math.trunc((100-gameTimer)/30)+1), canvas.width/2, 360);
-    //context.fillText("B for Build, U for Upgrade ", 360, 420);
-}
-
-
-// Spawn Enemies
-if(Math.random() < spawnInfluence && enemies.length <= (killCount / 3)+1) {
-    spawnEnemy();
- }
-
-// MESSAGES TO THE PLAYER
-if (gameTimer > 100 && gameTimer < 200) // messaging
-{ 
-	context.beginPath();
-	context.fillStyle = "rgba(64, 64, 64, 0.2)"; // gray with 10% opacity
-        context.fillRect(0, 310, canvas.width, 160);
-    context.beginPath();
-    context.fillStyle = "red";
-    context.font = "32px Impact";
-    context.textAlign = 'center';
-    context.fillText("YOU HAVE 1 LIFE.", canvas.width/2, 360)
-    context.fillText("GOOD LUCK", canvas.width/2, 420);
-}
-
-if (killCount % 100 === 0 && killCount > 1) // messaging
-{
-     Spree = killCount;
-     ShowSpree = 100;
-}
-if (ShowSpree > 0)
-{
-    context.beginPath();
-    context.fillStyle = "white";
-    context.font = "48px Impact";
-    context.textAlign = 'center';
-    context.fillText(Spree + " KILLS", canvas.width/2, 360)
-    ShowSpree--;
-}
-
-if (killCount % 1000 === 0 && killCount > 1) // messaging
-{
-	statusMessage = 'A HUGE WAVE OF ENEMIES SPAWNED';
-        statusMessageTimeout = 120;
-	for (let i = 0; i < (killCount / 20); i++) {
-	spawnEnemy();
-
-	}
-}
-
-
-
-     //Draw money and kills
-	context.beginPath();
-	context.fillStyle = "rgba(64, 64, 64, 0.2)"; // gray with 10% opacity
-        context.fillRect(0, 0, canvas.width, 60);
-     context.beginPath();
-     context.fillStyle = "white";
-     context.font = "32px Impact";
-     context.textAlign = 'left';
-     context.fillText("CASH: " + Math.trunc(money), 10, 30);
-     context.textAlign = 'center';
-     context.fillText("KILLS: " + killCount, 360, 30);
-     //context.fillText("MOBS: " + enemies.length, 360, 40);
-     context.font = "18px Impact";
-     context.textAlign = 'right';
-     context.fillText("SPAWNRATE: " + Math.trunc((spawnInfluence)*100) + "%", 710, 20);
-     context.fillText("Game Timer: " + (Math.trunc(gameTimer/30)), 710, 40);
 
 	    // Draw messages	
 
@@ -887,17 +1641,20 @@ if (killCount % 1000 === 0 && killCount > 1) // messaging
     context.textAlign = 'center';
     context.textBaseline = 'middle';
     context.font = "32px Impact";
-    context.fillText(statusMessage, canvas.width/2, canvas.height/2);
+    context.fillText(statusMessage, 1024/2, canvas.height/2);
     if(statusMessageTimeout > 0) {
         statusMessageTimeout--;
 	context.beginPath();
 	context.fillStyle = "rgba(64, 64, 64, 0.2)"; // gray with 10% opacity
-        context.fillRect(0, (canvas.height/2)-50, canvas.width, 100);
+        context.fillRect(0, (canvas.height/2)-50, 1024, 100);
     } else {
         statusMessage = '';
     }
      
-     
+    if(displayStartMenu == true)
+    {
+     drawStartMenu();
+    }
 
  
  }, 30);
