@@ -974,13 +974,15 @@ function buildBuilding(type, money) {
             if (type !== 'base') {
                 grid[i][j] = 1; // Set grid value to 1 if the building is not a base
             }
+		
             console.log(`A ${type} building was built at.` + i + j + ", value set to " + grid[i][j]);
             buildMode = false;
+		    return onConfirmLocation;
         }
         return remainingMoney;
     }
 
-    return onConfirmLocation;
+
 }
 
 
