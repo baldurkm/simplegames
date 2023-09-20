@@ -1014,7 +1014,7 @@ function upgradeBuilding(hoveredGridSquare) {
 function createHiveNearBase(money) {
     let randomLocation = getNearestBaseCoordinates(offsetX, offsetY);
     if (!randomLocation) {
-        console.log("No base exists");
+        //console.log("No base exists");
         return;
     }
     let xStart = Math.max(0, randomLocation.j - 10);
@@ -1554,7 +1554,7 @@ drawMenu();
     
 if(hives.length === 0)
 {
-    console.log("No hives. Looking for a base. Number of buildings:" + Object.values(buildings).length);
+    //console.log("No hives. Looking for a base. Number of buildings:" + Object.values(buildings).length);
     //console.log("Buildings: " + JSON.stringify(buildings));
 
     let containsBase = false;
@@ -1562,9 +1562,9 @@ if(hives.length === 0)
     for(let i=0; i<buildingValues.length; i++){
         //console.log("Cheking: " + JSON.stringify(buildingValues[i]) + ". Type is " + JSON.stringify(buildingValues[i].type));
         if(buildingValues[i].type === 'base'){
-            console.log("At least one base building has been built.");
+            //console.log("At least one base building has been built.");
             createHiveNearBase(money);
-            console.log("Hives now " + hives.length);
+            //console.log("Hives now " + hives.length);
             containsBase = true;
             break;
         }
