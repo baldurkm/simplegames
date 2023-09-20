@@ -977,11 +977,11 @@ function buildBuilding(type, money) {
 		
             console.log(`A ${type} building was built at.` + i + j + ", value set to " + grid[i][j]);
             buildMode = false;
-		    return onConfirmLocation;
+
         }
         return remainingMoney;
     }
-
+		    return onConfirmLocation;
 
 }
 
