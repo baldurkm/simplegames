@@ -661,7 +661,7 @@ class Building {
                 this.firingDelay = 200;
                 
                 this.range = 750;
-                this.damage = 4;
+                this.damage = 3;
                 this.timeToFire = this.firingDelay;
                 break;
             case 'laserTower':
@@ -669,7 +669,7 @@ class Building {
                 this.firingDelay = 10;
 
                 this.range = 350;
-                this.damage = 0.5;
+                this.damage = 0.3;
                 this.timeToFire = this.firingDelay;
                 break;
             case 'iceTower':
@@ -677,7 +677,7 @@ class Building {
                 this.firingDelay = 10;
 
                 this.range = 250;
-                this.damage = 1;
+                this.damage = 0.5;
                 this.slow = 0.8
                 this.timeToFire = this.firingDelay;
                 break;
@@ -765,7 +765,7 @@ static cost(type){
     calculateUpgradeCost() {
         // Implement your cost calculation logic here.
         // I'm just returning a mock value here for demonstration purposes.
-        return this.cost * this.level;
+        return this.cost * this.level * this.level;
     }
 
     draw() {
@@ -1350,7 +1350,7 @@ function Projectile(x, y, target){
     this.speed = 20;
     this.target = target;
     this.life = 300; // Life of the projectile. This could be adjusted based on the desired decay speed.
-    this.damage = 7
+    this.damage = 3
 }
 
 //*******************************************************************************************
