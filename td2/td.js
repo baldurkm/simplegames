@@ -1572,7 +1572,7 @@ if(hives.length === 0)
 
     // Spawn enemies
     
-spawnInfluence = (0.001 * (10+killCount) * (hives.length)/4);
+spawnInfluence = (0.01 + (0.001 * (10+killCount) * (hives.length)/4));
 if(Math.random() < spawnInfluence && enemies.length <= (killCount / 3)+1) {
 spawnEnemy(hives);
 }
