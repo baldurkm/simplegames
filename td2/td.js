@@ -1432,6 +1432,7 @@ if (upgradeMode)
 
             // Assuming ctx is your canvas context
             // Set styles for the box
+	    context.beginPath();
             context.fillStyle = "#333";
             context.strokeStyle = '#fff';
 
