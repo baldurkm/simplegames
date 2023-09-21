@@ -644,7 +644,7 @@ class Building {
         this.hp = 20;
 
         this.cost = Building.cost(type);
-        buildings.push(this);
+
 
 
     if (type === 'bombTower' || type === 'laserTower' || type === 'iceTower') {
@@ -726,6 +726,7 @@ static cost(type){
             //if (index !== -1) {
                 buildings.splice(index, 1);
                 console.log("Removing building:" + JSON.stringify(index))
+                buildings[index] = 0;
             //}
         }
     }
@@ -907,7 +908,7 @@ static cost(type){
                                             if (enemyIndex > -1){
                                                 enemies.splice(enemyIndex, 1);
                                                 // Award for killing an enemy
-                                                money += 20;
+                                                money += 5;
                                                 killCount++;  // Increase kill count when enemy is destroyed
                                             }
                                         }
@@ -950,12 +951,12 @@ function buildBuilding(type, money) {
         if (i >= gridRows || j >= gridColumns) {
             statusMessage = 'Invalid tower location';
             statusMessageTimeout = 120;
-            console.log("Error building tower");
+            
             return remainingMoney;
         } else if (grid[i][j] == 1) {
-            statusMessage = 'Cant build a tower on another tower';
+            statusMessage = "Can't build a tower on another tower";
             statusMessageTimeout = 120;
-            console.log("Error building tower");
+            
             return remainingMoney;
         }
         
@@ -964,18 +965,21 @@ function buildBuilding(type, money) {
             const cost = newBuilding.calculateCost();
             console.log("Cost is " + cost);
             if (remainingMoney < cost) {
-                console.log("Not enough money to build");
+                statusMessage = "Insufficient funds.";
+                statusMessageTimeout = 120;
                 return remainingMoney;
             }
-            console.log("Going to deduct cost. Money = " + remainingMoney);
+            //console.log("Going to deduct cost. Money = " + remainingMoney);
             remainingMoney -= cost;
-            console.log("Money now " + remainingMoney)
+            //console.log("Money now " + remainingMoney)
             buildings[`${hoveredGridSquare.x},${hoveredGridSquare.y}`] = newBuilding;
+            buildings.push(newBuilding);
+            //console.log("Built " + buildings[`${hoveredGridSquare.x},${hoveredGridSquare.y}`]);
             if (type !== 'base') {
                 grid[i][j] = 1; // Set grid value to 1 if the building is not a base
             }
 		
-            console.log(`A ${type} building was built at.` + i + j + ", value set to " + grid[i][j]);
+            //console.log(`A ${type} building was built at.` + i + j + ", value set to " + grid[i][j]);
             buildMode = false;
 
         }
@@ -995,16 +999,18 @@ function upgradeBuilding(hoveredGridSquare) {
         if (buildings[key]) {
             const upgradeCost = buildings[key].calculateUpgradeCost();
             if (remainingMoney < upgradeCost) {
-                console.log("Not enough money to upgrade");
+                statusMessage = "Insufficient funds.";
+                statusMessageTimeout = 120;
                 return remainingMoney;
             }
             if(buildings[key].level >= buildings[key].maxLevel){
-                console.log(`Cannot upgrade the building at ${key}. It already at max level.`);
+                statusMessage = "Building already at max level.";
+                statusMessageTimeout = 120;
                 return remainingMoney;
             }
             remainingMoney -= upgradeCost;
             buildings[key].upgrade();
-            console.log(`Upgraded the building at ${key}.`);
+            //console.log(`Upgraded the building at ${key}.`);
         }
     }
     return remainingMoney;
@@ -1027,6 +1033,8 @@ function createHiveNearBase(money) {
         randomJ = Math.floor(Math.random() * (xEnd - xStart + 1)) + xStart;
     } while (grid[randomI][randomJ] !== 0);
     const randomHiveLocation = { x: randomJ, y: randomI };
+    statusMessage = "A hive has spawned.";
+    statusMessageTimeout = 120;
     console.log("Building hive at " + JSON.stringify(randomHiveLocation));
     const onConfirmHiveLocation = buildBuilding('hive', money);
     money = onConfirmHiveLocation(randomHiveLocation);
@@ -1134,7 +1142,7 @@ this.draw = function() {
         // Add criteria for initiating the attack: if enemy is close to the base
         //console.log("this.x/gridSize = " + this.x/gridSize + "this.y/gridSize = " + this.y/gridSize);
         if (someCriteriaForAttack && Math.abs(nearestBase.j - this.x/gridSize) <= 2 && Math.abs(nearestBase.i - this.y/gridSize) <= 1) {
-            console.log("Initiating attack");
+            //console.log("Initiating attack");
             this.isAttacking = true;
             this.speed = 1;
             return; // Stop moving and initiate attack animation
@@ -1463,7 +1471,9 @@ if (upgradeMode)
 
 // Draw buildings and fire
 Object.values(buildings).forEach((building) => {
+    if(typeof building.draw === 'function') {
     building.draw();
+    }
     if(typeof building.fire === 'function') {
         // Only call .fire if it's defined as a function on the building object
         building.fire();
@@ -1471,7 +1481,7 @@ Object.values(buildings).forEach((building) => {
 });
 
 //passive income every 10 sec
-if (gameTimer % 300 === 0) {
+if (gameTimer % 600 === 0) {
 var incomePerTick = 0;
 for (var key in buildings) {
     if (buildings.hasOwnProperty(key) && buildings[key].type === 'base') {
@@ -1525,7 +1535,7 @@ drawMenu();
                 var enemyIndex = enemies.indexOf(enemy);
                 if (enemyIndex > -1){
                     enemies.splice(enemyIndex, 1);
-                    money += 20;
+                    money += 5;
                     killCount++;
                 }
             }
@@ -1584,6 +1594,17 @@ if(spawnInfluence > hives.length) {
 createHiveNearBase(money);
 }
 
+// HUGE WAVES
+if (killCount % 2000 === 0 && killCount > 1) // messaging
+{
+	statusMessage = 'A HUGE WAVE OF ENEMIES SPAWNED';
+        statusMessageTimeout = 120;
+	for (let i = 0; i < (killCount / 20); i++) {
+	spawnEnemy(hives);
+
+	}
+}
+
 //Move and draw enemies
 for(var i in enemies) {
     var enemy = enemies[i];
@@ -1620,12 +1641,12 @@ for(var i in enemies) {
     context.textAlign = 'center';
     context.textBaseline = 'middle';
     context.font = "32px Impact";
-    context.fillText(statusMessage, canvas.width/2, canvas.height/2);
+    context.fillText(statusMessage, 1024/2, canvas.height/2);
     if(statusMessageTimeout > 0) {
         statusMessageTimeout--;
 	context.beginPath();
 	context.fillStyle = "rgba(64, 64, 64, 0.2)"; // gray with 10% opacity
-        context.fillRect(0, (canvas.height/2)-50, canvas.width, 100);
+        context.fillRect(0, (canvas.height/2)-50, 1024, 100);
     } else {
         statusMessage = '';
     }
