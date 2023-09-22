@@ -1242,7 +1242,7 @@ function Enemy(x, y) {
         let someCriteriaForAttack = true; // TODO: Define this criteria
         if (nearestBase !== null) {
         // Add criteria for initiating the attack: if enemy is close to the base
-        if (someCriteriaForAttack && Math.abs(nearestBase.j - this.x/gridSize) <= 2 && Math.abs(nearestBase.i - this.y/gridSize) <= 1) {
+        if (someCriteriaForAttack && Math.abs(nearestBase.j - this.x/gridSize) <= 1 && Math.abs(nearestBase.i - this.y/gridSize) <= 1) {
             //console.log("Initiating attack");
             this.isAttacking = true;
             this.speed = 1;
@@ -1729,8 +1729,7 @@ var gameLoop = setInterval(function(){
     context.clearRect(0, 0, canvas.width, canvas.height);
 
     drawMap(); // DRAW THE MAP
-
-    drawGrid(); // DRAW THE GRID
+   
 
     buildings.forEach(building => building.draw()); // DRAW BUILDINGS
 
@@ -1740,6 +1739,8 @@ var gameLoop = setInterval(function(){
         enemy.move();
         enemy.draw();
     }
+
+    drawGrid(); // DRAW THE GRID
     
     renderProjectiles(); // DRAW PROJECTILES (AND MOVE)
 
@@ -1783,7 +1784,7 @@ if(hives.length === 0)
 }
 
 // Spawn enemies
-spawnInfluence = (0.01 + (0.001 * killCount));
+spawnInfluence = (0.01 + (0.00075 * killCount));
 if(Math.random() < spawnInfluence) {
 spawnEnemy(hives);
 }
