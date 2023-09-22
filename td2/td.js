@@ -33,6 +33,8 @@ var displayStartMenu = true;
 
 var CCounter = 0;
 
+var incomePerTick = 0;
+
     //make a grid
     var grid = [];
     var gridSize = 60;
@@ -165,6 +167,7 @@ function handleMenuClick(e) {
         if (mousePos.x >= x && mousePos.x <= x + BUTTON_WIDTH && mousePos.y >= y && mousePos.y <= y + BUTTON_HEIGHT) {
             if (isSubMenuActive) {
                 context.drawImage(depressedSubMenuImages[i], x, y, BUTTON_WIDTH, BUTTON_HEIGHT);
+                setTimeout(() => {
                 if (names[i] === "back") {
                     isSubMenuActive = false;
                     buildMode = false;
@@ -189,8 +192,11 @@ function handleMenuClick(e) {
                     buildMode = true;
                     towerToPlace = 'fence';
                 }
+            }, 200);
+
             } else {
                 context.drawImage(depressedButtonImages[i], x, y, BUTTON_WIDTH, BUTTON_HEIGHT);
+                setTimeout(() => {
                 if (names[i] === "build") {
                     isSubMenuActive = true;
                 }
@@ -200,7 +206,7 @@ function handleMenuClick(e) {
             else if (names[i] === "map") {
                 mapMode = !mapMode;
             }
-
+        }, 200);
             }
             return;
         }
@@ -534,10 +540,29 @@ setInterval(() => {
         var gridY = Math.floor(y / gridSize);
     
         // Update the hoveredGridSquare
-        hoveredGridSquare = { x: gridX, y: gridY };
+        hoveredGridSquare = getGridSquare(gridX, gridY);
     });
     
 
+}
+
+function getGridSquare(gridX, gridY) {
+    for(let buildingIndex in buildings){
+        let building = buildings[buildingIndex];
+        if(building.x == gridX && building.y == gridY){
+            return {
+                x: gridX,
+                y: gridY,
+                building: building
+            };
+        }
+    }
+
+    return {
+      x: gridX,
+      y: gridY,
+      building: null
+    };
 }
 
 
@@ -717,19 +742,17 @@ static cost(type){
         return 100 * this.level; // just an example, adjust as per your game economy.
     }
 
-    takeDamage(buildings) {
-        this.hp -= 1;
-        console.log("Took damage. HP now " + this.hp);
-    
-        if (this.hp <= 0) {
-            const index = buildings.indexOf(this);
-            //if (index !== -1) {
-                buildings.splice(index, 1);
-                console.log("Removing building:" + JSON.stringify(index))
-                buildings[index] = 0;
-            //}
-        }
+takeDamage() {
+    this.hp -= 1;
+    console.log("Took damage. HP now " + this.hp);
+
+    if (this.hp <= 0) {
+        const index = buildings.indexOf(this);
+        buildings.splice(index, 1);
+        console.log("Removing building:" + JSON.stringify(index));
     }
+}
+
 
     updateImage() {
         if (this.level <= buildingImgSources[this.type].maxLvl) {
@@ -766,7 +789,7 @@ static cost(type){
     calculateUpgradeCost() {
         // Implement your cost calculation logic here.
         // I'm just returning a mock value here for demonstration purposes.
-        return this.cost * this.level * this.level;
+        return this.cost * (this.level+1) * this.level;
     }
 
     draw() {
@@ -972,8 +995,12 @@ function buildBuilding(type, money) {
             //console.log("Going to deduct cost. Money = " + remainingMoney);
             remainingMoney -= cost;
             //console.log("Money now " + remainingMoney)
-            buildings[`${hoveredGridSquare.x},${hoveredGridSquare.y}`] = newBuilding;
+            //buildings[`${hoveredGridSquare.x},${hoveredGridSquare.y}`] = newBuilding;
             buildings.push(newBuilding);
+            console.log("Pushed building " + JSON.stringify(newBuilding) + "Overview of buildings:");
+            for (let key in buildings) {
+                console.log(`Building at location ${key}: `, buildings[key]);
+            }
             //console.log("Built " + buildings[`${hoveredGridSquare.x},${hoveredGridSquare.y}`]);
             if (type !== 'base') {
                 grid[i][j] = 1; // Set grid value to 1 if the building is not a base
@@ -993,28 +1020,33 @@ function buildBuilding(type, money) {
 
 //Upgrade building
 function upgradeBuilding(hoveredGridSquare) {
-    let remainingMoney = money;
-    if (hoveredGridSquare !== null) {
-        var key = `${hoveredGridSquare.x},${hoveredGridSquare.y}`
-        if (buildings[key]) {
-            const upgradeCost = buildings[key].calculateUpgradeCost();
-            if (remainingMoney < upgradeCost) {
-                statusMessage = "Insufficient funds.";
-                statusMessageTimeout = 120;
-                return remainingMoney;
-            }
-            if(buildings[key].level >= buildings[key].maxLevel){
-                statusMessage = "Building already at max level.";
-                statusMessageTimeout = 120;
-                return remainingMoney;
-            }
-            remainingMoney -= upgradeCost;
-            buildings[key].upgrade();
-            //console.log(`Upgraded the building at ${key}.`);
-        }
+  let remainingMoney = money;
+  console.log("Trying to upgrade. hoveredGridSquare = " + JSON.stringify(hoveredGridSquare) + ". .building = " + JSON.stringify(hoveredGridSquare.building));
+  if (hoveredGridSquare && hoveredGridSquare.building) {
+    const building = hoveredGridSquare.building;
+    const upgradeCost = building.calculateUpgradeCost();
+  
+    if (remainingMoney < upgradeCost) {
+      statusMessage = "Insufficient funds.";
+      statusMessageTimeout = 120;
+      return remainingMoney;
     }
-    return remainingMoney;
+  
+    if(building.level >= building.maxLevel){
+      statusMessage = "Building already at max level.";
+      statusMessageTimeout = 120;
+      return remainingMoney;
+    }
+  
+    remainingMoney -= upgradeCost;
+    building.upgrade();
+  }
+  
+  return remainingMoney;
+  
 }
+
+
 
 //Create a hive
 function createHiveNearBase(money) {
@@ -1102,11 +1134,11 @@ this.draw = function() {
         if (gameTimer % this.attackFrameUpdateInterval === 0) {
             this.currentAttackFrame = (this.currentAttackFrame + 1) % this.attackFrames;
             //console.log(JSON.stringify(this.currentAttackFrame));
-
+            let nearestBase = getNearestBaseCoordinates(this.x + offsetX, this.y + offsetY);
             // Reset attacking state and currentFrame after the last attack frame
-            if(this.currentAttackFrame === this.attackFrames - 1) {
+            if(this.currentAttackFrame === this.attackFrames - 1 && nearestBase) {
                 // HERE IS THE TAKEDAMAGE CODE
-                let nearestBase = getNearestBaseCoordinates(this.x + offsetX, this.y + offsetY);
+                
                 buildings[nearestBase.closestBaseKey].takeDamage(buildings);
                 //console.log("takeDamage called");
                 //this.isAttacking = false;
@@ -1138,9 +1170,8 @@ this.draw = function() {
 //        let distanceToNearestBase = Math.sqrt((this.x + offsetX - nearestBase.j * gridSize) ** 2 + (this.y + offsetY - nearestBase.i * gridSize) ** 2);
 //        console.log(JSON.stringify(distanceToNearestBase));
         let someCriteriaForAttack = true; // TODO: Define this criteria
-        //let attackThreshold = 10; // distance to attack
+        if (nearestBase !== null) {
         // Add criteria for initiating the attack: if enemy is close to the base
-        //console.log("this.x/gridSize = " + this.x/gridSize + "this.y/gridSize = " + this.y/gridSize);
         if (someCriteriaForAttack && Math.abs(nearestBase.j - this.x/gridSize) <= 2 && Math.abs(nearestBase.i - this.y/gridSize) <= 1) {
             //console.log("Initiating attack");
             this.isAttacking = true;
@@ -1149,6 +1180,7 @@ this.draw = function() {
         } else {
             this.isAttacking = false;
         }
+    }
         
     };
 
@@ -1156,9 +1188,10 @@ this.draw = function() {
       
     // ENEMY MOVEMENT
     this.move = function () {
+        let nearestBase = getNearestBaseCoordinates(this.x + offsetX, this.y + offsetY);
         var gridX = Math.round((this.x) / gridSize);
         var gridY = Math.round((this.y) / gridSize);
-    
+        if (nearestBase !== null) {
         if (!this.path.length || this.justChangedDirection || --this.pathUpdateCountdown <= 0) {
             this.justChangedDirection = false;
             var startNode = { i: gridY, j: gridX, f: 0, g: 0, h: 0 };
@@ -1170,6 +1203,7 @@ this.draw = function() {
             this.pathUpdateCountdown = this.pathUpdateFrequency;
             //console.log("Picked path: " + JSON.stringify(this.path));
         }
+    }
     
         if (this.path && this.path.length > 0) {
             var nextStep = this.path[0];
@@ -1198,7 +1232,7 @@ this.draw = function() {
         }
     };
     
-    
+
 }
 
 
@@ -1436,9 +1470,10 @@ for (var i = Math.floor((offsetY / gridSize)); i < Math.min(gridRows, Math.ceil(
 if (upgradeMode)
 {
     if (hoveredGridSquare !== null) {
-        var key = `${hoveredGridSquare.x},${hoveredGridSquare.y}`
-        if (buildings[key]) {
-            const upgradeCost = buildings[key].calculateUpgradeCost();
+        //var key = `${hoveredGridSquare.x},${hoveredGridSquare.y}`
+        if (hoveredGridSquare && hoveredGridSquare.building) {
+            const upgradeCost = hoveredGridSquare.building.calculateUpgradeCost();
+            //console.log("Upgrade cost: " + upgradeCost);
 
             // Assuming ctx is your canvas context
             // Set styles for the box
@@ -1447,8 +1482,8 @@ if (upgradeMode)
             context.strokeStyle = '#fff';
 
             // Calculate position for the box 
-            var boxX = hoveredGridSquare.x * gridSize;
-            var boxY = hoveredGridSquare.y * gridSize+64;
+            var boxX = (hoveredGridSquare.x * gridSize) - offsetX;
+            var boxY = (hoveredGridSquare.y * gridSize+64) - offsetY;
 
             // Set properties for the textbox
             context.font = '20px Impact';
@@ -1468,12 +1503,14 @@ if (upgradeMode)
     }
 }
 
+// Draw buildings and fire NEW EXPERIEMENTAL
+ 
 
-// Draw buildings and fire
+
+// Draw buildings and fire OLD
+buildings.forEach(building => building.draw());
+
 Object.values(buildings).forEach((building) => {
-    if(typeof building.draw === 'function') {
-    building.draw();
-    }
     if(typeof building.fire === 'function') {
         // Only call .fire if it's defined as a function on the building object
         building.fire();
@@ -1481,8 +1518,9 @@ Object.values(buildings).forEach((building) => {
 });
 
 //passive income every 10 sec
+
 if (gameTimer % 600 === 0) {
-var incomePerTick = 0;
+    incomePerTick = 0;
 for (var key in buildings) {
     if (buildings.hasOwnProperty(key) && buildings[key].type === 'base') {
         incomePerTick += buildings[key].generateIncome();
@@ -1656,5 +1694,28 @@ for(var i in enemies) {
      drawStartMenu();
     }
 
- 
+    // base count and income stats
+    context.beginPath();
+	context.fillStyle = "rgba(64, 64, 64, 0.2)"; // gray with 10% opacity
+    context.fillRect(1024, 720, -200, -75);
+    let baseCount = Object.values(buildings).filter(building => building.type === 'base' && !building.destroyed).length;
+    context.beginPath();
+    context.fillStyle = 'white';
+    context.textAlign = 'right';
+    context.font = '20px Impact';
+    context.fillText('BASES: ' + baseCount, canvas.width - 270, canvas.height - 50);
+    context.fillText('INCOME: ' + incomePerTick, canvas.width - 270, canvas.height - 20);
+
+
+    let containsBase = Object.values(buildings).some(building => building.type === 'base');
+    if (!containsBase && killCount > 1) {
+        console.log("No bases left.");
+        statusMessage = 'Game Over.';
+        statusMessageTimeout = 9999;
+        clearInterval(gameLoop);  // End the game loop
+
+    }
+
+
+
  }, 30);
