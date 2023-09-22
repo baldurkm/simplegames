@@ -1,6 +1,63 @@
 // Game variables
 var canvas = document.getElementById("gameCanvas");
 var context = canvas.getContext("2d");
+var backgroundCanvas = document.createElement('canvas');
+var backgroundContext = backgroundCanvas.getContext('2d');
+
+/*
+// Audio
+// Create an AudioContext
+var audioContext = new (window.AudioContext || window.webkitAudioContext)();
+
+// Define an object to store loaded audio buffers
+var audioBuffers = {};
+
+// Function to load and decode audio
+function loadAudio(url, callback) {
+    fetch(url)
+        .then(response => response.arrayBuffer())
+        .then(buffer => audioContext.decodeAudioData(buffer, callback));
+}
+
+// Function to play audio from a loaded buffer
+function playAudio(buffer) {
+    var source = audioContext.createBufferSource();
+    source.buffer = buffer;
+    source.connect(audioContext.destination);
+    source.start(0); // Start playing the audio
+}
+
+// Load multiple audio files
+var audioFiles = [
+    { name: 'bombFire', url: 'bombFire.wav' },
+    { name: 'bombExplode', url: 'bombExplode.wav' },
+    { name: 'iceFire', url: 'iceFire.wav' },
+    { name: 'income', url: 'income.wav' },
+    { name: 'laserFire', url: 'laserFire.wav' },
+    // Add more audio files as needed
+];
+
+// Load each audio file and store them in the audioBuffers object
+var loadedCount = 0;
+
+audioFiles.forEach(function (audioFile) {
+    loadAudio(audioFile.url, function (decodedData) {
+        // Store the decoded audio data in the audioBuffers object
+        audioBuffers[audioFile.name] = decodedData;
+
+        // Increment the loadedCount
+        loadedCount++;
+
+        // Check if all files are loaded
+        if (loadedCount === audioFiles.length) {
+            // All audio files are loaded and ready to play
+
+            // Example: Play 'sound1'
+            playAudio(audioBuffers['income']);
+        }
+    });
+});*/
+
 var offsetY = 0; // Offset for vertical scrolling
 var offsetX = 0; // Offset for horizontal scrolling
 var statusMessage = '';
@@ -11,6 +68,7 @@ var backgroundTextureImage = new Image();
 var backgroundTexturePattern;
 var hoveredGridSquare = null;
 var projectiles = [];
+var mapModeMultiplier = 1;
 
 var tileSize = 32; // Tile size in pixels
 var mapWidth = 18040; // Width of the game map
@@ -26,8 +84,11 @@ var mapMode = false;
 var money = 1000;
 var killCount = 0;
 var spawnInfluence = 0;
+var killReward = 10;
 
 let keyStates = {};
+
+let containsBase = false;
 
 var displayStartMenu = true;
 
@@ -41,6 +102,11 @@ var incomePerTick = 0;
     var gridRows = Math.floor((mapWidth) / gridSize); 
     var gridColumns = Math.floor(mapHeight / gridSize);
     console.log("Grid dimensions: ", gridRows,", ",gridColumns)
+    backgroundCanvas.width = gridColumns * gridSize;
+    backgroundCanvas.height = gridRows * gridSize;
+
+
+
 
 // Add event listener for the page load event
 window.addEventListener('load', function() {
@@ -224,6 +290,7 @@ var startButtonPos = {x: 600, y: 500};
 var startButtonDim = {width: 64, height: 64};
 
 // Load event listener for start button click
+if (killCount < 1 && containsBase == false) {
 canvas.addEventListener('mousedown', function(e) {
     var mousePos = getMousePos(canvas, e);
     if (mousePos.x >= startButtonPos.x && mousePos.x <= startButtonPos.x + startButtonDim.width && mousePos.y >= startButtonPos.y && mousePos.y <= startButtonPos.y + startButtonDim.height) {
@@ -231,7 +298,9 @@ canvas.addEventListener('mousedown', function(e) {
         context.drawImage(depressedStartButtonImage, startButtonPos.x, startButtonPos.y, startButtonDim.width, startButtonDim.height);
     }
 });
+}
 
+// Draw the start menu
 function drawStartMenu() {
     context.globalAlpha = 0.5;
     context.fillStyle = 'black';
@@ -259,6 +328,7 @@ function drawStartMenu() {
 
 // DRAW THE MENU
 function drawMenu() {
+    submenuPrices = [Building.cost("laserTower"), Building.cost("bombTower"), Building.cost("iceTower"), Building.cost("base"), Building.cost("fence"), 0];
     context.lineWidth = 2;
     context.drawImage(menuBackgroundImage, canvas.width - menuWidth, 0, menuWidth, menuHeight);
 
@@ -329,7 +399,6 @@ function getMousePos(canvas, e) {
 // Event listener for user mouse click
 canvas.addEventListener("click", handleMenuClick, false);
 
-
 canvas.addEventListener('click', handleMouseClickInBuildMode);
 
 function handleMouseClickInBuildMode(e) {
@@ -352,11 +421,9 @@ function handleMouseClickInBuildMode(e) {
 
 
 // FPS COUNTER
-
 var frame = 0; 
 var lastUpdateTime = Date.now();
 var fps = 0;
-
 function animate() {
   frame++;
 
@@ -380,27 +447,26 @@ function animate() {
 
   requestAnimationFrame(animate);
 }
-
 animate();
 
-
-// Include CDN link in your HTML
-// <script src="https://cdnjs.cloudflare.com/ajax/libs/simplex-noise/2.3.0/simplex-noise.min.js"></script>
-
+// init simplex noise for map generation
 const simplex = new SimplexNoise();
 
+// Types of terrains
 var terrainTypesImages = {
   'grass': loadImage('grass.png'),
   'desert': loadImage('desert.png'),
   'badlands': loadImage('badlands.png')
 };
 
+// Initialize game
 function initializeGame() {
     // Load all textures
     console.log("Loading all textures");
     for(let type in terrainTypesImages) {
         terrainTypesImages[type].src = type + '.png';
         console.log(terrainTypesImages[type].src);
+
     }
     
 backgroundTextureImage.onload = function() {
@@ -430,6 +496,8 @@ var noiseScale = 0.001
 
     backgroundTexturePattern = context.createPattern(patternCanvas, 'no-repeat');
 
+        // Now that the background texture is fully loaded and created, you can call renderBackgroundTexture
+        renderBackgroundTexture();
 };
 
 var patternCanvas = document.createElement('canvas');
@@ -456,14 +524,30 @@ patternCanvas.height = mapHeight;
 
   canvas.width = 1280;
   canvas.height = 720;
+
+
+
 }
 
-
-
+// Load an image
 function loadImage(src) {
   const img = new Image();
   img.src = src;
   return img;
+}
+
+// Render the background texture to the offscreen canvas (do this once)
+function renderBackgroundTexture() {
+    console.log("Rendering background texture.");
+    for (var i = 0; i < gridRows; i++) {
+        for (var j = 0; j < gridColumns; j++) {
+            // Set the background pattern
+            backgroundContext.fillStyle = backgroundTexturePattern;
+            
+            // Draw a tile on the offscreen canvas
+            backgroundContext.fillRect(j * gridSize, i * gridSize, gridSize, gridSize);
+        }
+    }
 }
 
 
@@ -487,10 +571,6 @@ function addEventListeners() {
                     bPressed = false;
                 }
 
-    /*if (event.key == 'U' || event.key == 'u') {
-        money = upgradeBuilding(hoveredGridSquare, money);
-    }*/
-    //...
 });
 
 // Move the screen
@@ -504,7 +584,7 @@ window.addEventListener('keyup', event => {
     keyStates[event.key] = false;
 });
 
-// Check for the key states
+// MAP SCROLLING
 setInterval(() => {
     const canvasScrollSpeed = 10;
     if (keyStates['ArrowRight'] || keyStates['KeyD']) {
@@ -525,9 +605,6 @@ setInterval(() => {
     }
 }, 1000/60); // Framerate of 60fps
 
-    //MOVE SCREEN
-     // Set this to the speed you want for scrolling
-    // Add keydown event listener to move canvas on arrow key press.
 
     // Find out where the mouse is
     canvas.addEventListener('mousemove', function(event) {
@@ -543,9 +620,9 @@ setInterval(() => {
         hoveredGridSquare = getGridSquare(gridX, gridY);
     });
     
-
 }
 
+// Get grid square number function
 function getGridSquare(gridX, gridY) {
     for(let buildingIndex in buildings){
         let building = buildings[buildingIndex];
@@ -576,19 +653,7 @@ for(var i = 0; i < gridRows; i++){
 }
 
 
-
-/*
-// Just spawn a basic enemy anywhere on the map
-function spawnEnemy() {
-    var enemyX = Math.random() * (canvas.width - gridSize);
-    var enemyY = Math.random() * (canvas.height - gridSize);
-    var start = { i: Math.round(enemyY / gridSize), j: Math.round(enemyX / gridSize) };
-    var end = getNearestBaseCoordinates(enemyX, enemyY);
-    var enemyPath = AStar(start, end);
-    enemies.push(new Enemy(enemyX, enemyY, enemyPath));
-    console.log("Spawned enemy at " + start + ". Walking to" + end + ". Taking route: " + enemyPath);
-}*/
-//Generate a list of hives
+// Generate a list of hives
 function generateHiveList(buildings) {
     const hives = [];
     for (let key in buildings) {
@@ -602,7 +667,7 @@ function generateHiveList(buildings) {
 // Spawn an enemy at a hive
 function spawnEnemy(hives) {
     if (!hives.length) {
-        console.log("No hives present to spawn enemy");
+        //console.log("No hives present to spawn enemy");
         return;
     }
 
@@ -653,8 +718,17 @@ const buildingImgSources = {
     }
 };
 
+// a directory of building types and maximum levels
+const buildingTypes = {
+    base: 3,
+    hive: 1,
+    iceTower: 3,
+    laserTower: 3,
+    bombTower: 3,
+    fence: 1
+};
 
-
+// BUILDING CLASS
 class Building {
     constructor(x, y, type){
         this.x = x;
@@ -744,7 +818,7 @@ static cost(type){
 
 takeDamage() {
     this.hp -= 1;
-    console.log("Took damage. HP now " + this.hp);
+    //console.log("Took damage. HP now " + this.hp);
 
     if (this.hp <= 0) {
         const index = buildings.indexOf(this);
@@ -764,11 +838,15 @@ takeDamage() {
         let remainingMoney = money;
         let cost = this.calculateUpgradeCost();
         if(money < cost){
-            console.log("Not enough money to upgrade")
+            //console.log("Not enough money to upgrade")
+            statusMessage = "Insufficient funds.";
+            statusMessageTimeout = 120;
             return false;
         }
         if(this.level >= this.maxLevel) {
             console.log(`${this.type} has reached maximum level`);
+            statusMessage = "Already at max level.";
+            statusMessageTimeout = 120;
             return false;
         }
         console.log("Money before: " + money);
@@ -799,7 +877,7 @@ takeDamage() {
             //console.log("this.image: " + this.image + " this.x: " + this.x + " this.y: " + this.y + " offsetX: " + offsetX + " offsetY: " + offsetY + " gridSize: " + gridSize)
             context.drawImage(this.image, this.x * gridSize - offsetX, this.y * gridSize - offsetY, gridSize, gridSize);
             // health bar for bases
-            if (this.type === 'base') {
+            /*if (this.type === 'base') {
                 const maxHealth = 20; // Assuming 100 is the maximum health
                 const barWidth = gridSize;
                 const barHeight = 5;
@@ -822,7 +900,7 @@ takeDamage() {
                 context.fillStyle = 'red';
             }
                 context.fillRect(barX, barY, barWidth * healthRatio, barHeight);
-            }
+            }*/
         } else {
             console.error('Waiting for image to load');
         }
@@ -876,7 +954,7 @@ takeDamage() {
                                     if (enemyIndex > -1){
                                         enemies.splice(enemyIndex, 1);
                                         // Award for killing an enemy
-                                        money += 5;
+                                        money += killReward;
                                         killCount++;  // Increase kill count when enemy is destroyed
                                     }
                                 }
@@ -931,7 +1009,7 @@ takeDamage() {
                                             if (enemyIndex > -1){
                                                 enemies.splice(enemyIndex, 1);
                                                 // Award for killing an enemy
-                                                money += 5;
+                                                money += killReward;
                                                 killCount++;  // Increase kill count when enemy is destroyed
                                             }
                                         }
@@ -950,15 +1028,6 @@ takeDamage() {
     }
 
 
-// a directory of building types and maximum levels
-const buildingTypes = {
-    base: 3,
-    hive: 1,
-    iceTower: 3,
-    laserTower: 3,
-    bombTower: 3,
-    fence: 1
-};
 
 
 // build building function
@@ -986,7 +1055,7 @@ function buildBuilding(type, money) {
         if (hoveredGridSquare !== null) {
             newBuilding = new Building(hoveredGridSquare.x, hoveredGridSquare.y, type);
             const cost = newBuilding.calculateCost();
-            console.log("Cost is " + cost);
+            //console.log("Cost is " + cost);
             if (remainingMoney < cost) {
                 statusMessage = "Insufficient funds.";
                 statusMessageTimeout = 120;
@@ -997,13 +1066,19 @@ function buildBuilding(type, money) {
             //console.log("Money now " + remainingMoney)
             //buildings[`${hoveredGridSquare.x},${hoveredGridSquare.y}`] = newBuilding;
             buildings.push(newBuilding);
-            console.log("Pushed building " + JSON.stringify(newBuilding) + "Overview of buildings:");
-            for (let key in buildings) {
-                console.log(`Building at location ${key}: `, buildings[key]);
-            }
+            //console.log("Pushed building " + JSON.stringify(newBuilding) + "Overview of buildings:");
+            //for (let key in buildings) {
+            //    console.log(`Building at location ${key}: `, buildings[key]);
+            //}
+                    isSubMenuActive = false;
             //console.log("Built " + buildings[`${hoveredGridSquare.x},${hoveredGridSquare.y}`]);
             if (type !== 'base') {
                 grid[i][j] = 1; // Set grid value to 1 if the building is not a base
+                for(var ix in enemies) { // force enemies to recalculate paths
+                    var enemy = enemies[ix];
+                    enemy.pathUpdateCountdown = 1;
+                    //console.log("Enemy " + enemy + " recalculating path");
+                }
             }
 		
             //console.log(`A ${type} building was built at.` + i + j + ", value set to " + grid[i][j]);
@@ -1016,12 +1091,10 @@ function buildBuilding(type, money) {
 
 }
 
-
-
 //Upgrade building
 function upgradeBuilding(hoveredGridSquare) {
   let remainingMoney = money;
-  console.log("Trying to upgrade. hoveredGridSquare = " + JSON.stringify(hoveredGridSquare) + ". .building = " + JSON.stringify(hoveredGridSquare.building));
+  //console.log("Trying to upgrade. hoveredGridSquare = " + JSON.stringify(hoveredGridSquare) + ". .building = " + JSON.stringify(hoveredGridSquare.building));
   if (hoveredGridSquare && hoveredGridSquare.building) {
     const building = hoveredGridSquare.building;
     const upgradeCost = building.calculateUpgradeCost();
@@ -1045,8 +1118,6 @@ function upgradeBuilding(hoveredGridSquare) {
   return remainingMoney;
   
 }
-
-
 
 //Create a hive
 function createHiveNearBase(money) {
@@ -1082,8 +1153,7 @@ function Bomb(x, y, target){
     this.life = 500; // Life of the bomb. This could be adjusted based on the desired decay speed.
 }
 
-// main enemy
-// Enemy constructor
+// MAIN ENEMY CONSTRUCTOR & METHODS
 function Enemy(x, y) {
     this.x = x;
     this.y = y;
@@ -1116,8 +1186,8 @@ function Enemy(x, y) {
     this.currentAttackFrame = 4; // Start from 4th frame for attack animation
 }
 
-
-this.draw = function() {
+    // ENEMY DRAWING
+    this.draw = function() {
     if (this.isAttacking) {
         context.drawImage(
             this.spriteSheet, 
@@ -1184,8 +1254,6 @@ this.draw = function() {
         
     };
 
-
-      
     // ENEMY MOVEMENT
     this.move = function () {
         let nearestBase = getNearestBaseCoordinates(this.x + offsetX, this.y + offsetY);
@@ -1235,7 +1303,6 @@ this.draw = function() {
 
 }
 
-
 // Find the nearest base
 function getNearestBaseCoordinates(enemyX, enemyY) {
     var closestDistance = Infinity;
@@ -1265,7 +1332,6 @@ function getNearestBaseCoordinates(enemyX, enemyY) {
         return { i: closestBaseY, j: closestBaseX, closestBaseKey };
     }
 }
-
 
 
 // **************************************************
@@ -1397,76 +1463,70 @@ function Projectile(x, y, target){
     this.damage = 3
 }
 
-//*******************************************************************************************
-//***********************THIS IS WHERE THE GAME LOOP STARTS.*********************************
-//*******************************************************************************************
+// ***************************************************
+// ****************DRAWING FUNCTIONS******************
+// ***************************************************
 
-var gameLoop = setInterval(function(){
-    // Updated game loop
-    gameTimer += 1;
-    context.clearRect(0, 0, canvas.width, canvas.height);
+function drawMap() {
+    if (mapMode == true) {
+        // Calculate the scaled offset for map mode
+        var scaledOffsetX = offsetX * 0.333;
+        var scaledOffsetY = offsetY * 0.333;
 
+        // Calculate the scaled dimensions for the source
+        var scaledSourceWidth = canvas.width / 0.333;
+        var scaledSourceHeight = canvas.height / 0.333;
 
-    
-// Draw the background texture for each tile
-if (mapMode === false){
-    for (var i = Math.floor((offsetY / gridSize)); i < Math.min(gridRows, Math.ceil((offsetY + canvas.height) / gridSize)); i++) {
-        for (var j = Math.floor((offsetX / gridSize)); j < Math.min(gridColumns, Math.ceil((offsetX + canvas.width) / gridSize)); j++) {
-            // Get repeatable texture
-            context.fillStyle = backgroundTexturePattern;
+        // Draw the background using the scaled offset and dimensions
+        //console.log("Scaled offset, " + scaledOffsetX + ", " + scaledOffsetY);
+        context.drawImage(backgroundCanvas, scaledOffsetX, scaledOffsetY, scaledSourceWidth, scaledSourceHeight, 0, 0, canvas.width, canvas.height);
 
-            context.save();
-            context.translate(-offsetX, -offsetY);
-            context.fillRect(j * gridSize, i * gridSize, gridSize, gridSize);
-            context.restore();
+        // Draw black squares for buildings in map mode
+        context.fillStyle = 'black';
+        for (const building of buildings) {
+                console.log("Checking building: " + JSON.stringify(building));
+                // Calculate building's position on the map
+                const mapX = ((building.x * gridSize) - offsetX) * 0.333;
+                const mapY = ((building.y * gridSize) - offsetY) * 0.333;
+                // Draw a black square as a placeholder for the building
+                console.log("Drawing black square at " + mapX + ", " + mapY);
+                context.fillRect(mapX, mapY, gridSize * 0.333, gridSize * 0.333);
+            
         }
-    }
-} else if (mapMode === true){
-    // Normal scale
-    for (var i = Math.floor(offsetY / gridSize); i < Math.min(gridRows, Math.ceil((offsetY + canvas.height) / gridSize) * 3); i++) {
-        for (var j = Math.floor(offsetX / gridSize); j < Math.min(gridColumns, Math.ceil((offsetX + canvas.width) / gridSize) * 3); j++) {
-            // Get repeatable texture
-            context.fillStyle = backgroundTexturePattern;
-
-            context.save();
-            context.scale(0.333, 0.333);  
-            context.translate(-offsetX, -offsetY);
-            context.fillRect(j * gridSize, i * gridSize, gridSize, gridSize);
-            context.restore();
-        }
+    } else {
+        // Draw the background using the original offset and dimensions
+        //console.log("Offset, " + offsetX + ", " + offsetY);
+        context.drawImage(backgroundCanvas, offsetX, offsetY, canvas.width, canvas.height, 0, 0, canvas.width, canvas.height);
     }
 }
 
-
-//console.log("Drew " + CCounter + " grid squares");
-//CCounter = 0;
-
+function drawGrid() {
 // Draw grid
 if (buildMode || upgradeMode) {
-for (var i = Math.floor((offsetY / gridSize)); i < Math.min(gridRows, Math.ceil((offsetY + canvas.height) / gridSize)); i++) {
-    for (var j = Math.floor((offsetX / gridSize)); j < Math.min(gridColumns, Math.ceil((offsetX + canvas.width) / gridSize)); j++) {
-        context.lineWidth = 1;
-        context.strokeStyle = "lightgrey";
-        context.strokeRect(j * gridSize - offsetX, i * gridSize - offsetY, gridSize, gridSize);
-
-        // Display numbers on each grid tile
-        /*context.textAlign = 'center';
-        context.fillStyle = "black";
-        context.font = "10px Arial";
-        context.fillText((i*gridColumns)+j+1, j*gridSize - offsetX + gridSize/2, i*gridSize - offsetY + gridSize/2);
-*/
-
-        // Check if this grid square matches the hoveredGridSquare
-        if (hoveredGridSquare && j === hoveredGridSquare.x && i === hoveredGridSquare.y) {
+    for (var i = Math.floor((offsetY / gridSize)); i < Math.min(gridRows, Math.ceil((offsetY + canvas.height) / gridSize)); i++) {
+        for (var j = Math.floor((offsetX / gridSize)); j < Math.min(gridColumns, Math.ceil((offsetX + canvas.width) / gridSize)); j++) {
             context.lineWidth = 1;
-            context.fillStyle = "rgba(255, 255, 0, 0.3)"; // Yellow highlight
-            context.fillRect(j * gridSize - offsetX, i * gridSize - offsetY, gridSize, gridSize);
+            context.strokeStyle = "lightgrey";
+            context.strokeRect(j * gridSize - offsetX, i * gridSize - offsetY, gridSize, gridSize);
+    
+            // Display numbers on each grid tile
+            /*context.textAlign = 'center';
+            context.fillStyle = "black";
+            context.font = "10px Arial";
+            context.fillText((i*gridColumns)+j+1, j*gridSize - offsetX + gridSize/2, i*gridSize - offsetY + gridSize/2);
+    */
+    
+            // Check if this grid square matches the hoveredGridSquare
+            if (hoveredGridSquare && j === hoveredGridSquare.x && i === hoveredGridSquare.y) {
+                context.lineWidth = 1;
+                context.fillStyle = "rgba(255, 255, 0, 0.3)"; // Yellow highlight
+                context.fillRect(j * gridSize - offsetX, i * gridSize - offsetY, gridSize, gridSize);
+            }
         }
     }
-}
-}
+    }
 
-// SHOW COST TOOLTIP
+    // SHOW COST TOOLTIP
 if (upgradeMode)
 {
     if (hoveredGridSquare !== null) {
@@ -1503,38 +1563,21 @@ if (upgradeMode)
     }
 }
 
-// Draw buildings and fire NEW EXPERIEMENTAL
- 
+}
 
-
-// Draw buildings and fire OLD
-buildings.forEach(building => building.draw());
-
-Object.values(buildings).forEach((building) => {
-    if(typeof building.fire === 'function') {
-        // Only call .fire if it's defined as a function on the building object
-        building.fire();
-    }
-});
-
-//passive income every 10 sec
-
-if (gameTimer % 600 === 0) {
+function income()
+{
     incomePerTick = 0;
-for (var key in buildings) {
-    if (buildings.hasOwnProperty(key) && buildings[key].type === 'base') {
-        incomePerTick += buildings[key].generateIncome();
+    for (var key in buildings) {
+        if (buildings.hasOwnProperty(key) && buildings[key].type === 'base') {
+            incomePerTick += buildings[key].generateIncome();
+        }
     }
-}
-// Add the generated income to the player's total income
-money += incomePerTick;
+    // Add the generated income to the player's total income
+    money += incomePerTick;
 }
 
-//Draw menu
-submenuPrices = [Building.cost("laserTower"), Building.cost("bombTower"), Building.cost("iceTower"), Building.cost("base"), Building.cost("fence"), 0];
-drawMenu();
-
-    // Projectile movement and drawing
+function renderProjectiles() {
     for (var i in projectiles){
         var projectile = projectiles[i];
         var enemy = projectile.target;
@@ -1598,82 +1641,10 @@ drawMenu();
 		}		
     }
 
-    const hives = generateHiveList(buildings);
-    
-if(hives.length === 0)
-{
-    //console.log("No hives. Looking for a base. Number of buildings:" + Object.values(buildings).length);
-    //console.log("Buildings: " + JSON.stringify(buildings));
-
-    let containsBase = false;
-    let buildingValues = Object.values(buildings);
-    for(let i=0; i<buildingValues.length; i++){
-        //console.log("Cheking: " + JSON.stringify(buildingValues[i]) + ". Type is " + JSON.stringify(buildingValues[i].type));
-        if(buildingValues[i].type === 'base'){
-            //console.log("At least one base building has been built.");
-            createHiveNearBase(money);
-            //console.log("Hives now " + hives.length);
-            containsBase = true;
-            break;
-        }
-    }
 }
 
-    
-
-    // Spawn enemies
-    
-spawnInfluence = (0.01 + (0.001 * killCount));
-if(Math.random() < spawnInfluence) {
-spawnEnemy(hives);
-}
-
-if(spawnInfluence > hives.length) {
-createHiveNearBase(money);
-}
-
-// HUGE WAVES
-if (killCount % 2000 === 0 && killCount > 1) // messaging
-{
-	statusMessage = 'A HUGE WAVE OF ENEMIES SPAWNED';
-        statusMessageTimeout = 120;
-	for (let i = 0; i < (killCount / 20); i++) {
-	spawnEnemy(hives);
-
-	}
-}
-
-//Move and draw enemies
-for(var i in enemies) {
-    var enemy = enemies[i];
-    //console.log("Enemy moving ",enemy)
-
-    enemy.move();
-    enemy.draw();
-    
-    // Draw Path
-    context.strokeStyle = 'red';
-    //console.log("Attempting to draw path, ", enemy.path)
-    //enemy.path.forEach((point) => {
-        // Highlight the square in green
-    //    context.fillStyle = "rgba(0, 255, 0, 0.5)"; // Green with 50% opacity
-    //    context.fillRect(point.j * gridSize, point.i * gridSize, gridSize, gridSize);
-    //});
-
-    // Check for lose condition
-    /*if (enemy.y + gridSize >= canvas.height - 150) {
-        statusMessage = 'Game Over.';
-        statusMessageTimeout = 9999;
-        clearInterval(gameLoop);  // End the game loop
-        //return;  // If you want to stop execution after losing
-    }*/
-}
-
-     //Menu elements
-
-
-	    // Draw messages	
-
+function drawMessages() {
+    // Draw messages	
     context.beginPath();
     context.fillStyle = 'red';
     context.textAlign = 'center';
@@ -1706,15 +1677,132 @@ for(var i in enemies) {
     context.fillText('BASES: ' + baseCount, canvas.width - 270, canvas.height - 50);
     context.fillText('INCOME: ' + incomePerTick, canvas.width - 270, canvas.height - 20);
 
-
+    
     let containsBase = Object.values(buildings).some(building => building.type === 'base');
-    if (!containsBase && killCount > 1) {
-        console.log("No bases left.");
+        if (containsBase == false && killCount > 1) {
+        //console.log("No bases left.");
         statusMessage = 'Game Over.';
         statusMessageTimeout = 9999;
-        clearInterval(gameLoop);  // End the game loop
+        //clearInterval(gameLoop);  // End the game loop
 
     }
+}
+
+// Define a function to draw health bars for all base buildings
+function drawHealthBars() {
+    for (let i = 0; i < buildings.length; i++) {
+        const building = buildings[i];
+        if (building.type === 'base') {
+            const maxHealth = 20; // Assuming 100 is the maximum health
+            const barWidth = gridSize;
+            const barHeight = 5;
+            const barX = building.x * gridSize - offsetX;
+            const barY = building.y * gridSize - offsetY - 10; // 10 units above the building
+            const healthRatio = building.hp / maxHealth;
+
+            // Background of health bar
+            context.fillStyle = 'black';
+            context.fillRect(barX, barY, barWidth, barHeight);
+
+            // Actual health level
+            if (building.hp > 10) {
+                context.fillStyle = 'rgb(0, 255, 0)';
+            }
+            if (building.hp > 4 && building.hp < 11) {
+                context.fillStyle = 'yellow';
+            }
+            if (building.hp < 5) {
+                context.fillStyle = 'rgb(255, 0, 0)';
+            }
+            context.fillRect(barX, barY, barWidth * healthRatio, barHeight);
+        }
+    }
+}
+
+//*******************************************************************************************
+//***********************THIS IS WHERE THE GAME LOOP STARTS.*********************************
+//*******************************************************************************************
+
+var gameLoop = setInterval(function(){
+    // Updated game loop
+    gameTimer += 1;
+    context.clearRect(0, 0, canvas.width, canvas.height);
+
+    drawMap(); // DRAW THE MAP
+
+    drawGrid(); // DRAW THE GRID
+
+    buildings.forEach(building => building.draw()); // DRAW BUILDINGS
+
+    //Move and draw enemies
+    for(var i in enemies) {
+        var enemy = enemies[i];
+        enemy.move();
+        enemy.draw();
+    }
+    
+    renderProjectiles(); // DRAW PROJECTILES (AND MOVE)
+
+    // BUILDINGS FIRE
+    Object.values(buildings).forEach((building) => {
+        if(typeof building.fire === 'function') {
+            // Only call .fire if it's defined as a function on the building object
+            building.fire();
+        }
+    });
+
+    drawMenu(); // DRAW THE MENU
+
+    drawHealthBars(); // DRAW HEALTH BARS
+
+    drawMessages(); // DRAW MESSAGES
+
+
+    // INCOME
+    if (gameTimer % 600 === 0) {
+    income();
+    }
+
+    
+// Spawn the first hive
+const hives = generateHiveList(buildings);
+if(hives.length === 0)
+{
+    let containsBase = false;
+    let buildingValues = Object.values(buildings);
+    for(let i=0; i<buildingValues.length; i++){
+        //console.log("Cheking: " + JSON.stringify(buildingValues[i]) + ". Type is " + JSON.stringify(buildingValues[i].type));
+        if(buildingValues[i].type === 'base'){
+            //console.log("At least one base building has been built.");
+            createHiveNearBase(money);
+            //console.log("Hives now " + hives.length);
+            containsBase = true;
+            break;
+        }
+    }
+}
+
+// Spawn enemies
+spawnInfluence = (0.01 + (0.001 * killCount));
+if(Math.random() < spawnInfluence) {
+spawnEnemy(hives);
+}
+
+// Spawn more hives
+if(spawnInfluence > hives.length && gameTimer > 1000) {
+createHiveNearBase(money);
+}
+
+// HUGE WAVES
+if (killCount % 2000 === 0 && killCount > 1)
+{
+	statusMessage = 'A HUGE WAVE OF ENEMIES SPAWNED';
+        statusMessageTimeout = 120;
+	for (let i = 0; i < (killCount / 20); i++) {
+	spawnEnemy(hives);
+
+	}
+}
 
 
 
