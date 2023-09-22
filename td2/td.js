@@ -1847,7 +1847,7 @@ if(hives.length === 0)
 }
 
 // Spawn enemies
-spawnInfluence = (0.01 + (0.00075 * killCount));
+spawnInfluence = (0.01 + (0.00065 * killCount));
 if(Math.random() < spawnInfluence) {
 spawnEnemy(hives);
 }
@@ -1858,7 +1858,7 @@ createHiveNearBase(money);
 }
 
 // HUGE WAVES
-if (killCount % 2000 === 0 && killCount > 1)
+if (killCount % 1000 === 0 && killCount > 1)
 {
 	statusMessage = 'A HUGE WAVE OF ENEMIES SPAWNED';
         statusMessageTimeout = 120;
