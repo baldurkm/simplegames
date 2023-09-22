@@ -96,6 +96,8 @@ var CCounter = 0;
 
 var incomePerTick = 0;
 
+
+
     //make a grid
     var grid = [];
     var gridSize = 60;
@@ -1292,8 +1294,12 @@ function getNearestBaseCoordinates(enemyX, enemyY) {
 // **************************************************
 //heuristic 
 function heuristic(a, b, start) {
+    //console.log("Heuristic value check. a:",a," b:",b," start:",start," i:",i," j:",j)
     if (a.i !== start.i || a.j !== start.j){
-        if (grid[a.i][a.j] === 1) {    
+        //console.log("Current grid is ",grid[a.i][a.j])
+        if (grid[a.i][a.j] === 1) {
+            //console.log("NON-TRAVERSABLE: " + grid[a.i][a.j]);// print to console
+            
             return Infinity; // a tile marked as a tower is now non-traversable
         }
     }
@@ -1311,6 +1317,8 @@ function getNeighbors(grid, node) {
     if (j < gridColumns-1 && grid[i][j+1] != 1) neighbors.push({i: i, j: j+1});
     if (i > 0 && grid[i-1][j] != 1) neighbors.push({i: i-1, j: j});
     if (j > 0 && grid[i][j-1] != 1) neighbors.push({i: i, j: j-1});
+  
+    //console.log("Neighbors: ",neighbors)
     return neighbors;
 }
 
@@ -1399,6 +1407,10 @@ function AStar(start, goal){
     // No result was found - empty array signifies failure to find path
     return [];
 }
+
+
+
+
 
 // Bomb constructor
 function Projectile(x, y, target){
