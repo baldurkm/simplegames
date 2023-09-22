@@ -101,7 +101,7 @@ var incomePerTick = 0;
     var gridSize = 60;
     var gridRows = Math.floor((mapWidth) / gridSize); 
     var gridColumns = Math.floor(mapHeight / gridSize);
-    console.log("Grid dimensions: ", gridRows,", ",gridColumns)
+    //console.log("Grid dimensions: ", gridRows,", ",gridColumns)
     backgroundCanvas.width = gridColumns * gridSize;
     backgroundCanvas.height = gridRows * gridSize;
 
@@ -380,9 +380,6 @@ function drawMenu() {
         }
 
     }
-    //context.beginPath();
-	//context.fillStyle = "rgba(64, 64, 64, 0.2)"; // gray with 10% opacity
-    //context.fillRect(0, 0, canvas.width, 60);
 
 
 }
@@ -442,9 +439,6 @@ function animate() {
   // Display the FPS in the top left corner
   context.fillText("FPS: " + fps, 50 , canvas.height - 50);
 
-  // Rest of your rendering code below
-  // ...
-
   requestAnimationFrame(animate);
 }
 animate();
@@ -462,10 +456,9 @@ var terrainTypesImages = {
 // Initialize game
 function initializeGame() {
     // Load all textures
-    console.log("Loading all textures");
     for(let type in terrainTypesImages) {
         terrainTypesImages[type].src = type + '.png';
-        console.log(terrainTypesImages[type].src);
+        //console.log(terrainTypesImages[type].src);
 
     }
     
@@ -473,9 +466,9 @@ backgroundTextureImage.onload = function() {
 
 var noiseScale = 0.001
     for (var y = 0; y < mapHeight; y += tileSize) {
-       // console.log("Running outer for loop");
+
         for (var x = 0; x < mapWidth; x += tileSize) {
-       //     console.log("Running inner for loop");
+
             var noiseValue = simplex.noise2D(x * noiseScale, y * noiseScale);
             var terrainType;
 
@@ -514,10 +507,10 @@ patternCanvas.height = mapHeight;
     for(let type in terrainTypesImages) {
         terrainTypesImages[type].src = type + '.png';
         terrainTypesImages[type].onload = function() {
-            console.log(type + '.png has been loaded successfully');
+            //console.log(type + '.png has been loaded successfully');
         };
         terrainTypesImages[type].onerror = function() {
-            console.log('Error loading ' + type + '.png');
+            //console.log('Error loading ' + type + '.png');
         };
     }
 
@@ -538,7 +531,7 @@ function loadImage(src) {
 
 // Render the background texture to the offscreen canvas (do this once)
 function renderBackgroundTexture() {
-    console.log("Rendering background texture.");
+    //console.log("Rendering background texture.");
     for (var i = 0; i < gridRows; i++) {
         for (var j = 0; j < gridColumns; j++) {
             // Set the background pattern
@@ -823,7 +816,7 @@ takeDamage() {
     if (this.hp <= 0) {
         const index = buildings.indexOf(this);
         buildings.splice(index, 1);
-        console.log("Removing building:" + JSON.stringify(index));
+        //console.log("Removing building:" + JSON.stringify(index));
     }
 }
 
@@ -838,25 +831,22 @@ takeDamage() {
         let remainingMoney = money;
         let cost = this.calculateUpgradeCost();
         if(money < cost){
-            //console.log("Not enough money to upgrade")
+
             statusMessage = "Insufficient funds.";
             statusMessageTimeout = 120;
             return false;
         }
         if(this.level >= this.maxLevel) {
-            console.log(`${this.type} has reached maximum level`);
+
             statusMessage = "Already at max level.";
             statusMessageTimeout = 120;
             return false;
         }
-        console.log("Money before: " + money);
+
         remainingMoney -= cost;
-        console.log("Remaining money: " + remainingMoney);
         this.level++;
         this.updateImage();
-        console.log(`Building upgraded to level ${this.level}.`);
         money = remainingMoney;
-        console.log(money);
         return true;
     }
 
@@ -865,56 +855,26 @@ takeDamage() {
     }
 
     calculateUpgradeCost() {
-        // Implement your cost calculation logic here.
-        // I'm just returning a mock value here for demonstration purposes.
         return this.cost * (this.level+1) * this.level;
     }
 
     draw() {
-        //console.log('Ready status:', this.ready);
-       // console.log('Image src:', this.image.src);
-        if (this.ready) {
+
+        if (this.ready && mapMode == false) {
             //console.log("this.image: " + this.image + " this.x: " + this.x + " this.y: " + this.y + " offsetX: " + offsetX + " offsetY: " + offsetY + " gridSize: " + gridSize)
             context.drawImage(this.image, this.x * gridSize - offsetX, this.y * gridSize - offsetY, gridSize, gridSize);
-            // health bar for bases
-            /*if (this.type === 'base') {
-                const maxHealth = 20; // Assuming 100 is the maximum health
-                const barWidth = gridSize;
-                const barHeight = 5;
-                const barX = this.x * gridSize - offsetX;
-                const barY = this.y * gridSize - offsetY - 10; // 10 units above the building
-                const healthRatio = this.hp / maxHealth;
-    
-                // Background of health bar
-                context.fillStyle = 'black';
-                context.fillRect(barX, barY, barWidth, barHeight);
-    
-                // Actual health level
-                if (this.hp > 10) {
-                context.fillStyle = 'green';
-            }
-            if (this.hp > 4 && this.hp < 11) {
-                context.fillStyle = 'yellow';
-            }
-            if (this.hp < 5) {
-                context.fillStyle = 'red';
-            }
-                context.fillRect(barX, barY, barWidth * healthRatio, barHeight);
-            }*/
         } else {
-            console.error('Waiting for image to load');
+
         }
     }
 
     bombFire() {
         if (this.timeToFire <= 0) {
-            //console.log("Cooldown elapsed, bomb tower firing");
             for (var j in enemies) {
                 var enemy = enemies[j];
                 var dx = (this.x * gridSize ) - (enemy.x + gridSize / 2);  // Calculate enemy center X
                 var dy = (this.y * gridSize ) - (enemy.y + gridSize / 2);  // Calculate enemy center Y
                 var distance = Math.sqrt(dx * dx + dy * dy);
-                //console.log("Checking range. Distance is " + distance + ". Range is " + this.range );
                     if(distance < this.range) {
                     projectiles.push(new Projectile(this.x * gridSize, this.y * gridSize, enemy));
                     this.timeToFire = this.firingDelay;
@@ -940,14 +900,16 @@ takeDamage() {
 
                                 // Draw a line between tower and enemy within range
                                 //context.drawImage(towerImageFiring, this.x, this.y, gridSize, gridSize); // Draw tower image
+                                if (mapMode == false)
+                                {
                                 context.beginPath();
                                 context.strokeStyle = 'red';
                                 context.moveTo((this.x * gridSize) - offsetX + 32, (this.y * gridSize) - offsetY + 32);  // Tower center
                                 context.lineTo((enemy.x) - offsetX + 32, (enemy.y) - offsetY + 32);  // Enemy center
                                 context.lineWidth = 4;
                                 context.stroke();
+                                }
                                 enemy.hp = enemy.hp - (this.damage * this.level);                    
-                //console.log("Fired. Enemy HP now" + enemy.hp);
                                             // If enemy's HP reached zero, delete it
                                 if (enemy.hp <= 0){
                                     var enemyIndex = enemies.indexOf(enemy);
@@ -973,25 +935,19 @@ takeDamage() {
     
 
     iceFire() {
-                	//console.log("Start of this.fire function");
+
                     if (this.timeToFire <= 0) {
-                        //console.log("Cooldown elapsed, ice Tower firing");
+
                                 for (var j in enemies) {
-                        //console.log("Fire loop for enemy #" + JSON.stringify(enemies[j]));
+
                                     var enemy = enemies[j];
                                     var dx = (this.x * gridSize ) - (enemy.x + gridSize / 2);  // Calculate enemy center X
                                     var dy = (this.y * gridSize ) - (enemy.y + gridSize / 2);  // Calculate enemy center Y
                                     var distance = Math.sqrt(dx * dx + dy * dy);
-                        //console.log("Checking range. Distance is " + distance + ". Range is " + this.range );
-        
-                      /* context.beginPath();
-                        context.moveTo(this.x * gridSize, this.y * gridSize);
-                        // Draw the line to the enemy's position
-                        context.lineTo(enemy.x + gridSize / 2, enemy.y + gridSize / 2);
-                        context.stroke();*/
+
         
                                     if(distance < this.range) {
-                        //console.log("In range, range = " + this.range);
+
                                         // Draw a line between tower and enemy within range
                                         //context.drawImage(towerImageFiring, this.x, this.y, gridSize, gridSize); // Draw tower image
                                         context.beginPath();
@@ -1002,7 +958,6 @@ takeDamage() {
                                         context.stroke();
                                         enemy.hp = enemy.hp - this.damage;                    
                                         enemy.speed = enemy.speed * this.slow;
-                        //console.log("Fired. Enemy HP now" + enemy.hp);
                                                     // If enemy's HP reached zero, delete it
                                         if (enemy.hp <= 0){
                                             var enemyIndex = enemies.indexOf(enemy);
@@ -1066,12 +1021,8 @@ function buildBuilding(type, money) {
             //console.log("Money now " + remainingMoney)
             //buildings[`${hoveredGridSquare.x},${hoveredGridSquare.y}`] = newBuilding;
             buildings.push(newBuilding);
-            //console.log("Pushed building " + JSON.stringify(newBuilding) + "Overview of buildings:");
-            //for (let key in buildings) {
-            //    console.log(`Building at location ${key}: `, buildings[key]);
-            //}
                     isSubMenuActive = false;
-            //console.log("Built " + buildings[`${hoveredGridSquare.x},${hoveredGridSquare.y}`]);
+
             if (type !== 'base') {
                 grid[i][j] = 1; // Set grid value to 1 if the building is not a base
                 for(var ix in enemies) { // force enemies to recalculate paths
@@ -1188,6 +1139,7 @@ function Enemy(x, y) {
 
     // ENEMY DRAWING
     this.draw = function() {
+        if (mapMode == false){
     if (this.isAttacking) {
         context.drawImage(
             this.spriteSheet, 
@@ -1233,6 +1185,7 @@ function Enemy(x, y) {
                 this.currentFrame = (this.currentFrame + 1) % this.totalFrames;
             }
         }
+    }
 
         let nearestBase = getNearestBaseCoordinates(this.x + offsetX, this.y + offsetY);
         
@@ -1339,12 +1292,8 @@ function getNearestBaseCoordinates(enemyX, enemyY) {
 // **************************************************
 //heuristic 
 function heuristic(a, b, start) {
-    //console.log("Heuristic value check. a:",a," b:",b," start:",start," i:",i," j:",j)
     if (a.i !== start.i || a.j !== start.j){
-        //console.log("Current grid is ",grid[a.i][a.j])
-        if (grid[a.i][a.j] === 1) {
-            //console.log("NON-TRAVERSABLE: " + grid[a.i][a.j]);// print to console
-            
+        if (grid[a.i][a.j] === 1) {    
             return Infinity; // a tile marked as a tower is now non-traversable
         }
     }
@@ -1362,8 +1311,6 @@ function getNeighbors(grid, node) {
     if (j < gridColumns-1 && grid[i][j+1] != 1) neighbors.push({i: i, j: j+1});
     if (i > 0 && grid[i-1][j] != 1) neighbors.push({i: i-1, j: j});
     if (j > 0 && grid[i][j-1] != 1) neighbors.push({i: i, j: j-1});
-  
-    //console.log("Neighbors: ",neighbors)
     return neighbors;
 }
 
@@ -1469,30 +1416,42 @@ function Projectile(x, y, target){
 
 function drawMap() {
     if (mapMode == true) {
-        // Calculate the scaled offset for map mode
-        var scaledOffsetX = offsetX * 0.333;
-        var scaledOffsetY = offsetY * 0.333;
-
         // Calculate the scaled dimensions for the source
         var scaledSourceWidth = canvas.width / 0.333;
         var scaledSourceHeight = canvas.height / 0.333;
 
         // Draw the background using the scaled offset and dimensions
         //console.log("Scaled offset, " + scaledOffsetX + ", " + scaledOffsetY);
-        context.drawImage(backgroundCanvas, scaledOffsetX, scaledOffsetY, scaledSourceWidth, scaledSourceHeight, 0, 0, canvas.width, canvas.height);
+        //context.drawImage(backgroundCanvas, scaledOffsetX, scaledOffsetY, scaledSourceWidth, scaledSourceHeight, 0, 0, canvas.width, canvas.height);
+        context.drawImage(backgroundCanvas, offsetX, offsetY, scaledSourceWidth, scaledSourceHeight, 0, 0, canvas.width, canvas.height);
 
         // Draw black squares for buildings in map mode
         context.fillStyle = 'black';
         for (const building of buildings) {
-                console.log("Checking building: " + JSON.stringify(building));
+                //console.log("Checking building: " + JSON.stringify(building));
                 // Calculate building's position on the map
                 const mapX = ((building.x * gridSize) - offsetX) * 0.333;
                 const mapY = ((building.y * gridSize) - offsetY) * 0.333;
                 // Draw a black square as a placeholder for the building
-                console.log("Drawing black square at " + mapX + ", " + mapY);
+                //console.log("Drawing black square at " + mapX + ", " + mapY);
                 context.fillRect(mapX, mapY, gridSize * 0.333, gridSize * 0.333);
             
         }
+            // Draw red dots for enemies in map mode
+        context.fillStyle = 'red';
+        for (const enemy of enemies) {
+            //console.log("Checking enemy: " + JSON.stringify(enemy));
+            // Calculate enemy's position on the map
+            const mapX = ((enemy.x) - offsetX) * 0.333;
+            const mapY = ((enemy.y) - offsetY) * 0.333;
+            // Draw a red dot as a placeholder for the enemy
+            //console.log("Drawing red dot at " + mapX + ", " + mapY);
+            context.beginPath();
+            context.arc(mapX, mapY, gridSize * 0.05, 0, 2 * Math.PI);
+            context.fill();
+        }
+
+
     } else {
         // Draw the background using the original offset and dimensions
         //console.log("Offset, " + offsetX + ", " + offsetY);
@@ -1693,31 +1652,123 @@ function drawHealthBars() {
     for (let i = 0; i < buildings.length; i++) {
         const building = buildings[i];
         if (building.type === 'base') {
-            const maxHealth = 20; // Assuming 100 is the maximum health
+            const maxHealth = 20; // Assuming 20 is the maximum health
             const barWidth = gridSize;
             const barHeight = 5;
             const barX = building.x * gridSize - offsetX;
             const barY = building.y * gridSize - offsetY - 10; // 10 units above the building
             const healthRatio = building.hp / maxHealth;
+            let fillColor = 'rgb(0, 255, 0)';
 
-            // Background of health bar
-            context.fillStyle = 'black';
-            context.fillRect(barX, barY, barWidth, barHeight);
-
-            // Actual health level
             if (building.hp > 10) {
-                context.fillStyle = 'rgb(0, 255, 0)';
+                fillColor = 'rgb(0, 255, 0)';
             }
             if (building.hp > 4 && building.hp < 11) {
-                context.fillStyle = 'yellow';
+                fillColor = 'yellow';
             }
             if (building.hp < 5) {
-                context.fillStyle = 'rgb(255, 0, 0)';
+                fillColor = 'rgb(255, 0, 0)';
             }
-            context.fillRect(barX, barY, barWidth * healthRatio, barHeight);
+            // Background of health bar
+            if (mapMode == false) {
+                context.fillStyle = 'black';
+                context.fillRect(barX, barY, barWidth, barHeight);
+                // Actual health level
+                context.fillStyle = fillColor;
+                context.fillRect(barX, barY, barWidth * healthRatio, barHeight);
+            } else if (mapMode == true) {
+                const barMapX = ((building.x * gridSize) - offsetX) * 0.333;   
+                const barMapY = (((building.y * gridSize) - offsetY) * 0.333)-5;
+                context.fillStyle = 'black';
+                context.fillRect(barMapX, barMapY, barWidth*0.333, barHeight);
+                context.fillStyle = fillColor;
+                context.fillRect(barMapX, barMapY, barWidth*0.333 * healthRatio, barHeight);
+            }
         }
     }
 }
+// Define a function to draw health bars for all base buildings
+function drawHealthBars() {
+    for (let i = 0; i < buildings.length; i++) {
+        const building = buildings[i];
+        if (building.type === 'base') {
+            const maxHealth = 20; // Assuming 20 is the maximum health
+            const barWidth = gridSize;
+            const barHeight = 5;
+            const barX = building.x * gridSize - offsetX;
+            const barY = building.y * gridSize - offsetY - 10; // 10 units above the building
+            const healthRatio = building.hp / maxHealth;
+            let fillColor = 'rgb(0, 255, 0)';
+
+            if (building.hp > 10) {
+                fillColor = 'rgb(0, 255, 0)';
+            }
+            if (building.hp > 4 && building.hp < 11) {
+                fillColor = 'yellow';
+            }
+            if (building.hp < 5) {
+                fillColor = 'rgb(255, 0, 0)';
+            }
+            // Background of health bar
+            if (mapMode == false) {
+                context.fillStyle = 'black';
+                context.fillRect(barX, barY, barWidth, barHeight);
+                // Actual health level
+                context.fillStyle = fillColor;
+                context.fillRect(barX, barY, barWidth * healthRatio, barHeight);
+            } else if (mapMode == true) {
+                const barMapX = ((building.x * gridSize) - offsetX) * 0.333;   
+                const barMapY = (((building.y * gridSize) - offsetY) * 0.333)-5;
+                context.fillStyle = 'black';
+                context.fillRect(barMapX, barMapY, barWidth*0.333, barHeight);
+                context.fillStyle = fillColor;
+                context.fillRect(barMapX, barMapY, barWidth*0.333 * healthRatio, barHeight);
+            }
+        }
+    }
+}
+
+// Define a function to draw health bars for all base buildings
+function drawHealthBars() {
+    for (let i = 0; i < buildings.length; i++) {
+        const building = buildings[i];
+        if (building.type === 'base') {
+            const maxHealth = 20; // Assuming 20 is the maximum health
+            const barWidth = gridSize;
+            const barHeight = 5;
+            const barX = building.x * gridSize - offsetX;
+            const barY = building.y * gridSize - offsetY - 10; // 10 units above the building
+            const healthRatio = building.hp / maxHealth;
+            let fillColor = 'rgb(0, 255, 0)';
+
+            if (building.hp > 10) {
+                fillColor = 'rgb(0, 255, 0)';
+            }
+            if (building.hp > 4 && building.hp < 11) {
+                fillColor = 'yellow';
+            }
+            if (building.hp < 5) {
+                fillColor = 'rgb(255, 0, 0)';
+            }
+            // Background of health bar
+            if (mapMode == false) {
+                context.fillStyle = 'black';
+                context.fillRect(barX, barY, barWidth, barHeight);
+                // Actual health level
+                context.fillStyle = fillColor;
+                context.fillRect(barX, barY, barWidth * healthRatio, barHeight);
+            } else if (mapMode == true) {
+                const barMapX = ((building.x * gridSize) - offsetX) * 0.333;   
+                const barMapY = (((building.y * gridSize) - offsetY) * 0.333)-5;
+                context.fillStyle = 'black';
+                context.fillRect(barMapX, barMapY, barWidth*0.333, barHeight);
+                context.fillStyle = fillColor;
+                context.fillRect(barMapX, barMapY, barWidth*0.333 * healthRatio, barHeight);
+            }
+        }
+    }
+}
+
 
 //*******************************************************************************************
 //***********************THIS IS WHERE THE GAME LOOP STARTS.*********************************
