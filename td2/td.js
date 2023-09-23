@@ -95,8 +95,12 @@ var displayStartMenu = true;
 var CCounter = 0;
 
 var incomePerTick = 0;
+var manualSpawned = 0;
 
-
+let lastPath = {
+    path: null,
+    end: null
+  };
 
     //make a grid
     var grid = [];
@@ -555,6 +559,7 @@ function addEventListeners() {
         if (event.key == 'G' || event.key == 'g') {
             const hives = generateHiveList(buildings);
             spawnEnemy(hives);
+            manualSpawned++;
         }
 
         // Add event listener to build or upgrade buildings
@@ -658,28 +663,79 @@ function generateHiveList(buildings) {
     }
     return hives;
 }
-
-// Spawn an enemy at a hive
+// Spawn enemies at hives
 function spawnEnemy(hives) {
     if (!hives.length) {
-        //console.log("No hives present to spawn enemy");
         return;
     }
 
-    // Choose a random hive from the hives array
     let hiveIndex = Math.floor(Math.random() * hives.length);
     let hive = hives[hiveIndex];
-    //console.log("Chose hive" + JSON.stringify(hive));
 
     var enemyX = hive.x;
     var enemyY = hive.y;
     var start = { i: enemyY, j: enemyX };
     var end = getNearestBaseCoordinates(enemyX, enemyY);
-    var enemyPath = AStar(start, end);
+    var enemyPath;
+
+    if(lastPath.path && lastPath.end.i === end.i && lastPath.end.j === end.j){
+        if(isPathStillValid(lastPath.path)) {
+            enemyPath = [...lastPath.path];
+            console.log("Using last path");
+        } else {
+            enemyPath = AStar(start, end);
+            lastPath = {
+                path: [...enemyPath],
+                end: { i: end.i, j: end.j }
+            };
+            console.log("Finding new path");
+        }
+    } else {
+        enemyPath = AStar(start, end);
+        lastPath = {
+            path: [...enemyPath],
+            end: { i: end.i, j: end.j }
+        };
+    }
+
     enemies.push(new Enemy(enemyX * gridSize, enemyY *  gridSize, enemyPath));
-    //console.log("enemyX: " + enemyX + " enemyY: " + enemyY);
-    //console.log("Spawned enemy at " + JSON.stringify(start) + ". Walking to" + JSON.stringify(end));
 }
+
+// Spawn many enemies at hives
+function spawnManyEnemies(hives, number) {
+    if (!hives.length) {
+        return;
+    }
+
+    let hiveIndex = Math.floor(Math.random() * hives.length);
+    let hive = hives[hiveIndex];
+
+    var enemyX = hive.x;
+    var enemyY = hive.y;
+    var start = { i: enemyY, j: enemyX };
+    var end = getNearestBaseCoordinates(enemyX, enemyY);
+    var enemyPath;
+        enemyPath = AStar(start, end);
+        for(let i = 0; i < number; i++) {
+    enemies.push(new Enemy(enemyX * gridSize, enemyY *  gridSize, enemyPath));
+        }
+}
+
+// Check if a path is still valid
+function isPathStillValid(path) {
+    for(let i = 0; i < path.length; i++) {
+        if(grid[path[i].i][path[i].j] === 1) {
+            // If there is a new obstacle at path[i], return false
+            //console.log("Found obstacle in previous path");
+            return false;
+            
+        }
+    }
+    //console.log("No obstacles in previous path.");
+    return true;
+}
+
+
 
 
 // ***********************************
@@ -986,63 +1042,81 @@ takeDamage() {
 
 
 
-
-// build building function
-function buildBuilding(type, money) {
-    let newBuilding;
-    let remainingMoney = money;
-
-    function onConfirmLocation(hoveredGridSquare) {
-        let i = Math.round(hoveredGridSquare.y);
-        let j = Math.round(hoveredGridSquare.x);
-        //console.log("i set to " + i + ", j set to " + j);
-        
-        if (i >= gridRows || j >= gridColumns) {
-            statusMessage = 'Invalid tower location';
-            statusMessageTimeout = 120;
+// BUILD A BUILDING
+    function buildBuilding(type, money) {
+        let newBuilding;
+        let remainingMoney = money;
+    
+        function onConfirmLocation(hoveredGridSquare) {
+            let i = Math.round(hoveredGridSquare.y);
+            let j = Math.round(hoveredGridSquare.x);
             
-            return remainingMoney;
-        } else if (grid[i][j] == 1) {
-            statusMessage = "Can't build a tower on another tower";
-            statusMessageTimeout = 120;
-            
-            return remainingMoney;
-        }
-        
-        if (hoveredGridSquare !== null) {
-            newBuilding = new Building(hoveredGridSquare.x, hoveredGridSquare.y, type);
-            const cost = newBuilding.calculateCost();
-            //console.log("Cost is " + cost);
-            if (remainingMoney < cost) {
-                statusMessage = "Insufficient funds.";
+            if (i >= gridRows || j >= gridColumns) {
+                statusMessage = 'Invalid tower location';
                 statusMessageTimeout = 120;
+                
+                return remainingMoney;
+            } else if (grid[i][j] == 1) {
+                statusMessage = "Can't build a tower on another tower";
+                statusMessageTimeout = 120;
+                
                 return remainingMoney;
             }
-            //console.log("Going to deduct cost. Money = " + remainingMoney);
-            remainingMoney -= cost;
-            //console.log("Money now " + remainingMoney)
-            //buildings[`${hoveredGridSquare.x},${hoveredGridSquare.y}`] = newBuilding;
-            buildings.push(newBuilding);
-                    isSubMenuActive = false;
-
-            if (type !== 'base') {
-                grid[i][j] = 1; // Set grid value to 1 if the building is not a base
-                for(var ix in enemies) { // force enemies to recalculate paths
-                    var enemy = enemies[ix];
-                    enemy.pathUpdateCountdown = 1;
-                    //console.log("Enemy " + enemy + " recalculating path");
+            
+            if (hoveredGridSquare !== null) {
+                newBuilding = new Building(hoveredGridSquare.x, hoveredGridSquare.y, type);
+                const cost = newBuilding.calculateCost();
+    
+                if (remainingMoney < cost) {
+                    statusMessage = "Insufficient funds.";
+                    statusMessageTimeout = 120;
+                    return remainingMoney;
                 }
+    
+                remainingMoney -= cost; 
+                buildings.push(newBuilding);
+                isSubMenuActive = false;
+                // Check if enemies can still reach the base. If not, force them to recalculate.
+                if (type !== 'base') {
+                    grid[i][j] = 1; // Set grid value to 1 if the building is not a base
+                    for (const enemy of enemies) { 
+                        if (enemy.isAttacking == true) {
+                            
+                            if (lastPath.path && lastPath.end.i === nearestBase.i && lastPath.end.j === nearestBase.j) {
+                                if(!isPathStillValid(lastPath.path)) {
+                                    enemy.pathUpdateCountdown = 1;
+                                } else {
+                                    enemy.path = [...lastPath.path];
+                                }
+                            } else {
+                                enemy.path = AStar(start, nearestBase);
+                                lastPath = {
+                                    path: [...enemy.path],
+                                    end: { i: nearestBase.i, j: nearestBase.j }
+                                };
+                            }
+                        
+                            let dx = nearestBase.j*gridSize - enemy.x;
+                            let dy = nearestBase.i*gridSize - enemy.y;
+                            let magnitude = Math.sqrt(dx*dx + dy*dy);
+                             
+                            if(magnitude != 0){
+                                enemy.x += (dx/magnitude) * enemy.speed;
+                                enemy.y += (dy/magnitude) * enemy.speed;
+                            }    
+                        } else if (!isPathStillValid(enemy.path)) {
+                            enemy.pathUpdateCountdown = 1;
+                        }
+                    }
+                    
+                }
+                buildMode = false;
             }
-		
-            //console.log(`A ${type} building was built at.` + i + j + ", value set to " + grid[i][j]);
-            buildMode = false;
-
+            return remainingMoney;
         }
-        return remainingMoney;
+        return onConfirmLocation;
     }
-		    return onConfirmLocation;
-
-}
+    
 
 //Upgrade building
 function upgradeBuilding(hoveredGridSquare) {
@@ -1651,86 +1725,6 @@ function drawMessages() {
     }
 }
 
-// Define a function to draw health bars for all base buildings
-function drawHealthBars() {
-    for (let i = 0; i < buildings.length; i++) {
-        const building = buildings[i];
-        if (building.type === 'base') {
-            const maxHealth = 20; // Assuming 20 is the maximum health
-            const barWidth = gridSize;
-            const barHeight = 5;
-            const barX = building.x * gridSize - offsetX;
-            const barY = building.y * gridSize - offsetY - 10; // 10 units above the building
-            const healthRatio = building.hp / maxHealth;
-            let fillColor = 'rgb(0, 255, 0)';
-
-            if (building.hp > 10) {
-                fillColor = 'rgb(0, 255, 0)';
-            }
-            if (building.hp > 4 && building.hp < 11) {
-                fillColor = 'yellow';
-            }
-            if (building.hp < 5) {
-                fillColor = 'rgb(255, 0, 0)';
-            }
-            // Background of health bar
-            if (mapMode == false) {
-                context.fillStyle = 'black';
-                context.fillRect(barX, barY, barWidth, barHeight);
-                // Actual health level
-                context.fillStyle = fillColor;
-                context.fillRect(barX, barY, barWidth * healthRatio, barHeight);
-            } else if (mapMode == true) {
-                const barMapX = ((building.x * gridSize) - offsetX) * 0.333;   
-                const barMapY = (((building.y * gridSize) - offsetY) * 0.333)-5;
-                context.fillStyle = 'black';
-                context.fillRect(barMapX, barMapY, barWidth*0.333, barHeight);
-                context.fillStyle = fillColor;
-                context.fillRect(barMapX, barMapY, barWidth*0.333 * healthRatio, barHeight);
-            }
-        }
-    }
-}
-// Define a function to draw health bars for all base buildings
-function drawHealthBars() {
-    for (let i = 0; i < buildings.length; i++) {
-        const building = buildings[i];
-        if (building.type === 'base') {
-            const maxHealth = 20; // Assuming 20 is the maximum health
-            const barWidth = gridSize;
-            const barHeight = 5;
-            const barX = building.x * gridSize - offsetX;
-            const barY = building.y * gridSize - offsetY - 10; // 10 units above the building
-            const healthRatio = building.hp / maxHealth;
-            let fillColor = 'rgb(0, 255, 0)';
-
-            if (building.hp > 10) {
-                fillColor = 'rgb(0, 255, 0)';
-            }
-            if (building.hp > 4 && building.hp < 11) {
-                fillColor = 'yellow';
-            }
-            if (building.hp < 5) {
-                fillColor = 'rgb(255, 0, 0)';
-            }
-            // Background of health bar
-            if (mapMode == false) {
-                context.fillStyle = 'black';
-                context.fillRect(barX, barY, barWidth, barHeight);
-                // Actual health level
-                context.fillStyle = fillColor;
-                context.fillRect(barX, barY, barWidth * healthRatio, barHeight);
-            } else if (mapMode == true) {
-                const barMapX = ((building.x * gridSize) - offsetX) * 0.333;   
-                const barMapY = (((building.y * gridSize) - offsetY) * 0.333)-5;
-                context.fillStyle = 'black';
-                context.fillRect(barMapX, barMapY, barWidth*0.333, barHeight);
-                context.fillStyle = fillColor;
-                context.fillRect(barMapX, barMapY, barWidth*0.333 * healthRatio, barHeight);
-            }
-        }
-    }
-}
 
 // Define a function to draw health bars for all base buildings
 function drawHealthBars() {
@@ -1772,6 +1766,8 @@ function drawHealthBars() {
         }
     }
 }
+
+
 
 
 //*******************************************************************************************
@@ -1839,7 +1835,7 @@ if(hives.length === 0)
 }
 
 // Spawn enemies
-spawnInfluence = (0.01 + (0.00065 * killCount));
+spawnInfluence = (0.01 + (0.00065 * (killCount - manualSpawned)));
 if(Math.random() < spawnInfluence) {
 spawnEnemy(hives);
 }
@@ -1850,14 +1846,12 @@ createHiveNearBase(money);
 }
 
 // HUGE WAVES
-if (killCount % 1000 === 0 && killCount > 1)
+if (killCount % 2000 === 0 && killCount > 1)
 {
 	statusMessage = 'A HUGE WAVE OF ENEMIES SPAWNED';
         statusMessageTimeout = 120;
-	for (let i = 0; i < (killCount / 20); i++) {
-	spawnEnemy(hives);
-
-	}
+        var number = killCount / 20
+	spawnManyEnemies(hives, number);
 }
 
 
