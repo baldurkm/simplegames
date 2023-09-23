@@ -1341,23 +1341,16 @@ function findInArray(arr, node) {
 }
 
 // Function AStar
-function AStar(start, goal){
-    
-    var openList = [];
+function AStar(start, goal) {
+    start.g = 0;
+    start.f = heuristic(start, goal, goal);
+
+    var openList = [start];
     var closedList = [];
-    openList.push(start);
- 
+
     while(openList.length > 0) {
-        // Best next option
-        var lowInd = 0;
-        for(var i=0; i<openList.length; i++) {
-            if(openList[i].f < openList[lowInd].f) { 
-                lowInd = i; 
-            }
-        }
-        var currentNode = openList[lowInd];
- 
-        // End case
+        var currentNode = openList.reduce((prev, curr) => prev.f < curr.f ? prev : curr);
+
         if(currentNode.i === goal.i && currentNode.j === goal.j) {
             var curr = currentNode;
             var ret = [];
@@ -1367,46 +1360,45 @@ function AStar(start, goal){
             }
             return ret.reverse();
         }
- 
-        // Normal case
+
         removeFromArray(openList, currentNode);
         closedList.push(currentNode);
- 
+
         var neighbors = getNeighbors(grid, currentNode);
         
         for(var i=0; i<neighbors.length;i++) {
             var neighbor = neighbors[i];
-            // Not a valid node
+
             if(findInArray(closedList, neighbor) || grid[neighbor.i][neighbor.j] === 1) {
                 continue;
             }
- 
-            var gScore = currentNode.g + 1; // 1 is the distance from a node to it's neighbor
+
+            var gScore = currentNode.g + 1; 
             var gScoreIsBest = false;
- 
+
             if(!findInArray(openList, neighbor)) {
-                // This the first time we have arrived at this node, it must be the best
-                gScoreIsBest = true;
-                neighbor.h = heuristic(neighbor, goal, start);
+                gScoreIsBest = true; 
+                neighbor.g = gScore;
+                neighbor.h = heuristic(neighbor, start, goal); 
+                neighbor.f = neighbor.g + neighbor.h;
                 openList.push(neighbor);
-            }
+            } 
+            
             else if(gScore < neighbor.g) {
-                // We have already seen the node, but last time it had a worse g (distance from start)
                 gScoreIsBest = true;
             }
- 
+
             if(gScoreIsBest) {
-                // Found an optimal (so far) path to this node.	 Take score for node to see how good it is.	
                 neighbor.parent = currentNode;
                 neighbor.g = gScore;
                 neighbor.f = neighbor.g + neighbor.h;
             }
         }
     }
- 
-    // No result was found - empty array signifies failure to find path
+
     return [];
 }
+
 
 
 
