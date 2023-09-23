@@ -681,14 +681,14 @@ function spawnEnemy(hives) {
     if(lastPath.path && lastPath.end.i === end.i && lastPath.end.j === end.j){
         if(isPathStillValid(lastPath.path)) {
             enemyPath = [...lastPath.path];
-            console.log("Using last path");
+            //console.log("Using last path");
         } else {
             enemyPath = AStar(start, end);
             lastPath = {
                 path: [...enemyPath],
                 end: { i: end.i, j: end.j }
             };
-            console.log("Finding new path");
+            //console.log("Finding new path");
         }
     } else {
         enemyPath = AStar(start, end);
@@ -1008,12 +1008,15 @@ takeDamage() {
 
                                         // Draw a line between tower and enemy within range
                                         //context.drawImage(towerImageFiring, this.x, this.y, gridSize, gridSize); // Draw tower image
+                                        if (mapMode == false)
+                                        {
                                         context.beginPath();
                                         context.strokeStyle = 'blue';
                                         context.moveTo((this.x * gridSize) - offsetX + 32, (this.y * gridSize) - offsetY + 32);  // Tower center
                                         context.lineTo((enemy.x) - offsetX + 32, (enemy.y) - offsetY + 32);  // Enemy center
                                         context.lineWidth = 4;
                                         context.stroke();
+                                        }
                                         enemy.hp = enemy.hp - this.damage;                    
                                         enemy.speed = enemy.speed * this.slow;
                                                     // If enemy's HP reached zero, delete it
@@ -1081,7 +1084,7 @@ takeDamage() {
                     grid[i][j] = 1; // Set grid value to 1 if the building is not a base
                     for (const enemy of enemies) { 
                         if (enemy.isAttacking == true) {
-                            
+                            let nearestBase = getNearestBaseCoordinates(this.x + offsetX, this.y + offsetY);
                             if (lastPath.path && lastPath.end.i === nearestBase.i && lastPath.end.j === nearestBase.j) {
                                 if(!isPathStillValid(lastPath.path)) {
                                     enemy.pathUpdateCountdown = 1;
@@ -1268,10 +1271,10 @@ function Enemy(x, y) {
 //        console.log("NearestBase I: " + nearestBase.i + "NearestBase J" + nearestBase.j);
 //        let distanceToNearestBase = Math.sqrt((this.x + offsetX - nearestBase.j * gridSize) ** 2 + (this.y + offsetY - nearestBase.i * gridSize) ** 2);
 //        console.log(JSON.stringify(distanceToNearestBase));
-        let someCriteriaForAttack = true; // TODO: Define this criteria
+        //let someCriteriaForAttack = true; // TODO: Define this criteria
         if (nearestBase !== null) {
         // Add criteria for initiating the attack: if enemy is close to the base
-        if (someCriteriaForAttack && Math.abs(nearestBase.j - this.x/gridSize) <= 1 && Math.abs(nearestBase.i - this.y/gridSize) <= 1) {
+        if (Math.abs(nearestBase.j - this.x/gridSize) <= 1 && Math.abs(nearestBase.i - this.y/gridSize) <= 1) {
             //console.log("Initiating attack");
             this.isAttacking = true;
             this.speed = 1;
@@ -1289,7 +1292,8 @@ function Enemy(x, y) {
         var gridX = Math.round((this.x) / gridSize);
         var gridY = Math.round((this.y) / gridSize);
         if (nearestBase !== null) {
-        if (!this.path.length || this.justChangedDirection || --this.pathUpdateCountdown <= 0) {
+        //if (!this.path.length || this.justChangedDirection || --this.pathUpdateCountdown <= 0) {
+        if (!this.path.length || --this.pathUpdateCountdown <= 0) {
             this.justChangedDirection = false;
             var startNode = { i: gridY, j: gridX, f: 0, g: 0, h: 0 };
             //console.log("Start Node: "+ JSON.stringify(startNode));
@@ -1501,18 +1505,35 @@ function drawMap() {
         // Draw the background using the scaled offset and dimensions
         //console.log("Scaled offset, " + scaledOffsetX + ", " + scaledOffsetY);
         //context.drawImage(backgroundCanvas, scaledOffsetX, scaledOffsetY, scaledSourceWidth, scaledSourceHeight, 0, 0, canvas.width, canvas.height);
-        context.drawImage(backgroundCanvas, offsetX, offsetY, scaledSourceWidth, scaledSourceHeight, 0, 0, canvas.width, canvas.height);
+        var mapModeOffsetX = offsetX - canvas.width;
+        var mapModeOffsetY = offsetY - canvas.height;
+        context.drawImage(backgroundCanvas, mapModeOffsetX, mapModeOffsetY, scaledSourceWidth, scaledSourceHeight, 0, 0, canvas.width, canvas.height);
 
         // Draw black squares for buildings in map mode
         context.fillStyle = 'black';
+        context.strokeStyle = 'white';
+        context.lineWidth = 2;
         for (const building of buildings) {
                 //console.log("Checking building: " + JSON.stringify(building));
                 // Calculate building's position on the map
-                const mapX = ((building.x * gridSize) - offsetX) * 0.333;
-                const mapY = ((building.y * gridSize) - offsetY) * 0.333;
+                const mapX = ((building.x * gridSize) - mapModeOffsetX) * 0.333;
+                const mapY = ((building.y * gridSize) - mapModeOffsetY) * 0.333;
+                //console.log("Building type: " + JSON.stringify(building.type));
+                if (building.type == 'base')
+                {
+                    context.fillStyle = 'blue';
+                } else if (building.type == 'hive')
+                {
+                    context.fillStyle = 'red';
+                }
+                else 
+                {
+                    context.fillStyle = 'black';
+                }
                 // Draw a black square as a placeholder for the building
                 //console.log("Drawing black square at " + mapX + ", " + mapY);
                 context.fillRect(mapX, mapY, gridSize * 0.333, gridSize * 0.333);
+                context.strokeRect(mapX, mapY, gridSize * 0.333, gridSize * 0.333);
             
         }
             // Draw red dots for enemies in map mode
@@ -1520,8 +1541,8 @@ function drawMap() {
         for (const enemy of enemies) {
             //console.log("Checking enemy: " + JSON.stringify(enemy));
             // Calculate enemy's position on the map
-            const mapX = ((enemy.x) - offsetX) * 0.333;
-            const mapY = ((enemy.y) - offsetY) * 0.333;
+            const mapX = ((enemy.x) - mapModeOffsetX) * 0.333;
+            const mapY = ((enemy.y) - mapModeOffsetY) * 0.333;
             // Draw a red dot as a placeholder for the enemy
             //console.log("Drawing red dot at " + mapX + ", " + mapY);
             context.beginPath();
@@ -1627,12 +1648,13 @@ function renderProjectiles() {
 
         if(distance < 10){
             //console.log("Bomb just hit an enemy!");
-
+            if (mapMode == false)
+            {
             context.beginPath();
             context.arc(projectile.x - offsetX, projectile.y - offsetY, 50, 0, Math.PI * 2, true); 
             context.fillStyle = "red";
             context.fill();
-
+            }
             // If we hit an enemy, iterate through all other enemies and check if splash damage should apply
             var splashRadius = 100;  // Set this to whatever your desired splash radius is
             for(var j in enemies){
@@ -1666,10 +1688,13 @@ function renderProjectiles() {
             projectile.x += velocityX;
             projectile.y += velocityY;
             // Draw the projectile
+            if (mapMode == false)
+            {
             context.beginPath();
             context.arc(projectile.x - offsetX, projectile.y - offsetY, 10, 0, Math.PI * 2, false);  // Change the "10" to your desired radius
             context.fillStyle = "black";
             context.fill();
+            }
 
         }  
 		
@@ -1756,8 +1781,8 @@ function drawHealthBars() {
                 context.fillStyle = fillColor;
                 context.fillRect(barX, barY, barWidth * healthRatio, barHeight);
             } else if (mapMode == true) {
-                const barMapX = ((building.x * gridSize) - offsetX) * 0.333;   
-                const barMapY = (((building.y * gridSize) - offsetY) * 0.333)-5;
+                const barMapX = (((building.x * gridSize) - offsetX + canvas.width) * 0.333);   
+                const barMapY = (((building.y * gridSize) - offsetY + canvas.height) * 0.333) - 5;
                 context.fillStyle = 'black';
                 context.fillRect(barMapX, barMapY, barWidth*0.333, barHeight);
                 context.fillStyle = fillColor;
