@@ -1527,7 +1527,7 @@ function sendNextWave()
         waveCount++;
         statusMessage = 'WAVE ' + waveCount;
         statusMessageTimeout = 120;
-        var number = ((waveCount * 4) - 2);
+        var number = Math.trunc(((waveCount * 3) - 1) + (killCount / 15)); // how many enemies each wave
         spawnManyEnemies(hives, number);
         waveDone = false;
         waveTimer = 0;
@@ -1607,7 +1607,7 @@ function drawMap() {
 
 
     } else {
-        // Draw the background using the original offset and dimensions
+        // Draw the background using the original offset //////////////////////////////*-   and dimensions
         //console.log("Offset, " + offsetX + ", " + offsetY);
         context.drawImage(backgroundCanvas, offsetX, offsetY, canvas.width, canvas.height, 0, 0, canvas.width, canvas.height);
     }
@@ -1865,6 +1865,8 @@ var gameLoop = setInterval(function(){
         if(Object.values(buildings)[i].type === 'base' && !Object.values(buildings)[i].destroyed){
             containsBase = true;
             break;
+        } else {
+            containsBase = false;
         }
     }
     
