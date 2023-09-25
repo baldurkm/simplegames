@@ -733,7 +733,7 @@ function spawnManyEnemies(hives, number) {
         enemies.push(new Enemy(enemyX * gridSize, enemyY * gridSize, enemyPath));
         i++;
 
-        setTimeout(spawn, 250);
+        setTimeout(spawn, 500);
     }
     
     spawn();
@@ -1876,7 +1876,7 @@ var gameLoop = setInterval(function(){
     
 // Spawn the first hive
 const hives = generateHiveList(buildings);
-if(hives.length === 0 && containsBase && waveTimer < 30)
+if(hives.length === 0 && containsBase && waveTimer < 300)
 {
     createHiveNearBase(money);
 }
