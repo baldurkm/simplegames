@@ -1062,6 +1062,13 @@ takeDamage() {
         function onConfirmLocation(hoveredGridSquare) {
             let i = Math.round(hoveredGridSquare.y);
             let j = Math.round(hoveredGridSquare.x);
+
+            if (!waveDone)
+            {
+                statusMessage = "Wait until the end of the wave."
+                statusMessageTimeout = 120;
+                return remainingMoney;
+            }
             
             if (i >= gridRows || j >= gridColumns) {
                 statusMessage = 'Invalid tower location';
@@ -1074,6 +1081,7 @@ takeDamage() {
                 
                 return remainingMoney;
             }
+
             
             
             if (hoveredGridSquare !== null) {
