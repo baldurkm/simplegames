@@ -733,7 +733,7 @@ function spawnManyEnemies(hives, number) {
         enemies.push(new Enemy(enemyX * gridSize, enemyY * gridSize, enemyPath));
         i++;
 
-        setTimeout(spawn, 10);
+        setTimeout(spawn, 250);
     }
     
     spawn();
@@ -1764,13 +1764,7 @@ function drawMessages() {
     context.fillText('INCOME: ' + incomePerTick + ' in ' + Math.trunc(countDownToIncome/30), canvas.width - 270, canvas.height - 20 );
 
     
-        if (containsBase == false && killCount > 1) {
-        //console.log("No bases left.");
-        statusMessage = 'Game Over.';
-        statusMessageTimeout = 9999;
-        //clearInterval(gameLoop);  // End the game loop
 
-    }
 }
 
 
@@ -1828,6 +1822,13 @@ var gameLoop = setInterval(function(){
     context.clearRect(0, 0, canvas.width, canvas.height);
     astarCalls = 0;
     let containsBase = Object.values(buildings).some(building => building.type === 'base');
+    if (containsBase === false && killCount > 1) {
+        //console.log("No bases left.");
+        statusMessage = 'Game Over.';
+        statusMessageTimeout = 9999;
+        //clearInterval(gameLoop);  // End the game loop
+
+    }
 
     drawMap(); // DRAW THE MAP
    
@@ -1861,7 +1862,10 @@ var gameLoop = setInterval(function(){
 
 
     // INCOME
-    if (containsBase) countDownToIncome -= 1;
+    if (containsBase)
+    { 
+        countDownToIncome -= 1;
+    }
     if (countDownToIncome === 0) {
     income();
     countDownToIncome = 600;
@@ -1896,7 +1900,7 @@ if (waveDone && containsBase)
         waveCount++;
         statusMessage = 'WAVE ' + waveCount;
         statusMessageTimeout = 120;
-        var number = (2 + (waveCount * 5));
+        var number = (1 + (waveCount * 3));
         spawnManyEnemies(hives, number);
         waveDone = false;
     }
