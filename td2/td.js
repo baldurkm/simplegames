@@ -99,7 +99,7 @@ let containsBase = false;
 var displayStartMenu = true;
 
 var CCounter = 0;
-var countDownToIncome = 600;
+//var countDownToIncome = 600;
 var incomePerTick = 0;
 var manualSpawned = 0;
 
@@ -191,6 +191,10 @@ window.addEventListener('keydown', function(event) {
             case 'M':
                 mapMode = !mapMode;
                 break;
+            case 'g':
+            case 'G':
+                    sendNextWave();
+                    break;
             case 'Esc': 
             case 'Escape':
                 upgradeMode = false;
@@ -284,6 +288,9 @@ function handleMenuClick(e) {
                 }
                 else if (names[i] === "upgrade") {
                     upgradeMode = !upgradeMode;
+                }
+                else if (names[i] === "spawn") {
+                    sendNextWave();
                 }
             else if (names[i] === "map") {
                 mapMode = !mapMode;
@@ -560,31 +567,11 @@ function renderBackgroundTexture() {
 }
 
 
-//let bPressed = false;
-//ADD EVENT LISTENERS
-function addEventListeners() {
-    // ACTION KEYS
-    document.addEventListener('keydown', function(event) {
-
-        if (event.key == 'G' || event.key == 'g') {
-            const hives = generateHiveList(buildings);
-            spawnEnemy(hives);
-            manualSpawned++;
-        }
-
-        // Add event listener to build or upgrade buildings
-            /*if ((event.key == 'X' || event.key == 'x') && !bPressed) {
-                createHiveNearBase(money);
-                bPressed = true;
-            }
-                if (event.key == 'X' || event.key == 'x') {
-                    bPressed = false;
-                }*/
-
-});
-
+// EVENT LISTENERS FOR KEYPRESSES
 // Move the screen
     // On keydown, change the state to true
+
+    function addEventListeners() {
 window.addEventListener('keydown', event => {
     keyStates[event.key] = true;
 });
@@ -629,8 +616,8 @@ setInterval(() => {
         // Update the hoveredGridSquare
         hoveredGridSquare = getGridSquare(gridX, gridY);
     });
-    
 }
+
 
 // Get grid square number function
 function getGridSquare(gridX, gridY) {
@@ -714,7 +701,7 @@ function spawnEnemy(hives) {
 // spawn many enemies
 function spawnManyEnemies(hives, number) {
     let i = 0;
-
+    var spawnRate = 500/(1+(waveCount/10));
     function spawn() {
         if (!hives.length || i >= number) {
             return;
@@ -733,7 +720,7 @@ function spawnManyEnemies(hives, number) {
         enemies.push(new Enemy(enemyX * gridSize, enemyY * gridSize, enemyPath));
         i++;
 
-        setTimeout(spawn, 500);
+        setTimeout(spawn, spawnRate);
     }
     
     spawn();
@@ -1102,6 +1089,7 @@ takeDamage() {
                 remainingMoney -= cost; 
                 buildings.push(newBuilding);
                 isSubMenuActive = false;
+                checkIncome();
                 // Check if enemies can still reach the base. If not, force them to recalculate.
                 if (type !== 'base') {
                     grid[i][j] = 1; // Set grid value to 1 if the building is not a base
@@ -1115,6 +1103,9 @@ takeDamage() {
                                     enemy.path = [...lastPath.path];
                                 }
                             } else {
+                                var enemyX = enemy.x;
+                                var enemyY = enemy.y;
+                                var start = { i: enemyY, j: enemyX };
                                 enemy.path = AStar(start, nearestBase);
                                 lastPath = {
                                     path: [...enemy.path],
@@ -1166,6 +1157,7 @@ function upgradeBuilding(hoveredGridSquare) {
   
     remainingMoney -= upgradeCost;
     building.upgrade();
+    checkIncome();
   }
   
   return remainingMoney;
@@ -1210,7 +1202,7 @@ function Bomb(x, y, target){
 function Enemy(x, y) {
     this.x = x;
     this.y = y;
-    this.speed = 3;
+    this.speed = 3 * (1+(waveCount/100));
     this.hp = 7;
     this.direction = 'down';
     this.justChangedDirection = false;
@@ -1516,6 +1508,37 @@ function Projectile(x, y, target){
     this.damage = 3
 }
 
+function sendNextWave()
+{
+    if (containsBase == true)
+    {
+
+        if (waveDone)
+    {
+        const hives = generateHiveList(buildings);
+        waveCount++;
+        statusMessage = 'WAVE ' + waveCount;
+        statusMessageTimeout = 120;
+        var number = ((waveCount * 4) - 2);
+        spawnManyEnemies(hives, number);
+        waveDone = false;
+        waveTimer = 0;
+
+    }
+    else
+    {
+        statusMessage = "Finish current wave before sending next.";
+        statusMessageTimeout = 120;
+    }
+
+    }
+    else
+    {
+        statusMessage = "You must build a base first.";
+        statusMessageTimeout = 120;
+    }
+}
+
 // ***************************************************
 // ****************DRAWING FUNCTIONS******************
 // ***************************************************
@@ -1646,7 +1669,7 @@ if (upgradeMode)
 }
 }
 
-function income()
+function checkIncome()
 {
     incomePerTick = 0;
     for (var key in buildings) {
@@ -1654,8 +1677,15 @@ function income()
             incomePerTick += buildings[key].generateIncome();
         }
     }
-    // Add the generated income to the player's total income
-    money += incomePerTick;
+    console.log("Checked income: " + incomePerTick);
+
+}
+
+function income()
+{
+        checkIncome();
+        // Add the generated income to the player's total income
+        money += incomePerTick;
 }
 
 function renderProjectiles() {
@@ -1761,7 +1791,7 @@ function drawMessages() {
     context.font = '20px Impact';
     //context.fillText('BASES: ' + baseCount, canvas.width - 270, canvas.height - 50);
     context.fillText('WAVE ' + (waveCount + 1) + ' in ' + Math.trunc(waveTimer/30), canvas.width - 270, canvas.height - 50);
-    context.fillText('INCOME: ' + incomePerTick + ' in ' + Math.trunc(countDownToIncome/30), canvas.width - 270, canvas.height - 20 );
+    context.fillText('INCOME: ' + incomePerTick + ' after wave', canvas.width - 270, canvas.height - 20 );
 
     
 
@@ -1821,7 +1851,15 @@ var gameLoop = setInterval(function(){
     gameTimer += 1;
     context.clearRect(0, 0, canvas.width, canvas.height);
     astarCalls = 0;
-    let containsBase = Object.values(buildings).some(building => building.type === 'base');
+    
+    //let containsBase = false;
+    for(let i = 0; i < Object.values(buildings).length; i++){
+        if(Object.values(buildings)[i].type === 'base' && !Object.values(buildings)[i].destroyed){
+            containsBase = true;
+            break;
+        }
+    }
+    
     if (containsBase === false && killCount > 1) {
         //console.log("No bases left.");
         statusMessage = 'Game Over.';
@@ -1862,14 +1900,14 @@ var gameLoop = setInterval(function(){
 
 
     // INCOME
-    if (containsBase)
+/*    if (containsBase)
     { 
         countDownToIncome -= 1;
     }
     if (countDownToIncome === 0) {
     income();
     countDownToIncome = 600;
-    }
+    }*/
 
     
 
@@ -1897,12 +1935,7 @@ if (waveDone && containsBase)
 {
     if (waveTimer == 0)
     {
-        waveCount++;
-        statusMessage = 'WAVE ' + waveCount;
-        statusMessageTimeout = 120;
-        var number = (1 + (waveCount * 3));
-        spawnManyEnemies(hives, number);
-        waveDone = false;
+        sendNextWave();
     }
     else
     {
@@ -1918,6 +1951,8 @@ if (enemies.length == 0 && !waveDone)
     statusMessageTimeout = 120;
     waveTimer = 500;
     waveDone = true;
+    checkIncome();
+    income();
 }
 
 
