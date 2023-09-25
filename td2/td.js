@@ -70,6 +70,7 @@ var hoveredGridSquare = null;
 var projectiles = [];
 var mapModeMultiplier = 1;
 
+
 var tileSize = 32; // Tile size in pixels
 var mapWidth = 18040; // Width of the game map
 var mapHeight = 9000; // Height of the game map
@@ -88,14 +89,23 @@ var killReward = 10;
 
 let keyStates = {};
 
+let waveDone = true;
+var waveCount = 0;
+var waveTimer = 500;
+
+let isFirstBuilding = true;
 let containsBase = false;
 
 var displayStartMenu = true;
 
 var CCounter = 0;
-
+var countDownToIncome = 600;
 var incomePerTick = 0;
 var manualSpawned = 0;
+
+// pathfinding throttling
+let astarCalls = 0;
+const astarCallLimit = 10;
 
 let lastPath = {
     path: null,
@@ -264,7 +274,7 @@ function handleMenuClick(e) {
                     buildMode = true;
                     towerToPlace = 'fence';
                 }
-            }, 200);
+            }, 20);
 
             } else {
                 context.drawImage(depressedButtonImages[i], x, y, BUTTON_WIDTH, BUTTON_HEIGHT);
@@ -278,7 +288,7 @@ function handleMenuClick(e) {
             else if (names[i] === "map") {
                 mapMode = !mapMode;
             }
-        }, 200);
+        }, 20);
             }
             return;
         }
@@ -550,7 +560,7 @@ function renderBackgroundTexture() {
 }
 
 
-let bPressed = false;
+//let bPressed = false;
 //ADD EVENT LISTENERS
 function addEventListeners() {
     // ACTION KEYS
@@ -563,13 +573,13 @@ function addEventListeners() {
         }
 
         // Add event listener to build or upgrade buildings
-            if ((event.key == 'X' || event.key == 'x') && !bPressed) {
+            /*if ((event.key == 'X' || event.key == 'x') && !bPressed) {
                 createHiveNearBase(money);
                 bPressed = true;
             }
                 if (event.key == 'X' || event.key == 'x') {
                     bPressed = false;
-                }
+                }*/
 
 });
 
@@ -701,24 +711,32 @@ function spawnEnemy(hives) {
     enemies.push(new Enemy(enemyX * gridSize, enemyY *  gridSize, enemyPath));
 }
 
-// Spawn many enemies at hives
+// spawn many enemies
 function spawnManyEnemies(hives, number) {
-    if (!hives.length) {
-        return;
-    }
+    let i = 0;
 
-    let hiveIndex = Math.floor(Math.random() * hives.length);
-    let hive = hives[hiveIndex];
-
-    var enemyX = hive.x;
-    var enemyY = hive.y;
-    var start = { i: enemyY, j: enemyX };
-    var end = getNearestBaseCoordinates(enemyX, enemyY);
-    var enemyPath;
-        enemyPath = AStar(start, end);
-        for(let i = 0; i < number; i++) {
-    enemies.push(new Enemy(enemyX * gridSize, enemyY *  gridSize, enemyPath));
+    function spawn() {
+        if (!hives.length || i >= number) {
+            return;
         }
+
+        let hiveIndex = Math.floor(Math.random() * hives.length);
+        let hive = hives[hiveIndex];
+
+        var enemyX = hive.x;
+        var enemyY = hive.y;
+        var start = { i: enemyY, j: enemyX };
+        var end = getNearestBaseCoordinates(enemyX, enemyY);
+        var enemyPath;
+        enemyPath = AStar(start, end);
+
+        enemies.push(new Enemy(enemyX * gridSize, enemyY * gridSize, enemyPath));
+        i++;
+
+        setTimeout(spawn, 10);
+    }
+    
+    spawn();
 }
 
 // Check if a path is still valid
@@ -916,6 +934,10 @@ takeDamage() {
         return this.cost * (this.level+1) * this.level;
     }
 
+    isMaxLevel() {
+        return this.level >= this.maxLevel;
+    }
+
     draw() {
 
         if (this.ready && mapMode == false) {
@@ -1065,6 +1087,7 @@ takeDamage() {
                 
                 return remainingMoney;
             }
+            
             
             if (hoveredGridSquare !== null) {
                 newBuilding = new Building(hoveredGridSquare.x, hoveredGridSquare.y, type);
@@ -1286,23 +1309,24 @@ function Enemy(x, y) {
         
     };
 
-    // ENEMY MOVEMENT
     this.move = function () {
         let nearestBase = getNearestBaseCoordinates(this.x + offsetX, this.y + offsetY);
         var gridX = Math.round((this.x) / gridSize);
         var gridY = Math.round((this.y) / gridSize);
         if (nearestBase !== null) {
-        //if (!this.path.length || this.justChangedDirection || --this.pathUpdateCountdown <= 0) {
-        if (!this.path.length || --this.pathUpdateCountdown <= 0) {
-            this.justChangedDirection = false;
-            var startNode = { i: gridY, j: gridX, f: 0, g: 0, h: 0 };
-            //console.log("Start Node: "+ JSON.stringify(startNode));
-            var {i: endNodeI, j: endNodeJ} = getNearestBaseCoordinates(this.x + offsetX, this.y + offsetY);
-            //console.log("getNearestBaseCoordinates: " + JSON.stringify(getNearestBaseCoordinates(this.x + offsetX, this.y + offsetY)));
-            var endNode = { i: endNodeI, j: endNodeJ, f: 0, g: 0, h: 0 };
-            this.path = AStar(startNode, endNode);
-            this.pathUpdateCountdown = this.pathUpdateFrequency;
+            if (!this.path.length || --this.pathUpdateCountdown <= 0) {
+                // Skip AStar call if limit reached
+                if (astarCalls >= astarCallLimit) return;
+    
+                this.justChangedDirection = false;
+                var startNode = { i: gridY, j: gridX, f: 0, g: 0, h: 0 };
+                var {i: endNodeI, j: endNodeJ} = getNearestBaseCoordinates(this.x + offsetX, this.y + offsetY);
+                var endNode = { i: endNodeI, j: endNodeJ, f: 0, g: 0, h: 0 };
+                this.path = AStar(startNode, endNode);
+                this.pathUpdateCountdown = this.pathUpdateFrequency;
             //console.log("Picked path: " + JSON.stringify(this.path));
+
+            astarCalls++;
         }
     }
     
@@ -1589,13 +1613,13 @@ if (upgradeMode)
 {
     if (hoveredGridSquare !== null) {
         //var key = `${hoveredGridSquare.x},${hoveredGridSquare.y}`
-        if (hoveredGridSquare && hoveredGridSquare.building) {
+        if (hoveredGridSquare && hoveredGridSquare.building && !hoveredGridSquare.building.isMaxLevel()) {
             const upgradeCost = hoveredGridSquare.building.calculateUpgradeCost();
             //console.log("Upgrade cost: " + upgradeCost);
 
             // Assuming ctx is your canvas context
             // Set styles for the box
-	    context.beginPath();
+            context.beginPath();
             context.fillStyle = "#333";
             context.strokeStyle = '#fff';
 
@@ -1620,7 +1644,6 @@ if (upgradeMode)
         }
     }
 }
-
 }
 
 function income()
@@ -1736,11 +1759,11 @@ function drawMessages() {
     context.fillStyle = 'white';
     context.textAlign = 'right';
     context.font = '20px Impact';
-    context.fillText('BASES: ' + baseCount, canvas.width - 270, canvas.height - 50);
-    context.fillText('INCOME: ' + incomePerTick, canvas.width - 270, canvas.height - 20);
+    //context.fillText('BASES: ' + baseCount, canvas.width - 270, canvas.height - 50);
+    context.fillText('WAVE ' + (waveCount + 1) + ' in ' + Math.trunc(waveTimer/30), canvas.width - 270, canvas.height - 50);
+    context.fillText('INCOME: ' + incomePerTick + ' in ' + Math.trunc(countDownToIncome/30), canvas.width - 270, canvas.height - 20 );
 
     
-    let containsBase = Object.values(buildings).some(building => building.type === 'base');
         if (containsBase == false && killCount > 1) {
         //console.log("No bases left.");
         statusMessage = 'Game Over.';
@@ -1803,6 +1826,8 @@ var gameLoop = setInterval(function(){
     // Updated game loop
     gameTimer += 1;
     context.clearRect(0, 0, canvas.width, canvas.height);
+    astarCalls = 0;
+    let containsBase = Object.values(buildings).some(building => building.type === 'base');
 
     drawMap(); // DRAW THE MAP
    
@@ -1836,49 +1861,73 @@ var gameLoop = setInterval(function(){
 
 
     // INCOME
-    if (gameTimer % 600 === 0) {
+    if (containsBase) countDownToIncome -= 1;
+    if (countDownToIncome === 0) {
     income();
+    countDownToIncome = 600;
     }
+
+    
 
     
 // Spawn the first hive
 const hives = generateHiveList(buildings);
-if(hives.length === 0)
+if(hives.length === 0 && containsBase && waveTimer < 30)
 {
-    let containsBase = false;
-    let buildingValues = Object.values(buildings);
-    for(let i=0; i<buildingValues.length; i++){
-        //console.log("Cheking: " + JSON.stringify(buildingValues[i]) + ". Type is " + JSON.stringify(buildingValues[i].type));
-        if(buildingValues[i].type === 'base'){
-            //console.log("At least one base building has been built.");
-            createHiveNearBase(money);
-            //console.log("Hives now " + hives.length);
-            containsBase = true;
-            break;
-        }
-    }
+    createHiveNearBase(money);
 }
 
 // Spawn enemies
-spawnInfluence = (0.01 + (0.00065 * (killCount - manualSpawned)));
+/*spawnInfluence = (0.01 + (0.00065 * (killCount - manualSpawned)));
 if(Math.random() < spawnInfluence) {
 spawnEnemy(hives);
-}
+}*/
 
 // Spawn more hives
-if(spawnInfluence > hives.length && gameTimer > 1000) {
+if (spawnInfluence > hives.length && gameTimer > 1000) {
 createHiveNearBase(money);
 }
 
-// HUGE WAVES
-if (killCount % 2000 === 0 && killCount > 1)
+// Wave spawner
+if (waveDone && containsBase)
+{
+    if (waveTimer == 0)
+    {
+        waveCount++;
+        statusMessage = 'WAVE ' + waveCount;
+        statusMessageTimeout = 120;
+        var number = (2 + (waveCount * 5));
+        spawnManyEnemies(hives, number);
+        waveDone = false;
+    }
+    else
+    {
+        waveTimer -= 1;
+    }
+
+}
+
+// Wave is done
+if (enemies.length == 0 && !waveDone)
+{
+    statusMessage = 'WAVE ' + waveCount + ' COMPLETE';
+    statusMessageTimeout = 120;
+    waveTimer = 500;
+    waveDone = true;
+}
+
+
+
+/*
+// WAVES
+if (waveDone == true && waveTimer == 0)
 {
 	statusMessage = 'A HUGE WAVE OF ENEMIES SPAWNED';
         statusMessageTimeout = 120;
         var number = killCount / 20
 	spawnManyEnemies(hives, number);
 }
-
+*/
 
 
  }, 30);
