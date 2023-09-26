@@ -105,7 +105,7 @@ var manualSpawned = 0;
 
 // pathfinding throttling
 let astarCalls = 0;
-const astarCallLimit = 10;
+const astarCallLimit = 7;
 
 let lastPath = {
     path: null,
@@ -710,14 +710,16 @@ function spawnManyEnemies(hives, number) {
     var enemyY = hive.y;
     var start = { i: enemyY, j: enemyX };
     var end = getNearestBaseCoordinates(enemyX, enemyY);
-    var enemyPath;
-    enemyPath = AStar(start, end);
+    var fixedPath;
+    fixedPath = AStar(start, end);
+    
+    console.log("Found spawn path for enemies this wave: " + JSON.stringify(fixedPath));
 
     function spawn() {
         if (!hives.length || i >= number) {
             return;
         }
-
+        enemyPath = [...fixedPath];
         enemies.push(new Enemy(enemyX * gridSize, enemyY * gridSize, enemyPath));
         i++;
 
@@ -1064,6 +1066,19 @@ takeDamage() {
             let i = Math.round(hoveredGridSquare.y);
             let j = Math.round(hoveredGridSquare.x);
 
+            
+            const hives = generateHiveList(buildings);
+            if (hives.length)
+                {
+                let hive = hives[0];
+                var startX = hive.x;
+                var startY = hive.y;
+                var start = { i: startY, j: startX };
+                var end = getNearestBaseCoordinates(startX, startY);
+                checkPath = AStar(start, end);
+                //console.log("We have checkPath");
+                }
+
             if (!waveDone)
             {
                 statusMessage = "Wait until the end of the wave."
@@ -1094,7 +1109,23 @@ takeDamage() {
                     statusMessageTimeout = 120;
                     return remainingMoney;
                 }
-    
+                if (typeof checkPath !== "undefined")
+                {
+                    //console.log("checkPath is not undefined");
+                    var pathValid = isPathStillValid(checkPath);
+                    //console.log("pathValid = " + pathValid);
+                    grid[i][j] = 1;
+                    if (!isPathStillValid(checkPath))
+                    {
+                        //console.log("Checking if building would block path");
+                        statusMessage = "This building would block the path.";
+                        statusMessageTimeout = 120;
+                        grid[i][j] = 0;
+                        return remainingMoney;
+                        
+                    }
+                }
+
                 remainingMoney -= cost; 
                 buildings.push(newBuilding);
                 isSubMenuActive = false;
@@ -1199,167 +1230,172 @@ function createHiveNearBase(money) {
 
 
 // Bomb constructor
-function Bomb(x, y, target){
-    this.x = x;
-    this.y = y;
-    this.speed = 30;
-    this.target = target;
-    this.life = 500; // Life of the bomb. This could be adjusted based on the desired decay speed.
+class Bomb {
+    constructor(x, y, target) {
+        this.x = x;
+        this.y = y;
+        this.speed = 30;
+        this.target = target;
+        this.life = 500; // Life of the bomb. This could be adjusted based on the desired decay speed.
+    }
 }
 
 // MAIN ENEMY CONSTRUCTOR & METHODS
-function Enemy(x, y) {
-    this.x = x;
-    this.y = y;
-    this.speed = 3 * (1+(waveCount/100));
-    this.hp = 7;
-    this.direction = 'down';
-    this.justChangedDirection = false;
-    this.pathUpdateFrequency = 1000; // update path every 1000 game loops
-    this.pathUpdateCountdown = this.pathUpdateFrequency; // countdown to next path update
-    this.path = [];
+class Enemy {
+    constructor(x, y, path) {
+        this.x = x;
+        this.y = y;
+        this.speed = 3 * (1 + (waveCount / 100));
+        this.hp = 7*(1+(waveCount / 100));
+        this.direction = 'down';
+        this.justChangedDirection = false;
+        this.pathUpdateFrequency = 1000; // update path every 1000 game loops
+        this.pathUpdateCountdown = this.pathUpdateFrequency; // countdown to next path update
+        this.path = path;
 
-    this.spriteSheet = new Image();
-    this.spriteSheet.src = 'es' + (Math.floor(Math.random() * 6) + 1) + '.png'; // Set the path to your sprite sheet
-    this.frameWidth = 20; // Width of each frame
-    this.frameHeight = 20; // Height of each frame
-    this.totalFrames = 3; // Total number of frames in the sprite sheet
-    this.currentFrame = 0; // Current frame index
-    this.frameUpdateInterval = 5; // Interval to update frames (adjust as needed)
+        this.spriteSheet = new Image();
+        this.spriteSheet.src = 'es' + (Math.floor(Math.random() * 6) + 1) + '.png'; // Set the path to your sprite sheet
+        this.frameWidth = 20; // Width of each frame
+        this.frameHeight = 20; // Height of each frame
+        this.totalFrames = 3; // Total number of frames in the sprite sheet
+        this.currentFrame = 0; // Current frame index
+        this.frameUpdateInterval = 5; // Interval to update frames (adjust as needed)
 
-    // Attack animation frames
-    this.attackFrames = 8;
-    this.currentAttackFrame = 4;
-    this.attackFrameUpdateInterval = 6; // Interval to update attack frames
 
-    this.isAttacking = false; // Variable to store attack state
+        // Attack animation frames
+        this.attackFrames = 8;
+        this.currentAttackFrame = 4;
+        this.attackFrameUpdateInterval = 6; // Interval to update attack frames
 
-    // Add a new method for initiating attack
-    this.initiateAttack = function() {
-    this.isAttacking = true;
-    this.currentAttackFrame = 4; // Start from 4th frame for attack animation
-}
+        this.isAttacking = false; // Variable to store attack state
 
-    // ENEMY DRAWING
-    this.draw = function() {
-        if (mapMode == false){
-    if (this.isAttacking) {
-        context.drawImage(
-            this.spriteSheet, 
-            this.currentAttackFrame * this.frameWidth,
-            this.frameHeight,
-            this.frameWidth,
-            this.frameHeight,
-            this.x - offsetX, 
-            this.y - offsetY, 
-            gridSize * 1.0, 
-            gridSize * 1.0
-        );
-        
-        if (gameTimer % this.attackFrameUpdateInterval === 0) {
-            this.currentAttackFrame = (this.currentAttackFrame + 1) % this.attackFrames;
-            //console.log(JSON.stringify(this.currentAttackFrame));
-            let nearestBase = getNearestBaseCoordinates(this.x + offsetX, this.y + offsetY);
-            // Reset attacking state and currentFrame after the last attack frame
-            if(this.currentAttackFrame === this.attackFrames - 1 && nearestBase) {
-                // HERE IS THE TAKEDAMAGE CODE
-                
-                buildings[nearestBase.closestBaseKey].takeDamage(buildings);
-                //console.log("takeDamage called");
-                //this.isAttacking = false;
-                //this.currentAttackFrame = 4;
+
+        // Add a new method for initiating attack
+        this.initiateAttack = function () {
+            this.isAttacking = true;
+            this.currentAttackFrame = 4; // Start from 4th frame for attack animation
+        };
+
+        // ENEMY DRAWING
+        this.draw = function () {
+            if (mapMode == false) {
+                if (this.isAttacking) {
+                    context.drawImage(
+                        this.spriteSheet,
+                        this.currentAttackFrame * this.frameWidth,
+                        this.frameHeight,
+                        this.frameWidth,
+                        this.frameHeight,
+                        this.x - offsetX,
+                        this.y - offsetY,
+                        gridSize * 1.0,
+                        gridSize * 1.0
+                    );
+
+                    if (gameTimer % this.attackFrameUpdateInterval === 0) {
+                        this.currentAttackFrame = (this.currentAttackFrame + 1) % this.attackFrames;
+                        //console.log(JSON.stringify(this.currentAttackFrame));
+                        let nearestBase = getNearestBaseCoordinates(this.x + offsetX, this.y + offsetY);
+                        // Reset attacking state and currentFrame after the last attack frame
+                        if (this.currentAttackFrame === this.attackFrames - 1 && nearestBase) {
+                            // HERE IS THE TAKEDAMAGE CODE
+                            buildings[nearestBase.closestBaseKey].takeDamage(buildings);
+                            //console.log("takeDamage called");
+                            //this.isAttacking = false;
+                            //this.currentAttackFrame = 4;
+                        }
+                    }
+                } else {
+                    // Draw regular frames
+                    context.drawImage(
+                        this.spriteSheet,
+                        this.currentFrame * this.frameWidth,
+                        this.frameHeight,
+                        this.frameWidth,
+                        this.frameHeight,
+                        this.x - offsetX,
+                        this.y - offsetY,
+                        gridSize * 1.0,
+                        gridSize * 1.0
+                    );
+
+                    if (gameTimer % this.frameUpdateInterval === 0) {
+                        this.currentFrame = (this.currentFrame + 1) % this.totalFrames;
+                    }
                 }
             }
-        } else {
-            // Draw regular frames
-            context.drawImage(
-                this.spriteSheet, 
-                this.currentFrame * this.frameWidth,
-                this.frameHeight,
-                this.frameWidth,
-                this.frameHeight,
-                this.x - offsetX, 
-                this.y - offsetY, 
-                gridSize * 1.0, 
-                gridSize * 1.0
-            );
-            
+
+            let nearestBase = getNearestBaseCoordinates(this.x + offsetX, this.y + offsetY);
+
+            //        console.log("NearestBase I: " + nearestBase.i + "NearestBase J" + nearestBase.j);
+            //        let distanceToNearestBase = Math.sqrt((this.x + offsetX - nearestBase.j * gridSize) ** 2 + (this.y + offsetY - nearestBase.i * gridSize) ** 2);
+            //        console.log(JSON.stringify(distanceToNearestBase));
+            //let someCriteriaForAttack = true; // TODO: Define this criteria
+            if (nearestBase !== null) {
+                // Add criteria for initiating the attack: if enemy is close to the base
+                if (Math.abs(nearestBase.j - this.x / gridSize) <= 1 && Math.abs(nearestBase.i - this.y / gridSize) <= 1) {
+                    //console.log("Initiating attack");
+                    this.isAttacking = true;
+                    this.speed = 1;
+                    return; // Stop moving and initiate attack animation
+                } else {
+                    this.isAttacking = false;
+                    this.speed = 3 * (1 + (waveCount / 100));
+                }
+            }
+
+        };
+
+        this.move = function () {
+            let nearestBase = getNearestBaseCoordinates(this.x + offsetX, this.y + offsetY);
+            var gridX = Math.round((this.x) / gridSize);
+            var gridY = Math.round((this.y) / gridSize);
+            if (nearestBase !== null) {
+                if (!this.path.length || --this.pathUpdateCountdown <= 0) {
+                    console.log("Finding new path. this.path.length = " + this.path.length + ". this.pathUpdateCoutndown = " + this.pathUpdateCountdown);
+                    // Skip AStar call if limit reached
+                    if (astarCalls >= astarCallLimit) return;
+
+                    this.justChangedDirection = false;
+                    var startNode = { i: gridY, j: gridX, f: 0, g: 0, h: 0 };
+                    var { i: endNodeI, j: endNodeJ } = getNearestBaseCoordinates(this.x + offsetX, this.y + offsetY);
+                    var endNode = { i: endNodeI, j: endNodeJ, f: 0, g: 0, h: 0 };
+                    this.path = AStar(startNode, endNode);
+                    this.pathUpdateCountdown = this.pathUpdateFrequency;
+                    //console.log("Picked path: " + JSON.stringify(this.path));
+                    astarCalls++;
+                }
+            }
+
+            if (this.path && this.path.length > 0) {
+                var nextStep = this.path[0];
+
+                if (nextStep.i > gridY) this.direction = 'down';
+                else if (nextStep.i < gridY) this.direction = 'up';
+                else if (nextStep.j > gridX) this.direction = 'right';
+                else if (nextStep.j < gridX) this.direction = 'left';
+
+                if (gridX === nextStep.j && gridY === nextStep.i) {
+                    var distanceToNextCellCenter = Math.sqrt((this.x + offsetX - nextStep.j * gridSize) ** 2 + (this.y + offsetY - nextStep.i * gridSize) ** 2);
+
+                    if (distanceToNextCellCenter > this.speed) {
+                        this.path.shift();
+                    }
+                }
+            }
+
+            if (this.direction === "right") this.x += this.speed;
+            else if (this.direction === "left") this.x -= this.speed;
+            else if (this.direction === "up") this.y -= this.speed;
+            else if (this.direction === "down") this.y += this.speed;
+
             if (gameTimer % this.frameUpdateInterval === 0) {
                 this.currentFrame = (this.currentFrame + 1) % this.totalFrames;
             }
-        }
+        };
+
+
     }
-
-        let nearestBase = getNearestBaseCoordinates(this.x + offsetX, this.y + offsetY);
-        
-//        console.log("NearestBase I: " + nearestBase.i + "NearestBase J" + nearestBase.j);
-//        let distanceToNearestBase = Math.sqrt((this.x + offsetX - nearestBase.j * gridSize) ** 2 + (this.y + offsetY - nearestBase.i * gridSize) ** 2);
-//        console.log(JSON.stringify(distanceToNearestBase));
-        //let someCriteriaForAttack = true; // TODO: Define this criteria
-        if (nearestBase !== null) {
-        // Add criteria for initiating the attack: if enemy is close to the base
-        if (Math.abs(nearestBase.j - this.x/gridSize) <= 1 && Math.abs(nearestBase.i - this.y/gridSize) <= 1) {
-            //console.log("Initiating attack");
-            this.isAttacking = true;
-            this.speed = 1;
-            return; // Stop moving and initiate attack animation
-        } else {
-            this.isAttacking = false;
-            this.speed = 3 * (1+(waveCount/100));
-        }
-    }
-        
-    };
-
-    this.move = function () {
-        let nearestBase = getNearestBaseCoordinates(this.x + offsetX, this.y + offsetY);
-        var gridX = Math.round((this.x) / gridSize);
-        var gridY = Math.round((this.y) / gridSize);
-        if (nearestBase !== null) {
-            if (!this.path.length || --this.pathUpdateCountdown <= 0) {
-                // Skip AStar call if limit reached
-                if (astarCalls >= astarCallLimit) return;
-    
-                this.justChangedDirection = false;
-                var startNode = { i: gridY, j: gridX, f: 0, g: 0, h: 0 };
-                var {i: endNodeI, j: endNodeJ} = getNearestBaseCoordinates(this.x + offsetX, this.y + offsetY);
-                var endNode = { i: endNodeI, j: endNodeJ, f: 0, g: 0, h: 0 };
-                this.path = AStar(startNode, endNode);
-                this.pathUpdateCountdown = this.pathUpdateFrequency;
-            //console.log("Picked path: " + JSON.stringify(this.path));
-
-            astarCalls++;
-        }
-    }
-    
-        if (this.path && this.path.length > 0) {
-            var nextStep = this.path[0];
-    
-            if (nextStep.i > gridY) this.direction = 'down';
-            else if (nextStep.i < gridY) this.direction = 'up';
-            else if (nextStep.j > gridX) this.direction = 'right';
-            else if (nextStep.j < gridX) this.direction = 'left';
-    
-            if (gridX === nextStep.j && gridY === nextStep.i) {
-                var distanceToNextCellCenter = Math.sqrt((this.x + offsetX - nextStep.j * gridSize) ** 2 + (this.y + offsetY - nextStep.i * gridSize) ** 2);
-
-                if (distanceToNextCellCenter > this.speed) {
-                    this.path.shift();
-                }
-            }
-        }
-    
-        if (this.direction === "right") this.x += this.speed;
-        else if (this.direction === "left") this.x -= this.speed;
-        else if (this.direction === "up") this.y -= this.speed;
-        else if (this.direction === "down") this.y += this.speed;
-    
-        if (gameTimer % this.frameUpdateInterval === 0) {
-            this.currentFrame = (this.currentFrame + 1) % this.totalFrames;
-        }
-    };
-    
-
 }
 
 // Find the nearest base
@@ -1938,7 +1974,7 @@ spawnEnemy(hives);
 }*/
 
 // Spawn more hives
-if (spawnInfluence > hives.length && gameTimer > 1000) {
+if (waveCount % 20 == 20) {
 createHiveNearBase(money);
 }
 
