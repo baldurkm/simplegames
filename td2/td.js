@@ -1112,16 +1112,19 @@ takeDamage() {
                 if (typeof checkPath !== "undefined")
                 {
                     //console.log("checkPath is not undefined");
-                    var pathValid = isPathStillValid(checkPath);
+                    //var pathValid = isPathStillValid(checkPath);
                     //console.log("pathValid = " + pathValid);
                     grid[i][j] = 1;
                     if (!isPathStillValid(checkPath))
                     {
-                        //console.log("Checking if building would block path");
-                        statusMessage = "This building would block the path.";
-                        statusMessageTimeout = 120;
-                        grid[i][j] = 0;
-                        return remainingMoney;
+                        checkPath = AStar(start, end);
+                        if (!isPathStillValid(checkPath)) {
+                            //console.log("Checking if building would block path");
+                            statusMessage = "This building would block the path.";
+                            statusMessageTimeout = 120;
+                            grid[i][j] = 0;
+                            return remainingMoney;
+                    }
                         
                     }
                 }
