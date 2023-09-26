@@ -702,20 +702,21 @@ function spawnEnemy(hives) {
 function spawnManyEnemies(hives, number) {
     let i = 0;
     var spawnRate = 500/(1+(waveCount/10));
+
+    let hiveIndex = Math.floor(Math.random() * hives.length);
+    let hive = hives[hiveIndex];
+
+    var enemyX = hive.x;
+    var enemyY = hive.y;
+    var start = { i: enemyY, j: enemyX };
+    var end = getNearestBaseCoordinates(enemyX, enemyY);
+    var enemyPath;
+    enemyPath = AStar(start, end);
+
     function spawn() {
         if (!hives.length || i >= number) {
             return;
         }
-
-        let hiveIndex = Math.floor(Math.random() * hives.length);
-        let hive = hives[hiveIndex];
-
-        var enemyX = hive.x;
-        var enemyY = hive.y;
-        var start = { i: enemyY, j: enemyX };
-        var end = getNearestBaseCoordinates(enemyX, enemyY);
-        var enemyPath;
-        enemyPath = AStar(start, end);
 
         enemies.push(new Enemy(enemyX * gridSize, enemyY * gridSize, enemyPath));
         i++;
@@ -1304,6 +1305,7 @@ function Enemy(x, y) {
             return; // Stop moving and initiate attack animation
         } else {
             this.isAttacking = false;
+            this.speed = 3 * (1+(waveCount/100));
         }
     }
         
