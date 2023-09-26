@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Asteroids Game</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+        }
+        canvas {
+            background-color: black;
+            display: block;
+            margin: 0 auto;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="asteroidsCanvas"></canvas>
+    <script>
+        const canvas = document.getElementById("asteroidsCanvas");
+        const ctx = canvas.getContext("2d");
+
+        const gameState = {
+            ship: {
+                x: canvas.width / 2,
+                y: canvas.height / 2,
+                radius: 15,
+                angle: 0,
+                speed: 0,
+            },
+            bullets: [],
+            asteroids: [],
+        };
+
+        const BULLET_SPEED = 5;
+        const ROTATION_SPEED = 0.1;
+        const ASTEROID_COUNT = 5;
+
+        function init() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+
+            createAsteroids();
+            updateGame();
+        }
+
+        function createAsteroids() {
+            for (let i = 0; i < ASTEROID_COUNT; i++) {
+                const radius = Math.random() * 30 + 15;
+                const x = Math.random() * canvas.width;
+                const y = Math.random() * canvas.height;
+                const speedX = (Math.random() - 0.5) * 2;
+                const speedY = (Math.random() - 0.5) * 2;
+                gameState.asteroids.push({ x, y, radius, speedX, speedY });
+            }
+        }
+
+        function updateGame() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            updateShip();
+            updateBullets();
+            drawShip();
+            drawAsteroids();
+            drawBullets();
+            requestAnimationFrame(updateGame);
+        }
+
+        function updateShip() {
+    const ship = gameState.ship;
+    const acceleration = ship.speed * 0.02; // Adjust this value for desired acceleration
+
+    // Update ship's position based on acceleration and angle
+    ship.x += acceleration * Math.cos(ship.angle);
+    ship.y += acceleration * Math.sin(ship.angle);
+
+    // Apply simple friction to slow down the ship
+    ship.speed *= 0.99; // Adjust this value for desired friction
+}
+
+
+
+        function updateBullets() {
+            const bullets = gameState.bullets;
+            for (let i = bullets.length - 1; i >= 0; i--) {
+                bullets[i].x += bullets[i].speedX;
+                bullets[i].y += bullets[i].speedY;
+                
+                // Remove bullets that are off-screen
+                if (
+                    bullets[i].x < 0 ||
+                    bullets[i].x > canvas.width ||
+                    bullets[i].y < 0 ||
+                    bullets[i].y > canvas.height
+                ) {
+                    bullets.splice(i, 1);
+                }
+            }
+        }
+
+        function drawShip() {
+            const ship = gameState.ship;
+            ctx.save();
+            ctx.translate(ship.x, ship.y);
+            ctx.rotate(ship.angle+1.7);
+            ctx.strokeStyle = "white";
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(0, -ship.radius);
+            ctx.lineTo(ship.radius, ship.radius);
+            ctx.lineTo(0, ship.radius / 2);
+            ctx.lineTo(-ship.radius, ship.radius);
+            ctx.closePath();
+            ctx.stroke();
+            ctx.restore();
+        }
+
+        function drawAsteroids() {
+            ctx.strokeStyle = "white";
+            ctx.lineWidth = 2;
+            for (const asteroid of gameState.asteroids) {
+                ctx.beginPath();
+                ctx.arc(asteroid.x, asteroid.y, asteroid.radius, 0, Math.PI * 2);
+                ctx.closePath();
+                ctx.stroke();
+            }
+        }
+
+        function drawBullets() {
+            ctx.fillStyle = "white";
+            for (const bullet of gameState.bullets) {
+                ctx.beginPath();
+                ctx.arc(bullet.x, bullet.y, 3, 0, Math.PI * 2);
+                ctx.closePath();
+                ctx.fill();
+            }
+        }
+
+        document.addEventListener("keydown", (e) => {
+            const ship = gameState.ship;
+            if (e.key === "ArrowLeft") {
+                ship.angle -= ROTATION_SPEED;
+            } else if (e.key === "ArrowRight") {
+                ship.angle += ROTATION_SPEED;
+            } else if (e.key === "ArrowUp") {
+                ship.speed += BULLET_SPEED;
+            } else if (e.key === " ") {
+                shoot();
+            }
+        });
+
+        function shoot() {
+            const ship = gameState.ship;
+            const bulletSpeedX = BULLET_SPEED * Math.cos(ship.angle);
+            const bulletSpeedY = BULLET_SPEED * Math.sin(ship.angle);
+            const bullet = {
+                x: ship.x,
+                y: ship.y,
+                speedX: bulletSpeedX,
+                speedY: bulletSpeedY,
+            };
+            gameState.bullets.push(bullet);
+        }
+
+        window.addEventListener("resize", () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+
+        init();
+    </script>
+</body>
+</html>
