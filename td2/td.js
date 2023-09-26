@@ -241,66 +241,7 @@ window.addEventListener('keydown', function(event) {
     }
 });
 
-// HANDLE MENU CLICKS
-function handleMenuClick(e) {
-    var mousePos = getMousePos(canvas, e);
-    var x = canvas.width - menuWidth / 2 - BUTTON_WIDTH / 2;
-    var names = isSubMenuActive ? subMenuNames : buttonNames;
-    var initialY = (menuHeight - (names.length * BUTTON_HEIGHT) - ((names.length - 1) * BUTTON_SPACING)) / 2;
 
-    for (let i = 0; i < names.length; i++) {
-        var y = initialY + i * (BUTTON_HEIGHT + BUTTON_SPACING);
-        if (mousePos.x >= x && mousePos.x <= x + BUTTON_WIDTH && mousePos.y >= y && mousePos.y <= y + BUTTON_HEIGHT) {
-            if (isSubMenuActive) {
-                context.drawImage(depressedSubMenuImages[i], x, y, BUTTON_WIDTH, BUTTON_HEIGHT);
-                setTimeout(() => {
-                if (names[i] === "back") {
-                    isSubMenuActive = false;
-                    buildMode = false;
-                }
-                else if (names[i] === "base") {
-                    buildMode = true;
-                    towerToPlace = 'base';
-                }
-                else if (names[i] === "frost") {
-                    buildMode = true;
-                    towerToPlace = 'iceTower';
-                }
-                else if (names[i] === "laser") {
-                    buildMode = true;
-                    towerToPlace = 'laserTower';
-                }
-                else if (names[i] === "bomb") {
-                    buildMode = true;
-                    towerToPlace = 'bombTower';
-                }
-                else if (names[i] === "fence") {
-                    buildMode = true;
-                    towerToPlace = 'fence';
-                }
-            }, 20);
-
-            } else {
-                context.drawImage(depressedButtonImages[i], x, y, BUTTON_WIDTH, BUTTON_HEIGHT);
-                setTimeout(() => {
-                if (names[i] === "build") {
-                    isSubMenuActive = true;
-                }
-                else if (names[i] === "upgrade") {
-                    upgradeMode = !upgradeMode;
-                }
-                else if (names[i] === "spawn") {
-                    sendNextWave();
-                }
-            else if (names[i] === "map") {
-                mapMode = !mapMode;
-            }
-        }, 20);
-            }
-            return;
-        }
-    }
-}
 
 // START MENU
 // Add an image button to your start menu
@@ -311,14 +252,16 @@ depressedStartButtonImage.src = "check_depressed.png";
 
 var startButtonPos = {x: 600, y: 500};
 var startButtonDim = {width: 64, height: 64};
+var startMenuDismissed = false;
 
 // Load event listener for start button click
-if (killCount < 1 && containsBase == false) {
+if (killCount < 1 && !startMenuDismissed) {
 canvas.addEventListener('mousedown', function(e) {
     var mousePos = getMousePos(canvas, e);
     if (mousePos.x >= startButtonPos.x && mousePos.x <= startButtonPos.x + startButtonDim.width && mousePos.y >= startButtonPos.y && mousePos.y <= startButtonPos.y + startButtonDim.height) {
         displayStartMenu = false;
         context.drawImage(depressedStartButtonImage, startButtonPos.x, startButtonPos.y, startButtonDim.width, startButtonDim.height);
+        startMenuDismissed = true;
     }
 });
 }
@@ -405,6 +348,67 @@ function drawMenu() {
     }
 
 
+}
+
+// HANDLE MENU CLICKS
+function handleMenuClick(e) {
+    var mousePos = getMousePos(canvas, e);
+    var x = canvas.width - menuWidth / 2 - BUTTON_WIDTH / 2;
+    var names = isSubMenuActive ? subMenuNames : buttonNames;
+    var initialY = (menuHeight - (names.length * BUTTON_HEIGHT) - ((names.length - 1) * BUTTON_SPACING)) / 2;
+
+    for (let i = 0; i < names.length; i++) {
+        var y = initialY + i * (BUTTON_HEIGHT + BUTTON_SPACING);
+        if (mousePos.x >= x && mousePos.x <= x + BUTTON_WIDTH && mousePos.y >= y && mousePos.y <= y + BUTTON_HEIGHT) {
+            if (isSubMenuActive) {
+                context.drawImage(depressedSubMenuImages[i], x, y, BUTTON_WIDTH, BUTTON_HEIGHT);
+                
+                if (names[i] === "back") {
+                    isSubMenuActive = false;
+                    buildMode = false;
+                }
+                else if (names[i] === "base") {
+                    buildMode = true;
+                    towerToPlace = 'base';
+                }
+                else if (names[i] === "frost") {
+                    buildMode = true;
+                    towerToPlace = 'iceTower';
+                }
+                else if (names[i] === "laser") {
+                    buildMode = true;
+                    towerToPlace = 'laserTower';
+                }
+                else if (names[i] === "bomb") {
+                    buildMode = true;
+                    towerToPlace = 'bombTower';
+                }
+                else if (names[i] === "fence") {
+                    buildMode = true;
+                    towerToPlace = 'fence';
+                }
+            
+
+            } else {
+                context.drawImage(depressedButtonImages[i], x, y, BUTTON_WIDTH, BUTTON_HEIGHT);
+                
+                if (names[i] === "build") {
+                    isSubMenuActive = true;
+                }
+                else if (names[i] === "upgrade") {
+                    upgradeMode = !upgradeMode;
+                }
+                else if (names[i] === "spawn") {
+                    sendNextWave();
+                }
+            else if (names[i] === "map") {
+                mapMode = !mapMode;
+            }
+        
+            }
+            return;
+        }
+    }
 }
 
 // Utility function to get mouse position
@@ -731,6 +735,12 @@ function spawnManyEnemies(hives, number) {
 
 // Check if a path is still valid
 function isPathStillValid(path) {
+
+    if (path.length == 0) // make sure empty paths are not considered valid.
+    {
+        return false;
+    }
+
     for(let i = 0; i < path.length; i++) {
         if(grid[path[i].i][path[i].j] === 1) {
             // If there is a new obstacle at path[i], return false
@@ -1111,19 +1121,25 @@ takeDamage() {
                 }
                 if (typeof checkPath !== "undefined")
                 {
-                    //console.log("checkPath is not undefined");
-                    //var pathValid = isPathStillValid(checkPath);
-                    //console.log("pathValid = " + pathValid);
+                    console.log("checkPath is not undefined");
                     grid[i][j] = 1;
+                    console.log("Set grid square " + i + ", " + j + "to 1.")
+                    var pathValid = isPathStillValid(checkPath);
+                    console.log("pathValid = " + pathValid);
+                    
                     if (!isPathStillValid(checkPath))
                     {
-                        checkPath = AStar(start, end);
+                        console.log("Path not valid. Trying to re-pathfind. Using values: Start: " + JSON.stringify(start) + ", End: " + JSON.stringify(end));
+                        checkPath = AStar(start, end, 500);
                         if (!isPathStillValid(checkPath)) {
-                            //console.log("Checking if building would block path");
+                            console.log("Couldn't pathfind again. Building would block path");
                             statusMessage = "This building would block the path.";
                             statusMessageTimeout = 120;
                             grid[i][j] = 0;
                             return remainingMoney;
+                    }
+                    else {
+                        console.log("Pathfinding successful");
                     }
                         
                     }
@@ -1484,9 +1500,11 @@ function findInArray(arr, node) {
 }
 
 // Function AStar
-function AStar(start, goal) {
+function AStar(start, goal, maxAttempts) {
     start.g = 0;
     start.f = heuristic(start, goal, goal);
+    
+    var attempts = 0;
 
     var openList = [start];
     var closedList = [];
@@ -1537,6 +1555,14 @@ function AStar(start, goal) {
                 neighbor.f = neighbor.g + neighbor.h;
             }
         }
+        
+        attempts++;
+
+        if (attempts >= maxAttempts) {
+            // Reached the maximum number of attempts, return an empty path
+            return [];
+        }
+
     }
 
     return [];
@@ -1965,7 +1991,7 @@ var gameLoop = setInterval(function(){
     
 // Spawn the first hive
 const hives = generateHiveList(buildings);
-if(hives.length === 0 && containsBase && waveTimer < 300)
+if(hives.length === 0 && containsBase)
 {
     createHiveNearBase(money);
 }
