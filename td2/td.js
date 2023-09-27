@@ -1820,6 +1820,7 @@ function income()
         checkIncome();
         // Add the generated income to the player's total income
         money += incomePerTick;
+        playAudio(audioBuffers['income']);
 }
 
 function renderProjectiles() {
