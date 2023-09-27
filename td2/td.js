@@ -2003,7 +2003,7 @@ spawnEnemy(hives);
 }*/
 
 // Spawn more hives
-if (waveCount % 20 == 20) {
+if (waveCount % 20 == 0) {
 createHiveNearBase(money);
 }
 
