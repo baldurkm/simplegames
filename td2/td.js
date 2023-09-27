@@ -1130,7 +1130,7 @@ takeDamage() {
                     if (!isPathStillValid(checkPath))
                     {
                         console.log("Path not valid. Trying to re-pathfind. Using values: Start: " + JSON.stringify(start) + ", End: " + JSON.stringify(end));
-                        checkPath = AStar(start, end, 500);
+                        checkPath = AStar(start, end, 1000);
                         if (!isPathStillValid(checkPath)) {
                             console.log("Couldn't pathfind again. Building would block path");
                             statusMessage = "This building would block the path.";
