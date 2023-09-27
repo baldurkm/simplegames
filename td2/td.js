@@ -38,6 +38,7 @@ var audioFiles = [
     { name: 'iceFire', url: 'iceFire.wav' },
     { name: 'income', url: 'income.wav' },
     { name: 'laserFire', url: 'laserFire.wav' },
+    { name: 'click', url: 'click.wav' },
     // Add more audio files as needed
 ];
 
@@ -410,6 +411,7 @@ function handleMenuClick(e) {
     for (let i = 0; i < names.length; i++) {
         var y = initialY + i * (BUTTON_HEIGHT + BUTTON_SPACING);
         if (mousePos.x >= x && mousePos.x <= x + BUTTON_WIDTH && mousePos.y >= y && mousePos.y <= y + BUTTON_HEIGHT) {
+            playAudio(audioBuffers['click']);
             if (isSubMenuActive) {
                 context.drawImage(depressedSubMenuImages[i], x, y, BUTTON_WIDTH, BUTTON_HEIGHT);
                 
