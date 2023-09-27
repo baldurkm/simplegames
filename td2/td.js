@@ -4,13 +4,15 @@ var context = canvas.getContext("2d");
 var backgroundCanvas = document.createElement('canvas');
 var backgroundContext = backgroundCanvas.getContext('2d');
 
-/*
-// Audio
+
 // Create an AudioContext
-var audioContext = new (window.AudioContext || window.webkitAudioContext)();
+var audioContext;
 
 // Define an object to store loaded audio buffers
 var audioBuffers = {};
+
+// Flag to track whether sound is enabled or disabled
+var soundEnabled = true;
 
 // Function to load and decode audio
 function loadAudio(url, callback) {
@@ -21,10 +23,12 @@ function loadAudio(url, callback) {
 
 // Function to play audio from a loaded buffer
 function playAudio(buffer) {
-    var source = audioContext.createBufferSource();
-    source.buffer = buffer;
-    source.connect(audioContext.destination);
-    source.start(0); // Start playing the audio
+    if (soundEnabled) {
+        var source = audioContext.createBufferSource();
+        source.buffer = buffer;
+        source.connect(audioContext.destination);
+        source.start(0); // Start playing the audio
+    }
 }
 
 // Load multiple audio files
@@ -37,26 +41,65 @@ var audioFiles = [
     // Add more audio files as needed
 ];
 
-// Load each audio file and store them in the audioBuffers object
-var loadedCount = 0;
+// Function to toggle sound on/off
+function toggleSound() {
+    soundEnabled = !soundEnabled;
 
-audioFiles.forEach(function (audioFile) {
-    loadAudio(audioFile.url, function (decodedData) {
-        // Store the decoded audio data in the audioBuffers object
-        audioBuffers[audioFile.name] = decodedData;
+    // Update the speaker icon based on the sound state
+    var speakerIcon = document.getElementById('speakerIcon');
+    if (soundEnabled) {
+        // Enable sound: Change the speaker icon to indicate sound is on
+        speakerIcon.textContent = '🔊'; // Use a speaker emoji or your preferred icon
+    } else {
+        // Disable sound: Change the speaker icon to indicate sound is off
+        speakerIcon.textContent = '🔇'; // Use a muted speaker emoji or your preferred icon
+    }
+}
 
-        // Increment the loadedCount
-        loadedCount++;
+// Function to initialize audio
+function initializeAudio() {
+    // Create an AudioContext
+    audioContext = new (window.AudioContext || window.webkitAudioContext)();
 
-        // Check if all files are loaded
-        if (loadedCount === audioFiles.length) {
-            // All audio files are loaded and ready to play
+    // Load each audio file and store them in the audioBuffers object
+    var loadedCount = 0;
 
-            // Example: Play 'sound1'
-            playAudio(audioBuffers['income']);
-        }
+    audioFiles.forEach(function (audioFile) {
+        loadAudio(audioFile.url, function (decodedData) {
+            // Store the decoded audio data in the audioBuffers object
+            audioBuffers[audioFile.name] = decodedData;
+
+            // Increment the loadedCount
+            loadedCount++;
+
+            // Check if all files are loaded
+            if (loadedCount === audioFiles.length) {
+                // All audio files are loaded and ready to play
+            }
+        });
     });
-});*/
+}
+
+// Call the initializeAudio function to set up audio context
+initializeAudio();
+
+// Function to add the speaker icon to the game interface
+function addSpeakerIcon() {
+    var speakerIcon = document.createElement('div');
+    speakerIcon.id = 'speakerIcon';
+    speakerIcon.textContent = '🔊'; // Use a speaker emoji or your preferred icon
+    speakerIcon.style.cursor = 'pointer'; // Add a pointer cursor to indicate it's clickable
+    speakerIcon.addEventListener('click', toggleSound);
+    
+    // Append the speaker icon to the document's body
+    document.body.appendChild(speakerIcon);
+}
+
+// Call the addSpeakerIcon function to add the speaker icon to the document
+addSpeakerIcon();
+
+
+
 
 var offsetY = 0; // Offset for vertical scrolling
 var offsetX = 0; // Offset for horizontal scrolling
@@ -69,7 +112,7 @@ var backgroundTexturePattern;
 var hoveredGridSquare = null;
 var projectiles = [];
 var mapModeMultiplier = 1;
-
+var createdHiveThisWave = false;
 
 var tileSize = 32; // Tile size in pixels
 var mapWidth = 18040; // Width of the game map
@@ -122,6 +165,13 @@ let lastPath = {
     backgroundCanvas.height = gridRows * gridSize;
 
 
+// ADMIN MODE SPECIAL OPERATIONS
+    document.addEventListener('keydown', function(event) {
+        if (event.key == 'X') {
+            money = money + 1000;
+            waveCount++;
+        }
+    });
 
 
 // Add event listener for the page load event
@@ -702,36 +752,42 @@ function spawnEnemy(hives) {
     enemies.push(new Enemy(enemyX * gridSize, enemyY *  gridSize, enemyPath));
 }
 
+// Assuming you have a global variable 'waveCount' defined somewhere.
+
 // spawn many enemies
 function spawnManyEnemies(hives, number) {
-    let i = 0;
-    var spawnRate = 500/(1+(waveCount/10));
+    var spawnRate = 500 / (1 + (waveCount / 10));
 
-    let hiveIndex = Math.floor(Math.random() * hives.length);
-    let hive = hives[hiveIndex];
-
-    var enemyX = hive.x;
-    var enemyY = hive.y;
-    var start = { i: enemyY, j: enemyX };
-    var end = getNearestBaseCoordinates(enemyX, enemyY);
-    var fixedPath;
-    fixedPath = AStar(start, end);
-    
-    console.log("Found spawn path for enemies this wave: " + JSON.stringify(fixedPath));
-
-    function spawn() {
-        if (!hives.length || i >= number) {
+    function spawn(index) {
+        if (index >= number) {
             return;
         }
-        enemyPath = [...fixedPath];
-        enemies.push(new Enemy(enemyX * gridSize, enemyY * gridSize, enemyPath));
-        i++;
 
-        setTimeout(spawn, spawnRate);
+        for (let j = 0; j < hives.length; j++) {
+            var hive = hives[j];
+
+            let enemyX = hive.x;
+            let enemyY = hive.y;
+            let start = { i: enemyY, j: enemyX };
+            let end = getNearestBaseCoordinates(enemyX, enemyY);
+            let fixedPath = AStar(start, end); // Calculate the fixed path here
+
+            console.log("Assigned path for hive #" + j + ": " + JSON.stringify(hive));
+
+            let enemyPath = [...fixedPath];
+            enemies.push(new Enemy(enemyX * gridSize, enemyY * gridSize, enemyPath));
+        }
+
+        setTimeout(() => spawn(index + 1), spawnRate);
     }
-    
-    spawn();
+
+    // Start the spawning process
+    spawn(0);
 }
+
+
+
+
 
 // Check if a path is still valid
 function isPathStillValid(path) {
@@ -1091,9 +1147,12 @@ takeDamage() {
 
             if (!waveDone)
             {
+                if (type != 'hive')
+                {
                 statusMessage = "Wait until the end of the wave."
                 statusMessageTimeout = 120;
                 return remainingMoney;
+            }
             }
             
             if (i >= gridRows || j >= gridColumns) {
@@ -2003,8 +2062,9 @@ spawnEnemy(hives);
 }*/
 
 // Spawn more hives
-if (waveCount % 20 == 0 & waveCount > 1) {
+if (waveCount % 12 == 0 & waveCount > 1 & !createdHiveThisWave) {
 createHiveNearBase(money);
+createdHiveThisWave = true;
 }
 
 // Wave spawner
@@ -2013,6 +2073,7 @@ if (waveDone && containsBase)
     if (waveTimer == 0)
     {
         sendNextWave();
+        createdHiveThisWave = false;
     }
     else
     {
@@ -2028,6 +2089,7 @@ if (enemies.length == 0 && !waveDone)
     statusMessageTimeout = 120;
     waveTimer = 500;
     waveDone = true;
+
     checkIncome();
     income();
 }
