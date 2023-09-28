@@ -2095,7 +2095,7 @@ spawnEnemy(hives);
 }*/
 
 // Spawn more hives
-if (waveCount % 12 == 0 & waveCount > 1 & !createdHiveThisWave) {
+if (waveCount % (10 - hives.length) == 0 & waveCount > 1 & !createdHiveThisWave) {
 createHiveNearBase(money);
 createdHiveThisWave = true;
 }
