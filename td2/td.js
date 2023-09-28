@@ -116,7 +116,7 @@ function addSpeakerIcon() {
 }
 
 // Call the addSpeakerIcon function to add the speaker icon to the document
-addSpeakerIcon();
+//addSpeakerIcon();
 
 
 
@@ -324,6 +324,17 @@ var startButtonPos = {x: 600, y: 500};
 var startButtonDim = {width: 64, height: 64};
 var startMenuDismissed = false;
 
+// Preload audio-related button images
+var audioButtonOn = new Image();
+audioButtonOn.src = "volon.png";
+var audioButtonOnDepressed = new Image();
+audioButtonOnDepressed.src = "volon_depressed.png";
+var audioButtonOff = new Image();
+audioButtonOff.src = "voloff.png";
+var audioButtonOffDepressed = new Image();
+audioButtonOffDepressed.src = "voloff_depressed.png";
+var isAudioOn = false; // Initialize audio as ON
+
 // Load event listener for start button click
 if (killCount < 1 && !startMenuDismissed) {
 canvas.addEventListener('mousedown', function(e) {
@@ -418,6 +429,47 @@ function drawMenu() {
 
     }
 
+        // Draw the audio toggle button at the top right corner
+        var audioButtonX = canvas.width - 10 - 64; // Adjust position as needed
+        var audioButtonY = 10; // Adjust position as needed
+        var audioButton = isAudioOn ? audioButtonOn : audioButtonOff;
+        var audioButtonDepressed = isAudioOn ? audioButtonOnDepressed : audioButtonOffDepressed;
+    
+        context.drawImage(
+            isAudioOn ? audioButtonOn : audioButtonOff,
+            audioButtonX,
+            audioButtonY,
+            64,
+            64
+        );
+    
+        canvas.addEventListener('mousedown', function (e) {
+            var mousePos = getMousePos(canvas, e);
+            if (
+                mousePos.x >= audioButtonX &&
+                mousePos.x <= audioButtonX + BUTTON_WIDTH &&
+                mousePos.y >= audioButtonY &&
+                mousePos.y <= audioButtonY + BUTTON_HEIGHT
+            ) {
+                // Toggle the audio state
+                isAudioOn = !isAudioOn;
+                toggleSound(); // Call your toggleSound function here
+        
+                // Redraw the menu to update the button state
+                drawMenu();
+                
+                // Draw the depressed image if audio is off
+                if (!isAudioOn) {
+                    context.drawImage(
+                        audioButtonOffDepressed,
+                        audioButtonX,
+                        audioButtonY,
+                        64,
+                        64
+                    );
+                }
+            }
+        });
 
 }
 
@@ -778,7 +830,7 @@ function spawnEnemy(hives) {
 
 // spawn many enemies
 function spawnManyEnemies(hives, number) {
-    var spawnRate = 500 / (1 + (waveCount / 5));
+    var spawnRate = 500 / (1 + (waveCount / 7));
 
     // Calculate fixed paths for each hive
     const fixedPaths = hives.map((hive) => {
