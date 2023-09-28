@@ -329,9 +329,10 @@ if (killCount < 1 && !startMenuDismissed) {
 canvas.addEventListener('mousedown', function(e) {
     var mousePos = getMousePos(canvas, e);
     if (mousePos.x >= startButtonPos.x && mousePos.x <= startButtonPos.x + startButtonDim.width && mousePos.y >= startButtonPos.y && mousePos.y <= startButtonPos.y + startButtonDim.height) {
+        startMenuDismissed = true;
         displayStartMenu = false;
         context.drawImage(depressedStartButtonImage, startButtonPos.x, startButtonPos.y, startButtonDim.width, startButtonDim.height);
-        startMenuDismissed = true;
+
     }
 });
 }
@@ -755,7 +756,7 @@ function spawnEnemy(hives) {
             enemyPath = [...lastPath.path];
             //console.log("Using last path");
         } else {
-            enemyPath = AStar(start, end);
+            enemyPath = AStar(start, end, 10000);
             lastPath = {
                 path: [...enemyPath],
                 end: { i: end.i, j: end.j }
@@ -763,7 +764,7 @@ function spawnEnemy(hives) {
             //console.log("Finding new path");
         }
     } else {
-        enemyPath = AStar(start, end);
+        enemyPath = AStar(start, end, 10000);
         lastPath = {
             path: [...enemyPath],
             end: { i: end.i, j: end.j }
@@ -791,7 +792,7 @@ function spawnManyEnemies(hives, number) {
             let enemyY = hive.y;
             let start = { i: enemyY, j: enemyX };
             let end = getNearestBaseCoordinates(enemyX, enemyY);
-            let fixedPath = AStar(start, end); // Calculate the fixed path here
+            let fixedPath = AStar(start, end, 10000); // Calculate the fixed path here
 
             console.log("Assigned path for hive #" + j + ": " + JSON.stringify(hive));
 
@@ -1165,7 +1166,7 @@ takeDamage() {
                 var startY = hive.y;
                 var start = { i: startY, j: startX };
                 var end = getNearestBaseCoordinates(startX, startY);
-                checkPath = AStar(start, end);
+                checkPath = AStar(start, end, 10000);
                 //console.log("We have checkPath");
                 }
 
@@ -1230,7 +1231,7 @@ takeDamage() {
 
                 remainingMoney -= cost; 
                 buildings.push(newBuilding);
-                playAudio(audioBuffers['place', gameVolume]);
+                playAudio(audioBuffers['place', 100]);
                 isSubMenuActive = false;
                 checkIncome();
                 // Check if enemies can still reach the base. If not, force them to recalculate.
@@ -1249,7 +1250,7 @@ takeDamage() {
                                 var enemyX = enemy.x;
                                 var enemyY = enemy.y;
                                 var start = { i: enemyY, j: enemyX };
-                                enemy.path = AStar(start, nearestBase);
+                                enemy.path = AStar(start, nearestBase, 10000);
                                 lastPath = {
                                     path: [...enemy.path],
                                     end: { i: nearestBase.i, j: nearestBase.j }
@@ -1463,7 +1464,7 @@ class Enemy {
                     var startNode = { i: gridY, j: gridX, f: 0, g: 0, h: 0 };
                     var { i: endNodeI, j: endNodeJ } = getNearestBaseCoordinates(this.x + offsetX, this.y + offsetY);
                     var endNode = { i: endNodeI, j: endNodeJ, f: 0, g: 0, h: 0 };
-                    this.path = AStar(startNode, endNode);
+                    this.path = AStar(startNode, endNode, 10000);
                     this.pathUpdateCountdown = this.pathUpdateFrequency;
                     //console.log("Picked path: " + JSON.stringify(this.path));
                     astarCalls++;
@@ -1924,7 +1925,7 @@ function drawMessages() {
 
     if (statusMessageTimeout == 120)
     {
-        playAudio(audioBuffers['alert', gameVolume]);
+        playAudio(audioBuffers['alert', 100]);
     }
     context.beginPath();
     context.fillStyle = 'red';
