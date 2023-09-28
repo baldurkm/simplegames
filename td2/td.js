@@ -4,6 +4,8 @@ var context = canvas.getContext("2d");
 var backgroundCanvas = document.createElement('canvas');
 var backgroundContext = backgroundCanvas.getContext('2d');
 
+var gameVolume = 0.25;
+
 
 // Create an AudioContext
 var audioContext;
@@ -14,6 +16,9 @@ var audioBuffers = {};
 // Flag to track whether sound is enabled or disabled
 var soundEnabled = true;
 
+// Create a Gain Node for volume control
+var gainNode;
+
 // Function to load and decode audio
 function loadAudio(url, callback) {
     fetch(url)
@@ -21,12 +26,21 @@ function loadAudio(url, callback) {
         .then(buffer => audioContext.decodeAudioData(buffer, callback));
 }
 
-// Function to play audio from a loaded buffer
-function playAudio(buffer) {
+// Function to play audio from a loaded buffer with volume control
+function playAudio(buffer, volume) {
     if (soundEnabled) {
         var source = audioContext.createBufferSource();
         source.buffer = buffer;
-        source.connect(audioContext.destination);
+        
+        // Connect the source to the gainNode for volume control
+        source.connect(gainNode);
+        
+        // Connect the gainNode to the audio context's destination
+        gainNode.connect(audioContext.destination);
+        
+        // Set the volume using the gainNode
+        gainNode.gain.value = volume;
+
         source.start(0); // Start playing the audio
     }
 }
@@ -39,6 +53,8 @@ var audioFiles = [
     { name: 'income', url: 'income.wav' },
     { name: 'laserFire', url: 'laserFire.wav' },
     { name: 'click', url: 'click.wav' },
+    { name: 'place', url: 'place.wav' },
+    { name: 'alert', url: 'alert.wav' },
     // Add more audio files as needed
 ];
 
@@ -61,6 +77,9 @@ function toggleSound() {
 function initializeAudio() {
     // Create an AudioContext
     audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    
+    // Create a Gain Node for volume control
+    gainNode = audioContext.createGain();
 
     // Load each audio file and store them in the audioBuffers object
     var loadedCount = 0;
@@ -411,7 +430,7 @@ function handleMenuClick(e) {
     for (let i = 0; i < names.length; i++) {
         var y = initialY + i * (BUTTON_HEIGHT + BUTTON_SPACING);
         if (mousePos.x >= x && mousePos.x <= x + BUTTON_WIDTH && mousePos.y >= y && mousePos.y <= y + BUTTON_HEIGHT) {
-            playAudio(audioBuffers['click']);
+            playAudio(audioBuffers['click', gameVolume]);
             if (isSubMenuActive) {
                 context.drawImage(depressedSubMenuImages[i], x, y, BUTTON_WIDTH, BUTTON_HEIGHT);
                 
@@ -1016,7 +1035,7 @@ takeDamage() {
                     if(distance < this.range) {
                     projectiles.push(new Projectile(this.x * gridSize, this.y * gridSize, enemy));
                     this.timeToFire = this.firingDelay;
-                    playAudio(audioBuffers['bombFire']);
+                    playAudio(audioBuffers['bombFire', gameVolume]);
                     break;
                 }
             }
@@ -1047,7 +1066,7 @@ takeDamage() {
                                 context.lineTo((enemy.x) - offsetX + 32, (enemy.y) - offsetY + 32);  // Enemy center
                                 context.lineWidth = 4;
                                 context.stroke();
-                                playAudio(audioBuffers['laserFire']);
+                                playAudio(audioBuffers['laserFire', gameVolume]);
                                 }
                                 enemy.hp = enemy.hp - (this.damage * this.level);                    
                                             // If enemy's HP reached zero, delete it
@@ -1098,7 +1117,7 @@ takeDamage() {
                                         context.lineTo((enemy.x) - offsetX + 32, (enemy.y) - offsetY + 32);  // Enemy center
                                         context.lineWidth = 4;
                                         context.stroke();
-                                        playAudio(audioBuffers['iceFire']);
+                                        playAudio(audioBuffers['iceFire', gameVolume]);
                                         }
                                         enemy.hp = enemy.hp - this.damage;                    
                                         enemy.speed = enemy.speed * this.slow;
@@ -1211,6 +1230,7 @@ takeDamage() {
 
                 remainingMoney -= cost; 
                 buildings.push(newBuilding);
+                playAudio(audioBuffers['place', gameVolume]);
                 isSubMenuActive = false;
                 checkIncome();
                 // Check if enemies can still reach the base. If not, force them to recalculate.
@@ -1825,7 +1845,7 @@ function income()
         checkIncome();
         // Add the generated income to the player's total income
         money += incomePerTick;
-        playAudio(audioBuffers['income']);
+        playAudio(audioBuffers['income', gameVolume]);
 }
 
 function renderProjectiles() {
@@ -1847,7 +1867,7 @@ function renderProjectiles() {
             context.arc(projectile.x - offsetX, projectile.y - offsetY, 50, 0, Math.PI * 2, true); 
             context.fillStyle = "red";
             context.fill();
-            playAudio(audioBuffers['bombExplode']);
+            playAudio(audioBuffers['bombExplode', gameVolume]);
             }
             // If we hit an enemy, iterate through all other enemies and check if splash damage should apply
             var splashRadius = 100;  // Set this to whatever your desired splash radius is
@@ -1901,6 +1921,11 @@ function renderProjectiles() {
 
 function drawMessages() {
     // Draw messages	
+
+    if (statusMessageTimeout == 120)
+    {
+        playAudio(audioBuffers['alert', gameVolume]);
+    }
     context.beginPath();
     context.fillStyle = 'red';
     context.textAlign = 'center';
