@@ -181,7 +181,7 @@ window.addEventListener('load', function() {
     initializeGame(); // SHOULD THIS BE A MAIN MENU?
     // Add event listeners for button clicks
     addEventListeners(); // SHOULD THIS BE IN INIT GAME?
-
+    toggleSound();
     offsetX = 4000;
     offsetY = 6000;
 });
@@ -1016,6 +1016,7 @@ takeDamage() {
                     if(distance < this.range) {
                     projectiles.push(new Projectile(this.x * gridSize, this.y * gridSize, enemy));
                     this.timeToFire = this.firingDelay;
+                    playAudio(audioBuffers['bombFire']);
                     break;
                 }
             }
@@ -1046,6 +1047,7 @@ takeDamage() {
                                 context.lineTo((enemy.x) - offsetX + 32, (enemy.y) - offsetY + 32);  // Enemy center
                                 context.lineWidth = 4;
                                 context.stroke();
+                                playAudio(audioBuffers['laserFire']);
                                 }
                                 enemy.hp = enemy.hp - (this.damage * this.level);                    
                                             // If enemy's HP reached zero, delete it
@@ -1096,6 +1098,7 @@ takeDamage() {
                                         context.lineTo((enemy.x) - offsetX + 32, (enemy.y) - offsetY + 32);  // Enemy center
                                         context.lineWidth = 4;
                                         context.stroke();
+                                        playAudio(audioBuffers['iceFire']);
                                         }
                                         enemy.hp = enemy.hp - this.damage;                    
                                         enemy.speed = enemy.speed * this.slow;
@@ -1844,6 +1847,7 @@ function renderProjectiles() {
             context.arc(projectile.x - offsetX, projectile.y - offsetY, 50, 0, Math.PI * 2, true); 
             context.fillStyle = "red";
             context.fill();
+            playAudio(audioBuffers['bombExplode']);
             }
             // If we hit an enemy, iterate through all other enemies and check if splash damage should apply
             var splashRadius = 100;  // Set this to whatever your desired splash radius is
