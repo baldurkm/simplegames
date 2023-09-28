@@ -1444,7 +1444,7 @@ class Enemy {
                     return; // Stop moving and initiate attack animation
                 } else {
                     this.isAttacking = false;
-                    this.speed = 3 * (1 + (waveCount / 100));
+                    //this.speed = 3 * (1 + (waveCount / 100));
                 }
             }
 
