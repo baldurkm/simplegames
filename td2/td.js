@@ -778,7 +778,7 @@ function spawnEnemy(hives) {
 
 // spawn many enemies
 function spawnManyEnemies(hives, number) {
-    var spawnRate = 500 / (1 + (waveCount / 10));
+    var spawnRate = 500 / (1 + (waveCount / 5));
 
     function spawn(index) {
         if (index >= number) {
