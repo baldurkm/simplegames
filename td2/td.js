@@ -1231,7 +1231,7 @@ takeDamage() {
 
                 remainingMoney -= cost; 
                 buildings.push(newBuilding);
-                playAudio(audioBuffers['place', 100]);
+                playAudio(audioBuffers['place', gameVolume]);
                 isSubMenuActive = false;
                 checkIncome();
                 // Check if enemies can still reach the base. If not, force them to recalculate.
@@ -1925,7 +1925,7 @@ function drawMessages() {
 
     if (statusMessageTimeout == 120)
     {
-        playAudio(audioBuffers['alert', 100]);
+        playAudio(audioBuffers['alert', gameVolume]);
     }
     context.beginPath();
     context.fillStyle = 'red';
