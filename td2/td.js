@@ -431,7 +431,7 @@ function handleMenuClick(e) {
     for (let i = 0; i < names.length; i++) {
         var y = initialY + i * (BUTTON_HEIGHT + BUTTON_SPACING);
         if (mousePos.x >= x && mousePos.x <= x + BUTTON_WIDTH && mousePos.y >= y && mousePos.y <= y + BUTTON_HEIGHT) {
-            playAudio(audioBuffers['click', gameVolume]);
+            playAudio(audioBuffers['click'], gameVolume);
             if (isSubMenuActive) {
                 context.drawImage(depressedSubMenuImages[i], x, y, BUTTON_WIDTH, BUTTON_HEIGHT);
                 
@@ -1036,7 +1036,7 @@ takeDamage() {
                     if(distance < this.range) {
                     projectiles.push(new Projectile(this.x * gridSize, this.y * gridSize, enemy));
                     this.timeToFire = this.firingDelay;
-                    playAudio(audioBuffers['bombFire', gameVolume]);
+                    playAudio(audioBuffers['bombFire'], gameVolume);
                     break;
                 }
             }
@@ -1067,7 +1067,7 @@ takeDamage() {
                                 context.lineTo((enemy.x) - offsetX + 32, (enemy.y) - offsetY + 32);  // Enemy center
                                 context.lineWidth = 4;
                                 context.stroke();
-                                playAudio(audioBuffers['laserFire', gameVolume]);
+                                playAudio(audioBuffers['laserFire'], gameVolume);
                                 }
                                 enemy.hp = enemy.hp - (this.damage * this.level);                    
                                             // If enemy's HP reached zero, delete it
@@ -1118,7 +1118,7 @@ takeDamage() {
                                         context.lineTo((enemy.x) - offsetX + 32, (enemy.y) - offsetY + 32);  // Enemy center
                                         context.lineWidth = 4;
                                         context.stroke();
-                                        playAudio(audioBuffers['iceFire', gameVolume]);
+                                        playAudio(audioBuffers['iceFire'], gameVolume);
                                         }
                                         enemy.hp = enemy.hp - this.damage;                    
                                         enemy.speed = enemy.speed * this.slow;
@@ -1231,7 +1231,7 @@ takeDamage() {
 
                 remainingMoney -= cost; 
                 buildings.push(newBuilding);
-                playAudio(audioBuffers['place', gameVolume]);
+                playAudio(audioBuffers['place'], gameVolume);
                 isSubMenuActive = false;
                 checkIncome();
                 // Check if enemies can still reach the base. If not, force them to recalculate.
@@ -1846,7 +1846,7 @@ function income()
         checkIncome();
         // Add the generated income to the player's total income
         money += incomePerTick;
-        playAudio(audioBuffers['income', gameVolume]);
+        playAudio(audioBuffers['income'], gameVolume);
 }
 
 function renderProjectiles() {
@@ -1868,7 +1868,7 @@ function renderProjectiles() {
             context.arc(projectile.x - offsetX, projectile.y - offsetY, 50, 0, Math.PI * 2, true); 
             context.fillStyle = "red";
             context.fill();
-            playAudio(audioBuffers['bombExplode', gameVolume]);
+            playAudio(audioBuffers['bombExplode'], gameVolume);
             }
             // If we hit an enemy, iterate through all other enemies and check if splash damage should apply
             var splashRadius = 100;  // Set this to whatever your desired splash radius is
@@ -1925,7 +1925,7 @@ function drawMessages() {
 
     if (statusMessageTimeout == 120)
     {
-        playAudio(audioBuffers['alert', gameVolume]);
+        playAudio(audioBuffers['alert'], gameVolume);
     }
     context.beginPath();
     context.fillStyle = 'red';
