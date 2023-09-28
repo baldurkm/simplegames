@@ -780,6 +780,13 @@ function spawnEnemy(hives) {
 function spawnManyEnemies(hives, number) {
     var spawnRate = 500 / (1 + (waveCount / 5));
 
+    // Calculate fixed paths for each hive
+    const fixedPaths = hives.map((hive) => {
+        let start = { i: hive.y, j: hive.x };
+        let end = getNearestBaseCoordinates(hive.x, hive.y);
+        return AStar(start, end, 10000);
+    });
+
     function spawn(index) {
         if (index >= number) {
             return;
@@ -787,14 +794,15 @@ function spawnManyEnemies(hives, number) {
 
         for (let j = 0; j < hives.length; j++) {
             var hive = hives[j];
+            var fixedPath = fixedPaths[j]; // Get the fixed path for this hive
+
+            if (!fixedPath || fixedPath.length === 0) {
+                // Skip hives with no valid path
+                continue;
+            }
 
             let enemyX = hive.x;
             let enemyY = hive.y;
-            let start = { i: enemyY, j: enemyX };
-            let end = getNearestBaseCoordinates(enemyX, enemyY);
-            let fixedPath = AStar(start, end, 10000); // Calculate the fixed path here
-
-            console.log("Assigned path for hive #" + j + ": " + JSON.stringify(hive));
 
             let enemyPath = [...fixedPath];
             enemies.push(new Enemy(enemyX * gridSize, enemyY * gridSize, enemyPath));
@@ -806,6 +814,7 @@ function spawnManyEnemies(hives, number) {
     // Start the spawning process
     spawn(0);
 }
+
 
 
 
