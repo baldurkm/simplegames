@@ -363,11 +363,13 @@ function drawStartMenu() {
     context.textAlign = 'left';
     context.fillStyle = 'white';
     context.fillText('Build bases and defend them against the hives that spawn.', 120, 220);
-    context.fillText('Each base will give you income depending on its level.', 120, 250);
-    context.fillText('Using your income, build towers to defend your bases.', 120, 280);
-    context.fillText('Upgrade your towers to improve their effectiveness.', 120, 310);
-    context.fillText('Do your best and see how far you can get.', 120, 340);
-    context.fillText('Press the button to begin.', 120, 400);
+    context.fillText('Each wave will have more enemies than the previous one.', 120, 250);
+    context.fillText('Each base will give you income depending on its level.', 120, 280);
+    context.fillText('Using your income, build towers to defend your bases.', 120, 310);
+    context.fillText('Upgrade your towers to improve their effectiveness.', 120, 340);
+    context.fillText('Use towers and fences to create a maze for the enemies.', 120, 370);
+    context.fillText('More hives will appear around wave 10.', 120, 400);
+    context.fillText('Press the button to begin.', 120, 430);
 
     context.drawImage(startButtonImage, startButtonPos.x, startButtonPos.y, startButtonDim.width, startButtonDim.height);
 
