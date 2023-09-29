@@ -867,6 +867,7 @@ function spawnManyEnemies(hives, number) {
             enemies.push(new Enemy(enemyX * gridSize, enemyY * gridSize, enemyPath));
         }
 
+        //setTimeout(() => spawn(index + 1), spawnRate);
         setTimeout(() => spawn(index + 1), spawnRate);
     }
 
