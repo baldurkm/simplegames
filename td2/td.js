@@ -836,7 +836,9 @@ function spawnManyEnemies(hives, number) {
     const fixedPaths = hives.map((hive) => {
         let start = { i: hive.y, j: hive.x };
         let end = getNearestBaseCoordinates(hive.x, hive.y);
-        return AStar(start, end, 10000);
+        var returnAstar = AStar(start, end, 10000);
+        console.log("Found path for hive: " + JSON.stringify(hive));
+        return returnAstar;
     });
 
     function spawn(index) {
@@ -855,7 +857,7 @@ function spawnManyEnemies(hives, number) {
 
             let enemyX = hive.x;
             let enemyY = hive.y;
-
+            console.log("Pushing enemy from " + hive.x + ", " + hive.y);
             let enemyPath = [...fixedPath];
             enemies.push(new Enemy(enemyX * gridSize, enemyY * gridSize, enemyPath));
         }
@@ -1740,7 +1742,7 @@ function sendNextWave()
         waveCount++;
         statusMessage = 'WAVE ' + waveCount;
         statusMessageTimeout = 120;
-        var number = Math.trunc(0.75*(((waveCount * 3) - 1) + (killCount / 15) * ((2+hives.length)/3))); // how many enemies each wave
+        var number = Math.trunc(0.75*((((waveCount * 3) - 1) + (killCount / 15)) * ((2+hives.length)/3))); // how many enemies each wave
         console.log("Spawning " + number + " enemies this wave");
         spawnManyEnemies(hives, number);
         waveDone = false;
@@ -2157,7 +2159,7 @@ spawnEnemy(hives);
 }*/
 
 // Spawn more hives
-if (waveCount % (10 - hives.length) == 0 & waveCount > 1 & !createdHiveThisWave) {
+if (waveCount % (11 - hives.length) == 0 & waveCount > 1 & !createdHiveThisWave) {
 createHiveNearBase(money);
 createdHiveThisWave = true;
 }
