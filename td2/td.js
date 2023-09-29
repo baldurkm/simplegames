@@ -63,14 +63,14 @@ function toggleSound() {
     soundEnabled = !soundEnabled;
 
     // Update the speaker icon based on the sound state
-    var speakerIcon = document.getElementById('speakerIcon');
+    /*var speakerIcon = document.getElementById('speakerIcon');
     if (soundEnabled) {
         // Enable sound: Change the speaker icon to indicate sound is on
         speakerIcon.textContent = '🔊'; // Use a speaker emoji or your preferred icon
     } else {
         // Disable sound: Change the speaker icon to indicate sound is off
         speakerIcon.textContent = '🔇'; // Use a muted speaker emoji or your preferred icon
-    }
+    }*/
 }
 
 // Function to initialize audio
