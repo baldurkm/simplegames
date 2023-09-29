@@ -378,6 +378,7 @@ function drawStartMenu() {
 
 // DRAW THE MENU
 function drawMenu() {
+    
     submenuPrices = [Building.cost("laserTower"), Building.cost("bombTower"), Building.cost("iceTower"), Building.cost("base"), Building.cost("fence"), 0];
     context.lineWidth = 2;
     context.drawImage(menuBackgroundImage, canvas.width - menuWidth, 0, menuWidth, menuHeight);
@@ -389,6 +390,7 @@ function drawMenu() {
     var initialY = (menuHeight - (names.length * BUTTON_HEIGHT) - ((names.length - 1) * BUTTON_SPACING)) / 2;
 
     context.beginPath;
+    context.imageSmoothingEnabled = true;
     context.fillStyle = "white";
     context.font = "36px Impact";
     context.textAlign = 'left';
@@ -472,6 +474,7 @@ function drawMenu() {
                 }
             }
         });
+        context.imageSmoothingEnabled = false;
 
 }
 
@@ -1455,10 +1458,10 @@ class Enemy {
                         this.frameHeight,
                         this.frameWidth,
                         this.frameHeight,
-                        this.x - offsetX,
-                        this.y - offsetY,
-                        gridSize * 1.0,
-                        gridSize * 1.0
+                        this.x - offsetX + 18,
+                        this.y - offsetY + 18,
+                        40,
+                        40
                     );
 
                     if (gameTimer % this.attackFrameUpdateInterval === 0) {
@@ -1482,10 +1485,10 @@ class Enemy {
                         this.frameHeight,
                         this.frameWidth,
                         this.frameHeight,
-                        this.x - offsetX,
-                        this.y - offsetY,
-                        gridSize * 1.0,
-                        gridSize * 1.0
+                        this.x - offsetX + 18,
+                        this.y - offsetY + 18,
+                        40,
+                        40
                     );
 
                     if (gameTimer % this.frameUpdateInterval === 0) {
@@ -1994,6 +1997,7 @@ function drawMessages() {
         playAudio(audioBuffers['alert'], gameVolume);
     }
     context.beginPath();
+
     context.fillStyle = 'red';
     context.textAlign = 'center';
     context.textBaseline = 'middle';
