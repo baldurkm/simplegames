@@ -1392,29 +1392,38 @@ function upgradeBuilding(hoveredGridSquare) {
   
 }
 
-//Create a hive
-function createHiveNearBase(money) {
-    let randomLocation = getNearestBaseCoordinates(offsetX, offsetY);
-    if (!randomLocation) {
-        //console.log("No base exists");
-        return;
-    }
-    let xStart = Math.max(0, randomLocation.j - 10);
-    let yStart = Math.max(0, randomLocation.i - 10);
-    let xEnd = Math.min(gridColumns - 1, randomLocation.j + 10);
-    let yEnd = Math.min(gridRows - 1, randomLocation.i + 10);
-    let randomI, randomJ;
+function createHiveNearBase(money, minDistance) {
+    let randomLocation;
+
     do {
-        randomI = Math.floor(Math.random() * (yEnd - yStart + 1)) + yStart;
-        randomJ = Math.floor(Math.random() * (xEnd - xStart + 1)) + xStart;
-    } while (grid[randomI][randomJ] !== 0);
-    const randomHiveLocation = { x: randomJ, y: randomI };
-    statusMessage = "A hive has spawned.";
-    statusMessageTimeout = 120;
-    console.log("Building hive at " + JSON.stringify(randomHiveLocation));
-    const onConfirmHiveLocation = buildBuilding('hive', money);
-    money = onConfirmHiveLocation(randomHiveLocation);
+        randomLocation = getNearestBaseCoordinates(offsetX, offsetY);
+        if (!randomLocation) {
+            // No base exists, so return
+            return;
+        }
+
+        // Calculate a random angle in radians
+        const randomAngle = Math.random() * 2 * Math.PI;
+        
+        // Calculate the modified randomLocation with a minimum distance
+        const newX = randomLocation.j + minDistance * Math.cos(randomAngle);
+        const newY = randomLocation.i + minDistance * Math.sin(randomAngle);
+
+        // Check if the modified location is within the grid bounds
+        if (newX >= 0 && newX < gridColumns && newY >= 0 && newY < gridRows && grid[Math.floor(newY)][Math.floor(newX)] === 0) {
+            // The modified location is valid, so build the hive there
+            const randomHiveLocation = { x: newX, y: newY };
+            statusMessage = "A hive has spawned.";
+            statusMessageTimeout = 120;
+            console.log("Building hive at " + JSON.stringify(randomHiveLocation));
+            const onConfirmHiveLocation = buildBuilding('hive', money);
+            money = onConfirmHiveLocation(randomHiveLocation);
+            return; // Exit the loop and function
+        }
+        // If the modified location is not valid, repeat the process
+    } while (true);
 }
+
 
 
 // Bomb constructor
@@ -2171,7 +2180,7 @@ var gameLoop = setInterval(function(){
 const hives = generateHiveList(buildings);
 if(hives.length === 0 && containsBase)
 {
-    createHiveNearBase(money);
+    createHiveNearBase(money, 10);
 }
 
 // Spawn enemies
@@ -2182,7 +2191,7 @@ spawnEnemy(hives);
 
 // Spawn more hives
 if (waveCount % (11 - hives.length) == 0 & waveCount > 1 & !createdHiveThisWave) {
-createHiveNearBase(money);
+createHiveNearBase(money, 10);
 createdHiveThisWave = true;
 }
 
