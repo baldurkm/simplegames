@@ -834,7 +834,8 @@ function spawnEnemy(hives) {
 
 // Assuming you have a global variable 'waveCount' defined somewhere.
 
-function spawnManyEnemies(hives, number) {
+function spawnManyEnemies(number) {
+    const hives = generateHiveList(buildings);
     totalSpawned = 0;
     var spawnRate = 500 / (1 + (waveCount / 7));
     var continueSpawning = true; // Flag to control spawning
@@ -1411,9 +1412,18 @@ function createHiveNearBase(money) {
     const randomHiveLocation = { x: randomJ, y: randomI };
     statusMessage = "A hive has spawned.";
     statusMessageTimeout = 120;
+
     console.log("Building hive at " + JSON.stringify(randomHiveLocation));
-    const onConfirmHiveLocation = buildBuilding('hive', money);
-    money = onConfirmHiveLocation(randomHiveLocation);
+    var distanceToHiveCheck = Math.sqrt(Math.pow(randomHiveLocation.x - randomLocation.j, 2) + Math.pow(randomHiveLocation.y - randomLocation.i, 2));
+
+    console.log("Distance from nearest base to hive: " + distanceToHiveCheck);
+    if (distanceToHiveCheck > 5) {
+        const onConfirmHiveLocation = buildBuilding('hive', money);
+        money = onConfirmHiveLocation(randomHiveLocation);
+    } else {
+        console.log("Hive set to spawn too close. Trying again.");
+        createHiveNearBase(money);    
+    }
 }
 
 
@@ -1765,7 +1775,7 @@ function sendNextWave()
         statusMessageTimeout = 120;
         var number = Math.trunc(0.85*(((waveCount * 3) + (killCount / 15)) * ((1+hives.length)/3))); // how many enemies each wave
         console.log("Spawning " + number + " enemies this wave");
-        spawnManyEnemies(hives, number);
+        spawnManyEnemies(number);
         waveDone = false;
         waveTimer = 0;
 
@@ -2104,6 +2114,8 @@ var gameLoop = setInterval(function(){
     gameTimer += 1;
     context.clearRect(0, 0, canvas.width, canvas.height);
     astarCalls = 0;
+
+    
     
     //let containsBase = false;
     for(let i = 0; i < Object.values(buildings).length; i++){
