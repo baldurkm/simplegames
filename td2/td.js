@@ -104,7 +104,7 @@ function initializeAudio() {
 initializeAudio();
 
 // Function to add the speaker icon to the game interface
-function addSpeakerIcon() {
+/*function addSpeakerIcon() {
     var speakerIcon = document.createElement('div');
     speakerIcon.id = 'speakerIcon';
     speakerIcon.textContent = '🔊'; // Use a speaker emoji or your preferred icon
@@ -113,7 +113,7 @@ function addSpeakerIcon() {
     
     // Append the speaker icon to the document's body
     document.body.appendChild(speakerIcon);
-}
+}*/
 
 // Call the addSpeakerIcon function to add the speaker icon to the document
 //addSpeakerIcon();
@@ -133,6 +133,7 @@ var hoveredGridSquare = null;
 var projectiles = [];
 var mapModeMultiplier = 1;
 var createdHiveThisWave = false;
+let totalSpawned = 0;
 
 var tileSize = 32; // Tile size in pixels
 var mapWidth = 18040; // Width of the game map
@@ -833,9 +834,10 @@ function spawnEnemy(hives) {
 
 // Assuming you have a global variable 'waveCount' defined somewhere.
 
-// spawn many enemies
 function spawnManyEnemies(hives, number) {
+    totalSpawned = 0;
     var spawnRate = 500 / (1 + (waveCount / 7));
+    var continueSpawning = true; // Flag to control spawning
 
     // Calculate fixed paths for each hive
     const fixedPaths = hives.map((hive) => {
@@ -847,7 +849,7 @@ function spawnManyEnemies(hives, number) {
     });
 
     function spawn(index) {
-        if (index >= number) {
+        if (!continueSpawning || index >= number) {
             return;
         }
 
@@ -857,6 +859,7 @@ function spawnManyEnemies(hives, number) {
 
             if (!fixedPath || fixedPath.length === 0) {
                 // Skip hives with no valid path
+                console.log("Skipping hive because no fixed path: " + JSON.stringify(hive));
                 continue;
             }
 
@@ -865,10 +868,22 @@ function spawnManyEnemies(hives, number) {
             console.log("Pushing enemy from " + hive.x + ", " + hive.y);
             let enemyPath = [...fixedPath];
             enemies.push(new Enemy(enemyX * gridSize, enemyY * gridSize, enemyPath));
+
+            // Increment the total number of spawned enemies
+            totalSpawned++;
+            console.log("total spawned: " + totalSpawned);
+
+            if (totalSpawned >= number) {
+                // Stop spawning when the total reaches the desired number
+                console.log("total spawned is more than number.");
+                continueSpawning = false; // Set the flag to stop spawning
+                break;
+            }
         }
 
-        //setTimeout(() => spawn(index + 1), spawnRate);
-        setTimeout(() => spawn(index + 1), spawnRate);
+        if (continueSpawning) {
+            setTimeout(() => spawn(index + 1), spawnRate);
+        }
     }
 
     // Start the spawning process
@@ -1748,7 +1763,7 @@ function sendNextWave()
         waveCount++;
         statusMessage = 'WAVE ' + waveCount;
         statusMessageTimeout = 120;
-        var number = Math.trunc(0.75*((((waveCount * 3) - 1) + (killCount / 15)) * ((2+hives.length)/3))); // how many enemies each wave
+        var number = Math.trunc(0.85*(((waveCount * 3) + (killCount / 15)) * ((1+hives.length)/3))); // how many enemies each wave
         console.log("Spawning " + number + " enemies this wave");
         spawnManyEnemies(hives, number);
         waveDone = false;
@@ -2176,6 +2191,7 @@ if (waveDone && containsBase)
 {
     if (waveTimer == 0)
     {
+        
         sendNextWave();
         createdHiveThisWave = false;
     }
