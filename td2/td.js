@@ -586,33 +586,6 @@ function handleMouseClickInBuildMode(e) {
 }
 
 
-
-// FPS COUNTER
-var frame = 0; 
-var lastUpdateTime = Date.now();
-var fps = 0;
-function animate() {
-  frame++;
-
-  var currentTime = Date.now();
-
-  if (currentTime - lastUpdateTime >= 1000) {
-    fps = frame;
-    frame = 0;
-    lastUpdateTime = currentTime;
-  }
-
-  context.textAlign = 'left';
-  context.fillStyle = "red";
-  context.font = "20px Impact";
-
-  // Display the FPS in the top left corner
-  context.fillText("FPS: " + fps, 50 , canvas.height - 50);
-
-  requestAnimationFrame(animate);
-}
-animate();
-
 // init simplex noise for map generation
 const simplex = new SimplexNoise();
 
@@ -1002,7 +975,7 @@ class Building {
         switch (this.type) {
             case 'bombTower':
                 this.fire = this.bombFire;
-                this.firingDelay = 200;
+                this.firingDelay = 200 + (Math.random()*5);
                 
                 this.range = 750;
                 this.damage = 3;
@@ -1010,7 +983,7 @@ class Building {
                 break;
             case 'laserTower':
                 this.fire = this.laserFire;
-                this.firingDelay = 10;
+                this.firingDelay = 10 + Math.random();
 
                 this.range = 350;
                 this.damage = 0.3;
@@ -1018,7 +991,7 @@ class Building {
                 break;
             case 'iceTower':
                 this.fire = this.iceFire;
-                this.firingDelay = 10;
+                this.firingDelay = 10 + Math.random();
 
                 this.range = 250;
                 this.damage = 0.5;
