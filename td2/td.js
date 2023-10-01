@@ -55,6 +55,14 @@ var audioFiles = [
     { name: 'click', url: 'click.wav' },
     { name: 'place', url: 'place.wav' },
     { name: 'alert', url: 'alert.wav' },
+    { name: 'step1', url: 'Footsteps_Walk_Grass_Mono_01.wav' },
+    { name: 'step2', url: 'Footsteps_Walk_Grass_Mono_02.wav' },
+    { name: 'step3', url: 'Footsteps_Walk_Grass_Mono_03.wav' },
+    { name: 'step4', url: 'Footsteps_Walk_Grass_Mono_04.wav' },
+    { name: 'step5', url: 'Footsteps_Walk_Grass_Mono_05.wav' },
+    { name: 'step6', url: 'Footsteps_Walk_Grass_Mono_06.wav' },
+    { name: 'step7', url: 'Footsteps_Walk_Grass_Mono_07.wav' },
+    { name: 'step8', url: 'Footsteps_Walk_Grass_Mono_08.wav' },
     // Add more audio files as needed
 ];
 
@@ -1589,6 +1597,11 @@ class Enemy {
 
             if (gameTimer % this.frameUpdateInterval === 0) {
                 this.currentFrame = (this.currentFrame + 1) % this.totalFrames;
+            }
+            if (this.currentFrame == 1)
+            {
+                var stepFile = "step" + (Math.random() * 8);
+                playAudio(audioBuffers[stepFile], gameVolume);
             }
         };
 
