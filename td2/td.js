@@ -474,7 +474,7 @@ function drawMenu() {
                 toggleSound(); // Call your toggleSound function here
         
                 // Redraw the menu to update the button state
-                drawMenu();
+                //drawMenu();
                 
                 // Draw the depressed image if audio is off
                 if (!isAudioOn) {
