@@ -1528,6 +1528,13 @@ class Enemy {
                     if (gameTimer % this.frameUpdateInterval === 0) {
                         this.currentFrame = (this.currentFrame + 1) % this.totalFrames;
                     }
+                    
+            if (this.currentFrame == 2)
+            {
+                var stepFile = "step" + (Math.random() * 8);
+                playAudio(audioBuffers[stepFile], gameVolume);
+                console.log("Played audio file: " + stepFile);
+            }
                 }
             }
 
@@ -1590,11 +1597,6 @@ class Enemy {
                 }
             }
 
-            if (this.currentFrame == 2)
-            {
-                var stepFile = "step" + (Math.random() * 8);
-                playAudio(audioBuffers[stepFile], gameVolume);
-            }
 
             if (this.direction === "right") this.x += this.speed;
             else if (this.direction === "left") this.x -= this.speed;
