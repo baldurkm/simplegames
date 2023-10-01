@@ -1135,7 +1135,7 @@ takeDamage() {
                                 context.beginPath();
                                 context.strokeStyle = 'red';
                                 context.moveTo((this.x * gridSize) - offsetX + 32, (this.y * gridSize) - offsetY + 32);  // Tower center
-                                context.lineTo((enemy.x) - offsetX + 37, (enemy.y) - offsetY + 37);  // Enemy center
+                                context.lineTo((enemy.x) - offsetX + 32, (enemy.y) - offsetY + 32);  // Enemy center
                                 context.lineWidth = 4;
                                 context.stroke();
                                 playAudio(audioBuffers['laserFire'], gameVolume);
@@ -1186,7 +1186,7 @@ takeDamage() {
                                         context.beginPath();
                                         context.strokeStyle = 'blue';
                                         context.moveTo((this.x * gridSize) - offsetX + 32, (this.y * gridSize) - offsetY + 32);  // Tower center
-                                        context.lineTo((enemy.x) - offsetX + 37, (enemy.y) - offsetY + 37);  // Enemy center
+                                        context.lineTo((enemy.x) - offsetX + 32, (enemy.y) - offsetY + 32);  // Enemy center
                                         context.lineWidth = 4;
                                         context.stroke();
                                         playAudio(audioBuffers['iceFire'], gameVolume);
@@ -1470,8 +1470,8 @@ class Enemy {
                         this.frameHeight,
                         this.frameWidth,
                         this.frameHeight,
-                        this.x - offsetX + 18,
-                        this.y - offsetY + 18,
+                        this.x - offsetX + 16,
+                        this.y - offsetY + 16,
                         40,
                         40
                     );
@@ -1497,8 +1497,8 @@ class Enemy {
                         this.frameHeight,
                         this.frameWidth,
                         this.frameHeight,
-                        this.x - offsetX + 18,
-                        this.y - offsetY + 18,
+                        this.x - offsetX + 16,
+                        this.y - offsetY + 16,
                         40,
                         40
                     );
@@ -1511,7 +1511,7 @@ class Enemy {
             {
                 var stepFile = "step" + Math.trunc((Math.random() * 8));
                 playAudio(audioBuffers[stepFile], gameVolume);
-                console.log("Played audio file: " + stepFile);
+                //console.log("Played audio file: " + stepFile);
             }
                 }
             }
