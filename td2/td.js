@@ -820,6 +820,7 @@ function spawnEnemy(hives) {
 
 function spawnManyEnemies(number) {
     const hives = generateHiveList(buildings);
+    console.log("Starting spawning. Hives: " + JSON.stringify(hives));
     totalSpawned = 0;
     var spawnRate = 500 / (1 + (waveCount / 7));
     var continueSpawning = true; // Flag to control spawning
@@ -1891,6 +1892,7 @@ if (upgradeMode)
             // Assuming ctx is your canvas context
             // Set styles for the box
             context.beginPath();
+            context.textAlign = 'left';
             context.fillStyle = "#333";
             context.strokeStyle = '#fff';
 
