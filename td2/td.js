@@ -344,17 +344,22 @@ var audioButtonOffDepressed = new Image();
 audioButtonOffDepressed.src = "voloff_depressed.png";
 var isAudioOn = false; // Initialize audio as ON
 
-// Load event listener for start button click
-if (killCount < 1 && !startMenuDismissed) {
-canvas.addEventListener('mousedown', function(e) {
+// Define a function to handle the start button click
+function handleStartButtonClick(e) {
     var mousePos = getMousePos(canvas, e);
     if (mousePos.x >= startButtonPos.x && mousePos.x <= startButtonPos.x + startButtonDim.width && mousePos.y >= startButtonPos.y && mousePos.y <= startButtonPos.y + startButtonDim.height) {
         startMenuDismissed = true;
         displayStartMenu = false;
         context.drawImage(depressedStartButtonImage, startButtonPos.x, startButtonPos.y, startButtonDim.width, startButtonDim.height);
 
+        // Remove the event listener after it's no longer needed
+        canvas.removeEventListener('mousedown', handleStartButtonClick);
     }
-});
+}
+
+// Load event listener for start button click
+if (killCount < 1 && !startMenuDismissed) {
+    canvas.addEventListener('mousedown', handleStartButtonClick);
 }
 
 // Draw the start menu
