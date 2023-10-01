@@ -818,8 +818,6 @@ function spawnEnemy(hives) {
     enemies.push(new Enemy(enemyX * gridSize, enemyY *  gridSize, enemyPath));
 }
 
-// Assuming you have a global variable 'waveCount' defined somewhere.
-
 function spawnManyEnemies(number) {
     const hives = generateHiveList(buildings);
     totalSpawned = 0;
@@ -2124,7 +2122,7 @@ var gameLoop = setInterval(function(){
     
     if (containsBase === false && killCount > 1) {
         //console.log("No bases left.");
-        statusMessage = 'Game Over.';
+        statusMessage = 'GAME OVER. YOU REACHED WAVE ' + waveCount;
         statusMessageTimeout = 9999;
         //clearInterval(gameLoop);  // End the game loop
 
