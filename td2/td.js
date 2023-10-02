@@ -843,6 +843,7 @@ function spawnManyEnemies(number) {
     const fixedPaths = hives.map((hive) => {
         let start = { i: hive.y, j: hive.x };
         let end = getNearestBaseCoordinates(hive.x, hive.y);
+        console.log("Pathfinding from " + JSON.stringify(start) + " to " + JSON.stringify(end));
         var returnAstar = AStar(start, end, 20000);
         console.log("Found path for hive: " + JSON.stringify(hive));
         return returnAstar;
@@ -1624,7 +1625,9 @@ function getNearestBaseCoordinates(enemyX, enemyY) {
     }
 
     if (closestBaseKey === null) {
+        console.log("Returning null");
         return null;
+        
     } else {
         var closestBaseX = buildings[closestBaseKey].x;
         var closestBaseY = buildings[closestBaseKey].y;
