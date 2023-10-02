@@ -6,6 +6,8 @@ var backgroundContext = backgroundCanvas.getContext('2d');
 
 var gameVolume = 0.25;
 
+let gameOver = false;
+
 
 // Create an AudioContext
 var audioContext;
@@ -2126,13 +2128,13 @@ var gameLoop = setInterval(function(){
         //console.log("No bases left.");
         statusMessage = 'GAME OVER. YOU REACHED WAVE ' + waveCount;
         statusMessageTimeout = 9999;
+        gameOver = true;
         //clearInterval(gameLoop);  // End the game loop
 
     }
 
     drawMap(); // DRAW THE MAP
    
-
     buildings.forEach(building => building.draw()); // DRAW BUILDINGS
 
     //Move and draw enemies
@@ -2194,7 +2196,7 @@ createdHiveThisWave = true;
 }
 
 // Wave spawner
-if (waveDone && containsBase)
+if (waveDone && containsBase && !gameOver)
 {
     if (waveTimer == 0)
     {
