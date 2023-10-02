@@ -172,6 +172,9 @@ let containsBase = false;
 
 var displayStartMenu = true;
 
+
+
+
 var CCounter = 0;
 //var countDownToIncome = 600;
 var incomePerTick = 0;
@@ -195,7 +198,7 @@ let lastPath = {
     backgroundCanvas.width = gridColumns * gridSize;
     backgroundCanvas.height = gridRows * gridSize;
 
-
+/*
 // ADMIN MODE SPECIAL OPERATIONS
     document.addEventListener('keydown', function(event) {
         if (event.key == 'X') {
@@ -203,7 +206,7 @@ let lastPath = {
             waveCount++;
         }
     });
-
+*/
 
 // Add event listener for the page load event
 window.addEventListener('load', function() {
@@ -410,14 +413,20 @@ function drawMenu() {
     context.fillStyle = "white";
     context.font = "36px Impact";
     context.textAlign = 'left';
+    if (money > 100000) context.font = "24px Impact";
     context.fillText("MONEY: " + Math.trunc(money), 1075, 660);
     
     if (!isSubMenuActive) {
         context.font = "18px Impact";
         context.fillText("KILLS: " + killCount, 1100, 620);
         //context.fillText("MOBS: " + enemies.length, 360, 40);
-        context.fillText("SPAWNRATE: " + Math.trunc((spawnInfluence)*100) + "%", 1100, 590);
-        context.fillText("Game Timer: " + (Math.trunc(gameTimer/30)), 1100, 560);
+        context.fillText('INCOME: ' + incomePerTick + ' after wave', 1100, 560);
+        if (waveTimer/30 < 4) context.fillStyle = "red";
+        if (waveTimer/30 >= 4) context.fillStyle = "white";
+        if (waveDone) context.fillText("WAVE " + (waveCount + 1) + ' in ' + Math.trunc(waveTimer/30), 1100, 590);
+        context.fillStyle = "white";
+
+        
     }
     context.font = "16px Impact"; // Change the font size and name to your preference
     for (let i = 0; i < names.length; i++) {
@@ -696,6 +705,9 @@ function renderBackgroundTexture() {
     function addEventListeners() {
 window.addEventListener('keydown', event => {
     keyStates[event.key] = true;
+    if([32, 37, 38, 39, 40].indexOf(event.key) > -1) {
+        event.preventDefault();
+        }
 });
 
 // On keyup, change the state back to false
@@ -824,7 +836,7 @@ function spawnManyEnemies(number) {
     const hives = generateHiveList(buildings);
     console.log("Starting spawning. Hives: " + JSON.stringify(hives));
     totalSpawned = 0;
-    var spawnRate = 500 / (1 + (waveCount / 7));
+    var spawnRate = 500 / (1 + (waveCount / 5));
     var continueSpawning = true; // Flag to control spawning
 
     // Calculate fixed paths for each hive
@@ -1092,6 +1104,7 @@ takeDamage() {
 
         if (this.ready && mapMode == false) {
             //console.log("this.image: " + this.image + " this.x: " + this.x + " this.y: " + this.y + " offsetX: " + offsetX + " offsetY: " + offsetY + " gridSize: " + gridSize)
+            
             context.drawImage(this.image, this.x * gridSize - offsetX, this.y * gridSize - offsetY, gridSize, gridSize);
         } else {
 
@@ -2040,7 +2053,7 @@ function drawMessages() {
      drawStartMenu();
     }
 
-    // base count and income stats
+   /* // base count and income stats
     context.beginPath();
 	context.fillStyle = "rgba(64, 64, 64, 0.2)"; // gray with 10% opacity
     context.fillRect(1024, 720, -200, -75);
@@ -2050,8 +2063,7 @@ function drawMessages() {
     context.textAlign = 'right';
     context.font = '20px Impact';
     //context.fillText('BASES: ' + baseCount, canvas.width - 270, canvas.height - 50);
-    context.fillText('WAVE ' + (waveCount + 1) + ' in ' + Math.trunc(waveTimer/30), canvas.width - 270, canvas.height - 50);
-    context.fillText('INCOME: ' + incomePerTick + ' after wave', canvas.width - 270, canvas.height - 20 );
+*/
 
     
 
@@ -2156,9 +2168,9 @@ var gameLoop = setInterval(function(){
         }
     });
 
-    drawMenu(); // DRAW THE MENU
-
     drawHealthBars(); // DRAW HEALTH BARS
+
+    drawMenu(); // DRAW THE MENU
 
     drawMessages(); // DRAW MESSAGES
 
