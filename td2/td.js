@@ -866,7 +866,7 @@ function spawnManyEnemies(number) {
 
             let enemyX = hive.x;
             let enemyY = hive.y;
-            console.log("Pushing enemy from " + hive.x + ", " + hive.y);
+            //console.log("Pushing enemy from " + hive.x + ", " + hive.y);
             let enemyPath = [...fixedPath];
             enemies.push(new Enemy(enemyX * gridSize, enemyY * gridSize, enemyPath));
 
