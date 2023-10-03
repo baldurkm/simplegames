@@ -842,19 +842,15 @@ function spawnManyEnemies(number) {
     // Calculate fixed paths for each hive
     const fixedPaths = hives.map((hive) => {
         let start = { i: hive.y, j: hive.x };
-        let endCoordinates = getNearestBaseCoordinates(hive.x, hive.y); // Retrieve end coordinates
+        //let endCoordinates =  // Retrieve end coordinates
         
-        if (endCoordinates) {
-            console.log("endCoordinates: " + JSON.stringify(endCoordinates));
-            let end = { i: endCoordinates.i, j: endCoordinates.j };
+            //console.log("endCoordinates: " + JSON.stringify(endCoordinates));
+            let end = getNearestBaseCoordinates(hive.x, hive.y);
             console.log("Pathfinding from " + JSON.stringify(start) + " to " + JSON.stringify(end));
             var returnAstar = AStar(start, end, 20000);
             console.log("Found path for hive: " + JSON.stringify(hive) + ". Path: " + returnAstar);
             return returnAstar;
-        } else {
-            console.log("No valid end coordinates found for hive: " + JSON.stringify(hive));
-            return null; // or any other suitable value if no valid end coordinates are found
-        }        
+   
     });
 
     function spawn(index) {
@@ -942,15 +938,18 @@ const buildingImgSources = {
     },
     iceTower: {
         maxLvl: 3,
-        img: ["iceTower1.png", "iceTower2.png", "iceTower3.png"]
+        img: ["iceTower1.png", "iceTower2.png", "iceTower3.png"],
+        imgFiring: ["iceFire.png"]
     },
     laserTower: {
         maxLvl: 3,
-        img: ["laserTower1.png", "laserTower2.png", "laserTower3.png"]
+        img: ["laserTower1.png", "laserTower2.png", "laserTower3.png"],
+        imgFiring: ["laserFire.png"]
     },
     bombTower: {
         maxLvl: 3,
-        img: ["bombTower1.png", "bombTower2.png", "bombTower3.png"]
+        img: ["bombTower1.png", "bombTower2.png", "bombTower3.png"],
+        imgFiring: ["bombFire.png"]
     },
     fence: {
         maxLvl: 1,
@@ -979,6 +978,7 @@ class Building {
         this.ready = false;
         this.image = new Image();
         this.image.onload = () => { this.ready = true; };
+        this.imageFiring = new Image();
         this.updateImage();
         this.hp = 20;
 
@@ -990,6 +990,7 @@ class Building {
         this.bombFire = this.bombFire.bind(this);
         this.laserFire = this.laserFire.bind(this);
         this.iceFire = this.iceFire.bind(this);
+
 
 
         
@@ -1071,6 +1072,7 @@ takeDamage() {
     updateImage() {
         if (this.level <= buildingImgSources[this.type].maxLvl) {
             this.image.src = buildingImgSources[this.type].img[this.level - 1];
+            this.imageFiring.src = buildingImgSources[this.type].imgFiring;
         }
     }
 
@@ -1113,7 +1115,6 @@ takeDamage() {
 
         if (this.ready && mapMode == false) {
             //console.log("this.image: " + this.image + " this.x: " + this.x + " this.y: " + this.y + " offsetX: " + offsetX + " offsetY: " + offsetY + " gridSize: " + gridSize)
-            
             context.drawImage(this.image, this.x * gridSize - offsetX, this.y * gridSize - offsetY, gridSize, gridSize);
         } else {
 
@@ -1131,11 +1132,20 @@ takeDamage() {
                     projectiles.push(new Projectile(this.x * gridSize, this.y * gridSize, enemy));
                     this.timeToFire = this.firingDelay;
                     playAudio(audioBuffers['bombFire'], gameVolume);
+                    context.drawImage(this.imageFiring, this.x * gridSize - offsetX, this.y * gridSize - offsetY, gridSize, gridSize);
+                        this.justFiredBomb = 20;
                     break;
                 }
             }
         } else {
             this.timeToFire = this.timeToFire - (1 * this.level);
+        }
+        if (this.justFiredBomb > 0)
+        {
+            console.log("Just fired bomb is more than 0. Decreasing. Value: " + this.justFiredBomb);
+        this.justFiredBomb -= 1;
+        context.drawImage(this.imageFiring, this.x * gridSize - offsetX, this.y * gridSize - offsetY, gridSize, gridSize);
+
         }
     }
 
@@ -1157,11 +1167,12 @@ takeDamage() {
                                 {
                                 context.beginPath();
                                 context.strokeStyle = 'red';
-                                context.moveTo((this.x * gridSize) - offsetX + 32, (this.y * gridSize) - offsetY + 32);  // Tower center
-                                context.lineTo((enemy.x) - offsetX + 32, (enemy.y) - offsetY + 32);  // Enemy center
+                                context.moveTo((this.x * gridSize) - offsetX + 30, (this.y * gridSize) - offsetY + 30);  // Tower center
+                                context.lineTo((enemy.x) - offsetX + 30, (enemy.y) - offsetY + 30);  // Enemy center
                                 context.lineWidth = 4;
                                 context.stroke();
                                 playAudio(audioBuffers['laserFire'], gameVolume);
+                                context.drawImage(this.imageFiring, this.x * gridSize - offsetX, this.y * gridSize - offsetY, gridSize, gridSize);
                                 }
                                 enemy.hp = enemy.hp - (this.damage * this.level);                    
                                             // If enemy's HP reached zero, delete it
@@ -1208,10 +1219,11 @@ takeDamage() {
                                         {
                                         context.beginPath();
                                         context.strokeStyle = 'blue';
-                                        context.moveTo((this.x * gridSize) - offsetX + 32, (this.y * gridSize) - offsetY + 32);  // Tower center
-                                        context.lineTo((enemy.x) - offsetX + 32, (enemy.y) - offsetY + 32);  // Enemy center
+                                        context.moveTo((this.x * gridSize) - offsetX + 30, (this.y * gridSize) - offsetY + 30);  // Tower center
+                                        context.lineTo((enemy.x) - offsetX + 30, (enemy.y) - offsetY + 30);  // Enemy center
                                         context.lineWidth = 4;
                                         context.stroke();
+                                        context.drawImage(this.imageFiring, this.x * gridSize - offsetX, this.y * gridSize - offsetY, gridSize, gridSize);
                                         playAudio(audioBuffers['iceFire'], gameVolume);
                                         }
                                         enemy.hp = enemy.hp - this.damage;                    
@@ -1300,7 +1312,7 @@ takeDamage() {
                 if (typeof checkPath !== "undefined")
                 {
                     console.log("checkPath is not undefined");
-                    grid[i][j] = 1;
+                    if (newBuilding.type != 'base') grid[i][j] = 1; // make sure bases stay 0
                     console.log("Set grid square " + i + ", " + j + "to 1.")
                     var pathValid = isPathStillValid(checkPath);
                     console.log("pathValid = " + pathValid);
@@ -1759,7 +1771,7 @@ function AStar(start, goal, maxAttempts) {
 
         if (attempts >= maxAttempts) {
             // Reached the maximum number of attempts, return an empty path
-            console.log("Hit max attempts. Aborting AStar. Failed path was for " + JSON.stringify(start) + " to " + JSON.stringify(end));
+            console.log("Hit max attempts. Aborting AStar. Failed path was for " + JSON.stringify(start) + " to " + JSON.stringify(goal));
             return [];
         }
 
@@ -1970,8 +1982,8 @@ function renderProjectiles() {
     for (var i in projectiles){
         var projectile = projectiles[i];
         var enemy = projectile.target;
-        var dx = enemy.x - projectile.x;
-        var dy = enemy.y - projectile.y;
+        var dx = enemy.x - projectile.x + 30;
+        var dy = enemy.y - projectile.y + 30;
         var distance = Math.sqrt(dx * dx + dy * dy);
         var velocityX = (dx / distance) * projectile.speed;
         var velocityY = (dy / distance) * projectile.speed;
