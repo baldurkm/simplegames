@@ -1752,6 +1752,7 @@ function AStar(start, goal, maxAttempts) {
 
         if (attempts >= maxAttempts) {
             // Reached the maximum number of attempts, return an empty path
+            console.log("Hit max attempts. Aborting AStar. Failed path was for " + JSON.stringify(start) + " to " + JSON.stringify(end));
             return [];
         }
 
