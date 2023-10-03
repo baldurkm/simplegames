@@ -1806,7 +1806,7 @@ function sendNextWave()
         waveCount++;
         statusMessage = 'WAVE ' + waveCount;
         statusMessageTimeout = 120;
-        var number = Math.trunc(0.85*(((waveCount * 3) + (killCount / 15)) * ((1+hives.length)/3))); // how many enemies each wave
+        var number = Math.trunc(0.85*(((waveCount * 3) + (killCount / 5)) * ((1+hives.length)/3))); // how many enemies each wave
         console.log("Spawning " + number + " enemies this wave");
         spawnManyEnemies(number);
         waveDone = false;
