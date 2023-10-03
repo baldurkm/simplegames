@@ -697,6 +697,12 @@ function renderBackgroundTexture() {
     }
 }
 
+// prevent arrow keys from moving page
+window.addEventListener("keydown", function(e) {
+    if(["Space","ArrowUp","ArrowDown","ArrowLeft","ArrowRight"].indexOf(e.code) > -1) {
+        e.preventDefault();
+    }
+}, false);
 
 // EVENT LISTENERS FOR KEYPRESSES
 // Move the screen
@@ -705,9 +711,6 @@ function renderBackgroundTexture() {
     function addEventListeners() {
 window.addEventListener('keydown', event => {
     keyStates[event.key] = true;
-    if([32, 37, 38, 39, 40].indexOf(event.key) > -1) {
-        event.preventDefault();
-        }
 });
 
 // On keyup, change the state back to false
@@ -834,7 +837,7 @@ function spawnEnemy(hives) {
 
 function spawnManyEnemies(number) {
     const hives = generateHiveList(buildings);
-    console.log("Starting spawning. Hives: " + JSON.stringify(hives));
+    //console.log("Starting spawning. Hives: " + JSON.stringify(hives));
     totalSpawned = 0;
     var spawnRate = 500 / (1 + (waveCount / 5));
     var continueSpawning = true; // Flag to control spawning
@@ -846,9 +849,9 @@ function spawnManyEnemies(number) {
         
             //console.log("endCoordinates: " + JSON.stringify(endCoordinates));
             let end = getNearestBaseCoordinates(hive.x, hive.y);
-            console.log("Pathfinding from " + JSON.stringify(start) + " to " + JSON.stringify(end));
+            //console.log("Pathfinding from " + JSON.stringify(start) + " to " + JSON.stringify(end));
             var returnAstar = AStar(start, end, 20000);
-            console.log("Found path for hive: " + JSON.stringify(hive) + ". Path: " + returnAstar);
+            //console.log("Found path for hive: " + JSON.stringify(hive) + ". Path: " + returnAstar);
             return returnAstar;
    
     });
@@ -864,7 +867,7 @@ function spawnManyEnemies(number) {
 
             if (!fixedPath || fixedPath.length === 0) {
                 // Skip hives with no valid path
-                console.log("Skipping hive because no fixed path: " + JSON.stringify(hive));
+                //console.log("Skipping hive because no fixed path: " + JSON.stringify(hive));
                 continue;
             }
 
@@ -876,11 +879,11 @@ function spawnManyEnemies(number) {
 
             // Increment the total number of spawned enemies
             totalSpawned++;
-            console.log("total spawned: " + totalSpawned);
+            //console.log("total spawned: " + totalSpawned);
 
             if (totalSpawned >= number) {
                 // Stop spawning when the total reaches the desired number
-                console.log("total spawned is more than number.");
+                //console.log("total spawned is more than number.");
                 continueSpawning = false; // Set the flag to stop spawning
                 break;
             }
@@ -1142,7 +1145,7 @@ takeDamage() {
         }
         if (this.justFiredBomb > 0)
         {
-            console.log("Just fired bomb is more than 0. Decreasing. Value: " + this.justFiredBomb);
+            //console.log("Just fired bomb is more than 0. Decreasing. Value: " + this.justFiredBomb);
         this.justFiredBomb -= 1;
         context.drawImage(this.imageFiring, this.x * gridSize - offsetX, this.y * gridSize - offsetY, gridSize, gridSize);
 
@@ -1311,25 +1314,25 @@ takeDamage() {
                 }
                 if (typeof checkPath !== "undefined")
                 {
-                    console.log("checkPath is not undefined");
+                    //console.log("checkPath is not undefined");
                     if (newBuilding.type != 'base') grid[i][j] = 1; // make sure bases stay 0
-                    console.log("Set grid square " + i + ", " + j + "to 1.")
+                    //console.log("Set grid square " + i + ", " + j + "to 1.")
                     var pathValid = isPathStillValid(checkPath);
-                    console.log("pathValid = " + pathValid);
+                    //console.log("pathValid = " + pathValid);
                     
                     if (!isPathStillValid(checkPath))
                     {
-                        console.log("Path not valid. Trying to re-pathfind. Using values: Start: " + JSON.stringify(start) + ", End: " + JSON.stringify(end));
+                        //console.log("Path not valid. Trying to re-pathfind. Using values: Start: " + JSON.stringify(start) + ", End: " + JSON.stringify(end));
                         checkPath = AStar(start, end, 10000);
                         if (!isPathStillValid(checkPath)) {
-                            console.log("Couldn't pathfind again. Building would block path");
+                            //console.log("Couldn't pathfind again. Building would block path");
                             statusMessage = "This building would block the path.";
                             statusMessageTimeout = 120;
                             grid[i][j] = 0;
                             return remainingMoney;
                     }
                     else {
-                        console.log("Pathfinding successful");
+                        //console.log("Pathfinding successful");
                     }
                         
                     }
@@ -1434,15 +1437,15 @@ function createHiveNearBase(money) {
     statusMessage = "A hive has spawned.";
     statusMessageTimeout = 120;
 
-    console.log("Building hive at " + JSON.stringify(randomHiveLocation));
+    //console.log("Building hive at " + JSON.stringify(randomHiveLocation));
     var distanceToHiveCheck = Math.sqrt(Math.pow(randomHiveLocation.x - randomLocation.j, 2) + Math.pow(randomHiveLocation.y - randomLocation.i, 2));
 
-    console.log("Distance from nearest base to hive: " + distanceToHiveCheck);
+    //console.log("Distance from nearest base to hive: " + distanceToHiveCheck);
     if (distanceToHiveCheck > 5) {
         const onConfirmHiveLocation = buildBuilding('hive', money);
         money = onConfirmHiveLocation(randomHiveLocation);
     } else {
-        console.log("Hive set to spawn too close. Trying again.");
+       // console.log("Hive set to spawn too close. Trying again.");
         createHiveNearBase(money);    
     }
 }
@@ -1578,7 +1581,7 @@ class Enemy {
             var gridY = Math.round((this.y) / gridSize);
             if (nearestBase !== null) {
                 if (!this.path.length || --this.pathUpdateCountdown <= 0) {
-                    console.log("Finding new path. this.path.length = " + this.path.length + ". this.pathUpdateCoutndown = " + this.pathUpdateCountdown);
+                    //console.log("Finding new path. this.path.length = " + this.path.length + ". this.pathUpdateCoutndown = " + this.pathUpdateCountdown);
                     // Skip AStar call if limit reached
                     if (astarCalls >= astarCallLimit) return;
 
@@ -1645,7 +1648,7 @@ function getNearestBaseCoordinates(enemyX, enemyY) {
     }
 
     if (closestBaseKey === null) {
-        console.log("Returning null");
+        //console.log("Returning null");
         return null;
         
     } else {
@@ -1807,7 +1810,7 @@ function sendNextWave()
         statusMessage = 'WAVE ' + waveCount;
         statusMessageTimeout = 120;
         var number = Math.trunc(0.85*(((waveCount * 3) + (killCount / 5)) * ((1+hives.length)/3))); // how many enemies each wave
-        console.log("Spawning " + number + " enemies this wave");
+        //console.log("Spawning " + number + " enemies this wave");
         spawnManyEnemies(number);
         waveDone = false;
         waveTimer = 0;
@@ -1966,7 +1969,7 @@ function checkIncome()
             incomePerTick += buildings[key].generateIncome();
         }
     }
-    console.log("Checked income: " + incomePerTick);
+    //console.log("Checked income: " + incomePerTick);
 
 }
 
