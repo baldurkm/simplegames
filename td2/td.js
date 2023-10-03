@@ -842,7 +842,8 @@ function spawnManyEnemies(number) {
     // Calculate fixed paths for each hive
     const fixedPaths = hives.map((hive) => {
         let start = { i: hive.y, j: hive.x };
-        let end = getNearestBaseCoordinates(hive.x, hive.y);
+        let endCoordinates = getNearestBaseCoordinates(hive.x, hive.y); // Retrieve end coordinates
+        let end = { i: endCoordinates.i, j: endCoordinates.j }; // Structure 'end' value similarly to 'start'
         console.log("Pathfinding from " + JSON.stringify(start) + " to " + JSON.stringify(end));
         var returnAstar = AStar(start, end, 20000);
         console.log("Found path for hive: " + JSON.stringify(hive) + ". Path: " + returnAstar);
