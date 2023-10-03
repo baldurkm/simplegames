@@ -845,6 +845,7 @@ function spawnManyEnemies(number) {
         let endCoordinates = getNearestBaseCoordinates(hive.x, hive.y); // Retrieve end coordinates
         
         if (endCoordinates) {
+            console.log("endCoordinates: " + JSON.stringify(endCoordinates));
             let end = { i: endCoordinates.i, j: endCoordinates.j };
             console.log("Pathfinding from " + JSON.stringify(start) + " to " + JSON.stringify(end));
             var returnAstar = AStar(start, end, 20000);
