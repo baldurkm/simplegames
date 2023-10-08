@@ -839,7 +839,7 @@ function spawnManyEnemies(number) {
     const hives = generateHiveList(buildings);
     //console.log("Starting spawning. Hives: " + JSON.stringify(hives));
     totalSpawned = 0;
-    var spawnRate = 500 / (1 + (waveCount / 5));
+    var spawnRate = 500 / (1 + (waveCount / 3));
     var continueSpawning = true; // Flag to control spawning
 
     // Calculate fixed paths for each hive
@@ -1135,7 +1135,7 @@ takeDamage() {
                     projectiles.push(new Projectile(this.x * gridSize, this.y * gridSize, enemy));
                     this.timeToFire = this.firingDelay;
                     playAudio(audioBuffers['bombFire'], gameVolume);
-                    context.drawImage(this.imageFiring, this.x * gridSize - offsetX, this.y * gridSize - offsetY, gridSize, gridSize);
+                    if (!mapMode) context.drawImage(this.imageFiring, this.x * gridSize - offsetX, this.y * gridSize - offsetY, gridSize, gridSize);
                         this.justFiredBomb = 20;
                     break;
                 }
@@ -1147,7 +1147,7 @@ takeDamage() {
         {
             //console.log("Just fired bomb is more than 0. Decreasing. Value: " + this.justFiredBomb);
         this.justFiredBomb -= 1;
-        context.drawImage(this.imageFiring, this.x * gridSize - offsetX, this.y * gridSize - offsetY, gridSize, gridSize);
+        if (!mapMode) context.drawImage(this.imageFiring, this.x * gridSize - offsetX, this.y * gridSize - offsetY, gridSize, gridSize);
 
         }
     }
@@ -1341,7 +1341,7 @@ takeDamage() {
                 remainingMoney -= cost; 
                 buildings.push(newBuilding);
                 playAudio(audioBuffers['place'], gameVolume);
-                isSubMenuActive = false;
+                //isSubMenuActive = false;
                 checkIncome();
                 // Check if enemies can still reach the base. If not, force them to recalculate.
                 if (type !== 'base') {
@@ -1879,8 +1879,8 @@ function drawMap() {
         for (const enemy of enemies) {
             //console.log("Checking enemy: " + JSON.stringify(enemy));
             // Calculate enemy's position on the map
-            const mapX = ((enemy.x) - mapModeOffsetX) * 0.333;
-            const mapY = ((enemy.y) - mapModeOffsetY) * 0.333;
+            const mapX = ((enemy.x) - mapModeOffsetX + (gridSize/2)) * 0.333;
+            const mapY = ((enemy.y) - mapModeOffsetY + (gridSize/2)) * 0.333;
             // Draw a red dot as a placeholder for the enemy
             //console.log("Drawing red dot at " + mapX + ", " + mapY);
             context.beginPath();
@@ -2255,7 +2255,7 @@ if (enemies.length == 0 && !waveDone)
 {
     statusMessage = 'WAVE ' + waveCount + ' COMPLETE';
     statusMessageTimeout = 120;
-    waveTimer = 500;
+    waveTimer = 500 + waveCount * 30;
     waveDone = true;
 
     checkIncome();
