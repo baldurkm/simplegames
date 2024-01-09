@@ -11,7 +11,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const mapButton = createButton('Map', 'map-button');
     const mainMenuButton = createButton('Main Menu', 'menu-button');
 
-    let dayCounter = 0; // display days on the road
+    let dayCounter = 0;
+    let seasonCounter = 0;
+    const seasons = ['Spring', 'Summer', 'Fall', 'Winter'];
 
         // Fetch events from events.json
         fetch('events.json')
@@ -47,11 +49,39 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     function handleContinueButtonClick() {
-        // Add logic for continuing to the next day
-        handleButtonClick('Continue', `Day ${dayCounter}: Your caravan moves forward.`);
         dayCounter++;
-        // Simulate an event for demonstration purposes
-        addEventToInbox('Weather change: Rain is expected tomorrow.');
+        if (dayCounter % 90 === 0) {
+            // Transition to the next season
+            seasonCounter = (seasonCounter + 1) % 4;
+            updateMainDisplay(`Day ${dayCounter}: ${seasons[seasonCounter]} begins.`);
+        } else {
+            updateMainDisplay(`Day ${dayCounter}: ${seasons[seasonCounter]}`);
+        }
+
+        // Randomize the number of events (between 0 and 3)
+        const numEvents = Math.floor(Math.random() * 4);
+
+        // Randomize and select events based on likelihoods
+        for (let i = 0; i < numEvents; i++) {
+            const randomEvent = getRandomEvent();
+            if (randomEvent) {
+                addEventToInbox(randomEvent.description);
+            }
+        }
+    }
+
+    // Function to get a random event based on likelihoods
+    function getRandomEvent() {
+        // Filter events based on location and season
+        const filteredEvents = events.filter(event => {
+            const locationCondition = event.likelihood.location === 'Any' || event.likelihood.location === currentLocation;
+            const seasonCondition = event.likelihood.season.includes('Any') || event.likelihood.season.includes(seasons[seasonCounter]);
+            return locationCondition && seasonCondition;
+        });
+
+        // Randomly select an event from the filtered list
+        const randomIndex = Math.floor(Math.random() * filteredEvents.length);
+        return filteredEvents[randomIndex];
     }
 
     // Function to handle button clicks
