@@ -1,20 +1,275 @@
 [
     {
         "id": 1,
-        "name": "Encounter with Sioux Indians",
-        "description": "You encounter a group of Sioux Indians on the trail.",
+        "name": "Encounter with Friendly Traders",
+        "description": "You encounter a group of friendly traders. They offer to exchange goods with you.",
         "likelihood": {
-            "area": "South Dakota",
-            "season": ["Spring", "Summer"]
+            "location": "Any",
+            "season": ["Spring", "Summer", "Fall"]
         }
     },
     {
         "id": 2,
-        "name": "Snowstorm",
-        "description": "A snowstorm hits, making it difficult to move.",
+        "name": "Ambush by Bandits",
+        "description": "Your caravan is ambushed by bandits. Prepare for a battle!",
         "likelihood": {
+            "location": "Any",
+            "season": ["Spring", "Summer", "Fall"]
+        }
+    },
+    {
+        "id": 3,
+        "name": "Lost in the Fog",
+        "description": "A dense fog descends, making it challenging to navigate. Progress slows down.",
+        "likelihood": {
+            "location": "Any",
+            "season": ["Fall", "Winter"]
+        }
+    },
+    {
+        "id": 4,
+        "name": "Heavy Rainfall",
+        "description": "Heavy rainfall creates muddy paths. Travel becomes difficult.",
+        "likelihood": {
+            "location": "Any",
+            "season": ["Spring", "Fall"]
+        }
+    },
+    {
+        "id": 5,
+        "name": "Harsh Blizzard",
+        "description": "A fierce blizzard hits. The caravan is forced to halt due to extreme weather conditions.",
+        "likelihood": {
+            "location": "Any",
             "season": ["Winter"]
         }
+    },
+    {
+        "id": 6,
+        "name": "Bounty of Wildlife",
+        "description": "You come across an area rich in wildlife. Hunting is plentiful, providing extra resources.",
+        "likelihood": {
+            "location": "Any",
+            "season": ["Spring", "Summer"]
+        }
+    },
+    {
+        "id": 7,
+        "name": "Aid from a Friendly Settlement",
+        "description": "A nearby settlement offers assistance and supplies. Your caravan is grateful.",
+        "likelihood": {
+            "location": "Any",
+            "season": ["Any"]
+        }
+    },
+    {
+        "id": 8,
+        "name": "Mechanical Breakdown",
+        "description": "One of your wagons breaks down. Caravan progress is slowed until repairs are completed.",
+        "likelihood": {
+            "location": "Any",
+            "season": ["Any"]
+        }
+    },
+    {
+        "id": 9,
+        "name": "Unexpected Illness",
+        "description": "A member of your caravan falls ill. Medical supplies are needed for recovery.",
+        "likelihood": {
+            "location": "Any",
+            "season": ["Any"]
+        }
+    },
+    {
+        "id": 10,
+        "name": "Crossroads Decision",
+        "description": "You reach a crossroads. A decision must be made on the path to take.",
+        "likelihood": {
+            "location": "Any",
+            "season": ["Any"]
+        }
+    },
+    {
+        "id": 11,
+        "name": "Mysterious Artifact",
+        "description": "A mysterious artifact is discovered on the trail. Its origin and purpose are unknown.",
+        "likelihood": {
+            "location": "Any",
+            "season": ["Any"]
+        }
+    },
+    {
+        "id": 12,
+        "name": "Festival Celebration",
+        "description": "You stumble upon a festival celebration in a nearby town. Join in the festivities!",
+        "likelihood": {
+            "location": "Any",
+            "season": ["Spring", "Summer", "Fall"]
+        }
+    },
+    {
+        "id": 13,
+        "name": "Cattle Stampede",
+        "description": "A sudden cattle stampede crosses your path. Navigate carefully to avoid chaos.",
+        "likelihood": {
+            "location": "Any",
+            "season": ["Spring", "Summer", "Fall"]
+        }
+    },
+    {
+        "id": 14,
+        "name": "Eagle Eye's View",
+        "description": "An eagle circles overhead, signaling potential danger or opportunity ahead.",
+        "likelihood": {
+            "location": "Any",
+            "season": ["Any"]
+        }
+    },
+    {
+        "id": 15,
+        "name": "Sacred Ground Encounter",
+        "description": "You stumble upon a sacred ground. Approach with respect or face consequences.",
+        "likelihood": {
+            "location": "Any",
+            "season": ["Any"]
+        }
+    },
+    {
+        "id": 16,
+        "name": "Eldritch Phenomenon",
+        "description": "An otherworldly phenomenon occurs, sparking awe and fear among your caravan members.",
+        "likelihood": {
+            "location": "Any",
+            "season": ["Any"]
+        }
+    },
+    {
+        "id": 17,
+        "name": "Hidden Cave Discovery",
+        "description": "A hidden cave is discovered along the trail. Explore its depths for potential treasures.",
+        "likelihood": {
+            "location": "Any",
+            "season": ["Any"]
+        }
+    },
+    {
+        "id": 18,
+        "name": "Friendly Nomadic Encounter",
+        "description": "Nomadic travelers join your caravan temporarily, sharing stories and skills.",
+        "likelihood": {
+            "location": "Any",
+            "season": ["Any"]
+        }
+    },
+    {
+        "id": 19,
+        "name": "Quicksand Peril",
+        "description": "Quicksand poses a danger on the trail. Navigate cautiously to avoid mishaps.",
+        "likelihood": {
+            "location": "Any",
+            "season": ["Spring", "Summer"]
+        }
+    },
+    {
+        "id": 20,
+        "name": "Celestial Phenomenon",
+        "description": "A rare celestial event graces the night sky, bringing wonder and reflection to your caravan.",
+        "likelihood": {
+            "location": "Any",
+            "season": ["Any"]
+        }
     }
+]
 
+[
+    {
+        "id": 21,
+        "name": "Fertile Soil Discovery",
+        "description": "You find an area with exceptionally fertile soil. Consider stopping to cultivate crops for additional supplies.",
+        "likelihood": {
+            "location": "Any",
+            "season": ["Spring", "Summer"]
+        }
+    },
+    {
+        "id": 22,
+        "name": "Ancient Ruins Encounter",
+        "description": "Your caravan stumbles upon ancient ruins. Explore for historical artifacts and potential discoveries.",
+        "likelihood": {
+            "location": "Any",
+            "season": ["Any"]
+        }
+    },
+    {
+        "id": 23,
+        "name": "Wildfire Threat",
+        "description": "A distant wildfire poses a threat to your route. Plan a detour to avoid potential danger.",
+        "likelihood": {
+            "location": "Any",
+            "season": ["Summer", "Fall"]
+        }
+    },
+    {
+        "id": 24,
+        "name": "Cursed Artefact",
+        "description": "A mysterious artefact is discovered. Its presence brings an unsettling aura. Handle with caution.",
+        "likelihood": {
+            "location": "Any",
+            "season": ["Any"]
+        }
+    },
+    {
+        "id": 25,
+        "name": "Enchanted Oasis",
+        "description": "An enchanted oasis appears in the desert. Resting here provides magical benefits.",
+        "likelihood": {
+            "location": "Desert",
+            "season": ["Spring", "Summer"]
+        }
+    },
+    {
+        "id": 26,
+        "name": "Avalanche Threat",
+        "description": "Traversing through mountainous terrain, an avalanche risk becomes imminent. Evaluate the best path forward.",
+        "likelihood": {
+            "location": "Mountains",
+            "season": ["Winter"]
+        }
+    },
+    {
+        "id": 27,
+        "name": "Geyser Spectacle",
+        "description": "Discover a mesmerizing geyser field. Enjoy the natural spectacle and potential benefits for the journey.",
+        "likelihood": {
+            "location": "Any",
+            "season": ["Spring"]
+        }
+    },
+    {
+        "id": 28,
+        "name": "Haunted Forest",
+        "description": "Enter a mysterious, haunted forest. Your caravan must navigate through eerie surroundings with caution.",
+        "likelihood": {
+            "location": "Forest",
+            "season": ["Any"]
+        }
+    },
+    {
+        "id": 29,
+        "name": "Trade Route Discovery",
+        "description": "Stumble upon an ancient trade route. Follow it for potential shortcuts and trade opportunities.",
+        "likelihood": {
+            "location": "Any",
+            "season": ["Any"]
+        }
+    },
+    {
+        "id": 30,
+        "name": "Lost Traveler Encounter",
+        "description": "Encounter a lost traveler seeking refuge. Offer assistance and potentially gain a valuable ally.",
+        "likelihood": {
+            "location": "Any",
+            "season": ["Any"]
+        }
+    }
 ]
