@@ -1,0 +1,20 @@
+[
+    {
+        "id": 1,
+        "name": "Encounter with Sioux Indians",
+        "description": "You encounter a group of Sioux Indians on the trail.",
+        "likelihood": {
+            "area": "South Dakota",
+            "season": ["Spring", "Summer"]
+        }
+    },
+    {
+        "id": 2,
+        "name": "Snowstorm",
+        "description": "A snowstorm hits, making it difficult to move.",
+        "likelihood": {
+            "season": ["Winter"]
+        }
+    }
+
+]
