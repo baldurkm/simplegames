@@ -19,6 +19,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let seasonCounter = 0;
     const seasons = ['Spring', 'Summer', 'Fall', 'Winter'];
     let currentLocation = 'Missouri';
+    let chosenDirection = null;
 
     // location mapping
     const gridMap = [
@@ -39,29 +40,12 @@ document.addEventListener('DOMContentLoaded', function() {
             })
             .catch(error => console.error('Error fetching events:', error));
 
-    continueButton.addEventListener('click', function() {
-        handleContinueButtonClick();
-    });
-
-    homeButton.addEventListener('click', function() {
-        displayHomePage();
-    });
-
-    caravanButton.addEventListener('click', function() {
-        displayCaravanPage();
-    });
-
-    membersButton.addEventListener('click', function() {
-        displayMembersPage();
-    });
-
-    mapButton.addEventListener('click', function() {
-        displayMapPage();
-    });
-
-    mainMenuButton.addEventListener('click', function() {
-        handleButtonClick('Main Menu');
-    });
+    continueButton.addEventListener('click', handleContinueButtonClick);
+    homeButton.addEventListener('click', displayHomePage);
+    caravanButton.addEventListener('click', displayCaravanPage);
+    membersButton.addEventListener('click', displayMembersPage);
+    mapButton.addEventListener('click', displayMapPage);
+    mainMenuButton.addEventListener('click', () => handleButtonClick('Main Menu'));
 
     function handleContinueButtonClick() {
         dayCounter++;
