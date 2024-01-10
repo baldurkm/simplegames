@@ -73,6 +73,22 @@ document.addEventListener('DOMContentLoaded', function() {
             updateMainDisplay(`Day ${dayCounter}: ${seasons[seasonCounter]}`);
         }
 
+            // Apply movement if a direction was chosen
+    if (chosenDirection !== null) {
+        const newPosition = calculateNewPosition(playerPosition, chosenDirection.toLowerCase());
+        if (isValidPosition(newPosition)) {
+            const newLocation = gridMap[newPosition.row][newPosition.col];
+            updateMainDisplay(`Day ${dayCounter}: Traveling to ${newLocation}.`);
+            playerPosition = newPosition;
+            displayMapInfo(); // Update map information
+        } else {
+            updateMainDisplay(`Day ${dayCounter}: Error - Invalid path.`);
+        }
+
+        // Reset the chosen direction after applying movement
+        chosenDirection = null;
+    }
+
         // Randomize the number of events (between 0 and 3)
         const numEvents = Math.floor(Math.random() * 4);
 
@@ -83,6 +99,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 addEventToInbox(randomEvent.description);
             }
         }
+        
     }
 
     // Function to get a random event based on likelihoods
@@ -180,15 +197,8 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function followPath(direction) {
-        const newPosition = calculateNewPosition(playerPosition, direction);
-        if (isValidPosition(newPosition)) {
-            const newLocation = gridMap[newPosition.row][newPosition.col];
-            updateMainDisplay(`Day ${dayCounter}: Traveling to ${newLocation}.`);
-            playerPosition = newPosition;
-            displayMapInfo(); // Update map information
-        } else {
-            updateMainDisplay(`Day ${dayCounter}: Error - Invalid path.`);
-        }
+        chosenDirection = direction;
+        updateMainDisplay(`Day ${dayCounter}: Path chosen - ${chosenDirection}.`);
     }
 
     function calculateNewPosition(currentPosition, direction) {
