@@ -15,6 +15,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let dayCounter = 0;
     let seasonCounter = 0;
     const seasons = ['Spring', 'Summer', 'Fall', 'Winter'];
+    let currentLocation = 'Missouri';
 
         // Fetch events from events.json
         fetch('events.json')
