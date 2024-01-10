@@ -1,4 +1,6 @@
 document.addEventListener('DOMContentLoaded', function() {
+
+    // base variables
     const body = document.body;
     const gameContainer = createGameContainer();
     const mainDisplay = createMainDisplay();
@@ -11,11 +13,22 @@ document.addEventListener('DOMContentLoaded', function() {
     const mapButton = createButton('Map', 'map-button');
     const mainMenuButton = createButton('Main Menu', 'menu-button');
 
+    // gameplay variables
     let events;
     let dayCounter = 0;
     let seasonCounter = 0;
     const seasons = ['Spring', 'Summer', 'Fall', 'Winter'];
     let currentLocation = 'Missouri';
+
+    // location mapping
+    const gridMap = [
+    ['Forest', 'Plains', 'River', 'Mountain', 'Plains'],
+    ['Desert', 'Forest', 'Plains', 'Forest', 'Hills'],
+    ['Mountain', 'River', 'Forest', 'Forest', 'Plains'],
+    ['River', 'Mountain', 'Forest', 'Plains', 'Desert'],
+    ['River', 'Mountain', 'Plains', 'Desert', 'Desert'],
+    ];
+    let playerPosition = { row: 0, col: 0 }; // Initial position
 
         // Fetch events from events.json
         fetch('events.json')
@@ -165,6 +178,70 @@ document.addEventListener('DOMContentLoaded', function() {
         mainDisplay.style.display = 'block';
         screenContainer.style.display = 'none';
     }
+
+    function followPath(direction) {
+        const newPosition = calculateNewPosition(playerPosition, direction);
+        if (isValidPosition(newPosition)) {
+            const newLocation = gridMap[newPosition.row][newPosition.col];
+            updateMainDisplay(`Day ${dayCounter}: Traveling to ${newLocation}.`);
+            playerPosition = newPosition;
+            displayMapInfo(); // Update map information
+        } else {
+            updateMainDisplay(`Day ${dayCounter}: Error - Invalid path.`);
+        }
+    }
+
+    function calculateNewPosition(currentPosition, direction) {
+        // Clone the current position to avoid modifying the original object
+        const newPosition = { ...currentPosition };
+    
+        // Update the position based on the direction
+        switch (direction) {
+            case 'up':
+                newPosition.row -= 1;
+                break;
+            case 'down':
+                newPosition.row += 1;
+                break;
+            case 'left':
+                newPosition.col -= 1;
+                break;
+            case 'right':
+                newPosition.col += 1;
+                break;
+            default:
+                // Handle invalid direction (optional)
+                break;
+        }
+    
+        return newPosition;
+    }
+
+    function isValidPosition(position) {
+        // Check if the new position is within the boundaries of the grid
+        // and if the player can traverse to the specified location
+        return (
+            position.row >= 0 &&
+            position.row < gridMap.length &&
+            position.col >= 0 &&
+            position.col < gridMap[0].length &&
+            canTraverse(gridMap[position.row][position.col])
+        );
+    }
+
+    function canTraverse(location) {
+        // Implement logic to check if the player can traverse the specified location
+        // (e.g., certain locations are impassable or require special conditions)
+        return true;
+    }
+
+    function displayMapInfo() {
+    const currentLocation = gridMap[playerPosition.row][playerPosition.col];
+    updateMainDisplay(`Current Location: ${currentLocation}`);
+    // Display information about the current cell and possible paths
+}
+
+    
 
 
 });
