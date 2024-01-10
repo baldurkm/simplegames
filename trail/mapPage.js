@@ -2,6 +2,14 @@ function displayMapPage()
 {
     console.log("Showing Map Page");
 
+    createDirectionButtons();
+
+        // Hide inbox
+        const inboxContainer = document.getElementById('inbox-container');
+        inboxContainer.style.display = 'none';
+    
+}
+
         function createDirectionButtons() {
         const directions = ['Up', 'Down', 'Left', 'Right'];
     
@@ -12,9 +20,3 @@ function displayMapPage()
             });
         });
     }
-
-        // Hide inbox
-        const inboxContainer = document.getElementById('inbox-container');
-        inboxContainer.style.display = 'none';
-    
-}
