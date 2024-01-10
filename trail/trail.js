@@ -11,6 +11,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const mapButton = createButton('Map', 'map-button');
     const mainMenuButton = createButton('Main Menu', 'menu-button');
 
+    let events;
     let dayCounter = 0;
     let seasonCounter = 0;
     const seasons = ['Spring', 'Summer', 'Fall', 'Winter'];
@@ -20,7 +21,7 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(response => response.json())
         .then(data => {
             // Store events in a variable for later use
-            const events = data;
+            events = data;
             })
             .catch(error => console.error('Error fetching events:', error));
 
