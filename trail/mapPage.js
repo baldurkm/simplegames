@@ -10,10 +10,10 @@ function displayMapPage() {
 }
 
 function createDirectionButtons() {
-    const directions = ['Up', 'Down', 'Left', 'Right'];
+    const directions = ['North', 'East', 'South', 'West'];
 
     directions.forEach(direction => {
-        const button = createButton(`${direction.toLowerCase()}-button`, direction,);
+        const button = createButton(direction, `${direction.toLowerCase()}-button`);
         button.addEventListener('click', function() {
             followPath(direction.toLowerCase());
         });
