@@ -191,16 +191,16 @@ document.addEventListener('DOMContentLoaded', function() {
     
         // Update the position based on the direction
         switch (direction) {
-            case 'up':
+            case 'north':
                 newPosition.row -= 1;
                 break;
-            case 'down':
+            case 'south':
                 newPosition.row += 1;
                 break;
-            case 'left':
+            case 'west':
                 newPosition.col -= 1;
                 break;
-            case 'right':
+            case 'east':
                 newPosition.col += 1;
                 break;
             default:
@@ -234,6 +234,62 @@ document.addEventListener('DOMContentLoaded', function() {
     updateMainDisplay(`Current Location: ${currentLocation}`);
     // Display information about the current cell and possible paths
 }
+
+    function displayMapPage() {
+    console.log("Showing Map Page");
+
+    // Call the function to create direction buttons
+    createDirectionButtons();
+
+    // Hide inbox
+    const inboxContainer = document.getElementById('inbox-container');
+    inboxContainer.style.display = 'none';
+}
+
+    function displayMembersPage()
+{
+    
+    
+    console.log("Showing Members Page");
+
+        // Hide inbox
+        const inboxContainer = document.getElementById('inbox-container');
+        inboxContainer.style.display = 'none';
+    
+}
+
+    function displayHomePage() {
+    console.log("Showing Home Page");
+
+    // Display inbox
+    const inboxContainer = document.getElementById('inbox-container');
+    inboxContainer.style.display = 'block';
+
+    // Add any additional inbox-related functionality here
+}
+
+    function displayCaravanPage()
+{
+
+    console.log("Showing Caravan Page");
+
+
+        // Hide inbox
+        const inboxContainer = document.getElementById('inbox-container');
+        inboxContainer.style.display = 'none';
+}
+
+function createDirectionButtons() {
+    const directions = ['North', 'East', 'South', 'West'];
+
+    directions.forEach(direction => {
+        const button = createButton(direction, `${direction.toLowerCase()}-button`);
+        button.addEventListener('click', function() {
+            followPath(direction.toLowerCase());
+        });
+    });
+}
+
 
     
 
