@@ -12,6 +12,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const membersButton = createButton('Members', 'members-button');
     const mapButton = createButton('Map', 'map-button');
     const mainMenuButton = createButton('Main Menu', 'menu-button');
+    createDirectionButtons();
 
     
     // Map variables
@@ -269,9 +270,16 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function displayMapPage() {
         console.log("Showing Map Page");
-        createDirectionButtons();
+
         // Show map only on the map page
         mapCanvas.style.display = 'block';
+
+        // Hide direction buttons when not on the map page
+        const directionButtons = document.querySelectorAll('.direction-button');
+        directionButtons.forEach(button => {
+            button.style.display = 'block';
+        });
+
         // Hide inbox
         inboxContainer.style.display = 'none';
     }
@@ -334,6 +342,12 @@ document.addEventListener('DOMContentLoaded', function() {
     function displayMembersPage() {
         console.log("Showing Members Page");
 
+        // Hide direction buttons when not on the map page
+        const directionButtons = document.querySelectorAll('.direction-button');
+        directionButtons.forEach(button => {
+            button.style.display = 'none';
+        });
+
         // Hide inbox
         const inboxContainer = document.getElementById('inbox-container');
         mapCanvas.style.display = 'none';
@@ -342,6 +356,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function displayHomePage() {
         console.log("Showing Home Page");
+
+        // Hide direction buttons when not on the map page
+        const directionButtons = document.querySelectorAll('.direction-button');
+        directionButtons.forEach(button => {
+            button.style.display = 'none';
+        });
 
         // Display inbox
         const inboxContainer = document.getElementById('inbox-container');
@@ -354,12 +374,17 @@ document.addEventListener('DOMContentLoaded', function() {
     function displayCaravanPage() {
         console.log("Showing Caravan Page");
 
+        // Hide direction buttons when not on the map page
+        const directionButtons = document.querySelectorAll('.direction-button');
+        directionButtons.forEach(button => {
+            button.style.display = 'none';
+        });
+
         // Hide inbox
         const inboxContainer = document.getElementById('inbox-container');
         inboxContainer.style.display = 'none';
         mapCanvas.style.display = 'none';
     }
-
     function createDirectionButtons() {
         const directions = ['North', 'East', 'South', 'West'];
 
