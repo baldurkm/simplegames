@@ -13,7 +13,7 @@ function createDirectionButtons() {
     const directions = ['Up', 'Down', 'Left', 'Right'];
 
     directions.forEach(direction => {
-        const button = createButton(direction, `${direction.toLowerCase()}-button`);
+        const button = createButton(`${direction.toLowerCase()}-button`, direction,);
         button.addEventListener('click', function() {
             followPath(direction.toLowerCase());
         });
