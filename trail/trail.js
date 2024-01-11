@@ -13,6 +13,11 @@ document.addEventListener('DOMContentLoaded', function() {
     const mapButton = createButton('Map', 'map-button');
     const mainMenuButton = createButton('Main Menu', 'menu-button');
 
+    
+    // Map variables
+    const mapCanvas = createMapCanvas();
+    const mapContext = mapCanvas.getContext('2d');
+
     // gameplay variables
     let events;
     let dayCounter = 0;
@@ -31,14 +36,14 @@ document.addEventListener('DOMContentLoaded', function() {
     ];
     let playerPosition = { row: 0, col: 0 }; // Initial position
 
-        // Fetch events from events.json
-        fetch('events.json')
+    // Fetch events from events.json
+    fetch('events.json')
         .then(response => response.json())
         .then(data => {
             // Store events in a variable for later use
             events = data;
-            })
-            .catch(error => console.error('Error fetching events:', error));
+        })
+        .catch(error => console.error('Error fetching events:', error));
 
     continueButton.addEventListener('click', handleContinueButtonClick);
     homeButton.addEventListener('click', displayHomePage);
@@ -46,6 +51,33 @@ document.addEventListener('DOMContentLoaded', function() {
     membersButton.addEventListener('click', displayMembersPage);
     mapButton.addEventListener('click', displayMapPage);
     mainMenuButton.addEventListener('click', () => handleButtonClick('Main Menu'));
+
+    function updateScreenContainerContent(screenLabel, content) {
+        // Hide all screen elements by default
+        mainDisplay.style.display = 'none';
+        screenContainer.style.display = 'none';
+        mapCanvas.style.display = 'none';
+
+        // Determine which element to display based on the screen label
+        switch (screenLabel) {
+            case 'Home':
+                mainDisplay.textContent = content;
+                mainDisplay.style.display = 'block';
+                break;
+            case 'Caravan':
+            case 'Members':
+                screenContainer.innerHTML = `<p>${screenLabel}: ${content}</p>`;
+                screenContainer.style.display = 'block';
+                break;
+            case 'Map':
+                // Additional logic for map screen
+                screenContainer.style.display = 'block';
+                mapCanvas.style.display = 'block';
+                updateMapDisplay(); // Add this line to update the map when displaying the map screen
+                break;
+            // Add additional cases for other screens if needed
+        }
+    }
 
     function handleContinueButtonClick() {
         dayCounter++;
@@ -57,21 +89,22 @@ document.addEventListener('DOMContentLoaded', function() {
             updateMainDisplay(`Day ${dayCounter}: ${seasons[seasonCounter]}`);
         }
 
-            // Apply movement if a direction was chosen
-    if (chosenDirection !== null) {
-        const newPosition = calculateNewPosition(playerPosition, chosenDirection.toLowerCase());
-        if (isValidPosition(newPosition)) {
-            const newLocation = gridMap[newPosition.row][newPosition.col];
-            updateMainDisplay(`Day ${dayCounter}: Traveling to ${newLocation}.`);
-            playerPosition = newPosition;
-            displayMapInfo(); // Update map information
-        } else {
-            updateMainDisplay(`Day ${dayCounter}: Error - Invalid path.`);
-        }
+        // Apply movement if a direction was chosen
+        if (chosenDirection !== null) {
+            const newPosition = calculateNewPosition(playerPosition, chosenDirection.toLowerCase());
+            if (isValidPosition(newPosition)) {
+                const newLocation = gridMap[newPosition.row][newPosition.col];
+                updateMainDisplay(`Day ${dayCounter}: Traveling to ${newLocation}.`);
+                playerPosition = newPosition;
+                displayMapInfo(); // Update map information
+                updateMapDisplay(); // Add this line to update the map after a continue
+            } else {
+                updateMainDisplay(`Day ${dayCounter}: Error - Invalid path.`);
+            }
 
-        // Reset the chosen direction after applying movement
-        chosenDirection = null;
-    }
+            // Reset the chosen direction after applying movement
+            chosenDirection = null;
+        }
 
         // Randomize the number of events (between 0 and 3)
         const numEvents = Math.floor(Math.random() * 4);
@@ -83,7 +116,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 addEventToInbox(randomEvent.description);
             }
         }
-        
     }
 
     // Function to get a random event based on likelihoods
@@ -230,68 +262,117 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function displayMapInfo() {
-    const currentLocation = gridMap[playerPosition.row][playerPosition.col];
-    updateMainDisplay(`Current Location: ${currentLocation}`);
-    // Display information about the current cell and possible paths
-}
+        const currentLocation = gridMap[playerPosition.row][playerPosition.col];
+        updateMainDisplay(`Current Location: ${currentLocation}`);
+        // Display information about the current cell and possible paths
+    }
 
     function displayMapPage() {
-    console.log("Showing Map Page");
+        console.log("Showing Map Page");
+        createDirectionButtons();
+        // Show map only on the map page
+        mapCanvas.style.display = 'block';
+        // Hide inbox
+        inboxContainer.style.display = 'none';
+    }
 
-    // Call the function to create direction buttons
-    createDirectionButtons();
+    function createMapCanvas() {
+        const canvas = document.createElement('canvas');
+        canvas.id = 'map-canvas';
+        canvas.width = 400; // Set the desired width
+        canvas.height = 400; // Set the desired height
+        gameContainer.appendChild(canvas);
+        return canvas;
+    }
 
-    // Hide inbox
-    const inboxContainer = document.getElementById('inbox-container');
-    inboxContainer.style.display = 'none';
-}
+    function updateMapDisplay() {
+        // Clear the map canvas
+        mapContext.clearRect(0, 0, mapCanvas.width, mapCanvas.height);
+        // Draw the grid
+        drawGrid();
+        // Draw the player position
+        drawPlayerPosition();
+    }
 
-    function displayMembersPage()
-{
-    
-    
-    console.log("Showing Members Page");
+    // Function to draw the grid
+    function drawGrid() {
+        const cellSize = mapCanvas.width / gridMap.length;
+
+        // Draw vertical lines
+        for (let i = 1; i < gridMap.length; i++) {
+            const x = i * cellSize;
+            mapContext.beginPath();
+            mapContext.moveTo(x, 0);
+            mapContext.lineTo(x, mapCanvas.height);
+            mapContext.stroke();
+        }
+
+        // Draw horizontal lines
+        for (let j = 1; j < gridMap[0].length; j++) {
+            const y = j * cellSize;
+            mapContext.beginPath();
+            mapContext.moveTo(0, y);
+            mapContext.lineTo(mapCanvas.width, y);
+            mapContext.stroke();
+        }
+    }
+
+    // Function to draw the player position
+    function drawPlayerPosition() {
+        const cellSize = mapCanvas.width / gridMap.length;
+        const playerX = playerPosition.col * cellSize + cellSize / 2;
+        const playerY = playerPosition.row * cellSize + cellSize / 2;
+
+        // Draw a dot for the player
+        mapContext.beginPath();
+        mapContext.arc(playerX, playerY, 5, 0, 2 * Math.PI);
+        mapContext.fillStyle = 'red';
+        mapContext.fill();
+        mapContext.stroke();
+    }
+
+    function displayMembersPage() {
+        console.log("Showing Members Page");
 
         // Hide inbox
         const inboxContainer = document.getElementById('inbox-container');
+        mapCanvas.style.display = 'none';
         inboxContainer.style.display = 'none';
-    
-}
+    }
 
     function displayHomePage() {
-    console.log("Showing Home Page");
+        console.log("Showing Home Page");
 
-    // Display inbox
-    const inboxContainer = document.getElementById('inbox-container');
-    inboxContainer.style.display = 'block';
+        // Display inbox
+        const inboxContainer = document.getElementById('inbox-container');
+        inboxContainer.style.display = 'block';
+        mapCanvas.style.display = 'none';
 
-    // Add any additional inbox-related functionality here
-}
+        // Add any additional inbox-related functionality here
+    }
 
-    function displayCaravanPage()
-{
-
-    console.log("Showing Caravan Page");
-
+    function displayCaravanPage() {
+        console.log("Showing Caravan Page");
 
         // Hide inbox
         const inboxContainer = document.getElementById('inbox-container');
         inboxContainer.style.display = 'none';
-}
+        mapCanvas.style.display = 'none';
+    }
 
-function createDirectionButtons() {
-    const directions = ['North', 'East', 'South', 'West'];
+    function createDirectionButtons() {
+        const directions = ['North', 'East', 'South', 'West'];
 
-    directions.forEach(direction => {
-        const button = createButton(direction, `${direction.toLowerCase()}-button`);
-        button.addEventListener('click', function() {
-            followPath(direction.toLowerCase());
+        directions.forEach(direction => {
+            const button = createButton(direction, `${direction.toLowerCase()}-button`);
+            console.log(`${direction.toLowerCase()}-button`);
+            button.addEventListener('click', function() {
+                followPath(direction.toLowerCase());
+            });
         });
-    });
-}
+    }
 
-
-    
-
-
+    // Initial update of the map display
+    updateMapDisplay();
+    mapCanvas.style.display = 'none'; // Hide the map initially
 });
