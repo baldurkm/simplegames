@@ -19,3 +19,13 @@ function createDirectionButtons() {
         });
     });
 }
+
+    // Function to create a button
+    function createButton(label, id) {
+        const button = document.createElement('button');
+        button.textContent = label;
+        button.id = id;
+        button.style.cursor = 'pointer';
+        gameContainer.appendChild(button);
+        return button;
+    }
