@@ -12,12 +12,13 @@ document.addEventListener('DOMContentLoaded', function() {
     const membersButton = createButton('Members', 'members-button');
     const mapButton = createButton('Map', 'map-button');
     const mainMenuButton = createButton('Main Menu', 'menu-button');
-    createDirectionButtons();
+
 
     
     // Map variables
     const mapCanvas = createMapCanvas();
     const mapContext = mapCanvas.getContext('2d');
+    createDirectionButtons();
 
     // gameplay variables
     let events;
@@ -385,11 +386,12 @@ document.addEventListener('DOMContentLoaded', function() {
         inboxContainer.style.display = 'none';
         mapCanvas.style.display = 'none';
     }
+    
     function createDirectionButtons() {
         const directions = ['North', 'East', 'South', 'West'];
 
         directions.forEach(direction => {
-            const button = createButton(direction, `${direction.toLowerCase()}-button`);
+            const button = createButton(direction, `${direction.toLowerCase()}-button direction-button`);
             console.log(`${direction.toLowerCase()}-button`);
             button.addEventListener('click', function() {
                 followPath(direction.toLowerCase());
