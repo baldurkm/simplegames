@@ -97,21 +97,26 @@ body {
 #west-button {
     bottom: 10%;
     left: 2%;
+    display: none;
 }
 
 #north-button {
     bottom: 10%;
     left: 12%;
+    display: none;
+}
 }
 
 #east-button {
     bottom: 10%;
     left: 22%;
+    display: none;
 }
 
 #south-button {
     bottom: 10%;
     left: 32%;
+    display: none;
 }
 
 #menu-button {
