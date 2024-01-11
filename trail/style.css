@@ -90,6 +90,26 @@ body {
     left: 32%;
 }
 
+#west-button {
+    bottom: 1%;
+    left: 2%;
+}
+
+#north-button {
+    bottom: 1%;
+    left: 12%;
+}
+
+#east-button {
+    bottom: 1%;
+    left: 22%;
+}
+
+#south-button {
+    bottom: 1%;
+    left: 32%;
+}
+
 #menu-button {
     bottom: 1%;
     right: 1%;
