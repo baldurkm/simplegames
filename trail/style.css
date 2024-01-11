@@ -58,6 +58,10 @@ body {
 #caravan-button,
 #members-button,
 #map-button,
+#north-button,
+#south-button,
+#east-button,
+#west-button,
 #menu-button {
     padding: 10px 20px;
     font-size: 16px;
@@ -121,4 +125,30 @@ body {
     margin: 20px;
     overflow-y: auto;
     display: none;
+}
+
+/* Add a new class to control the visibility of the map container */
+.map-container {
+    display: none;
+}
+
+#map-screen {
+    width: calc(100% - 40px);
+    height: calc(100% - 40px);
+    margin: 20px;
+    overflow-y: auto;
+    display: none;
+    position: relative;
+}
+
+#map-canvas {
+    display: none;
+    width: 40%; /* Adjust the width of the map canvas as needed */
+    height: 40%; /* Adjust the height of the map canvas as needed */
+    position: absolute; /* Change position to absolute */
+    margin-left: 35%;
+    margin-top: 10%;
+    top: 0;
+    left: 0;
+    border: 2px solid #000;
 }
