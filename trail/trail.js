@@ -274,6 +274,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Show map only on the map page
         mapCanvas.style.display = 'block';
+        body.classList.add('map-page');
 
         // Hide direction buttons when not on the map page
         const directionButtons = document.querySelectorAll('.direction-button');
@@ -348,6 +349,7 @@ document.addEventListener('DOMContentLoaded', function() {
         directionButtons.forEach(button => {
             button.style.display = 'none';
         });
+        body.classList.remove('map-page');
 
         // Hide inbox
         const inboxContainer = document.getElementById('inbox-container');
@@ -363,6 +365,7 @@ document.addEventListener('DOMContentLoaded', function() {
         directionButtons.forEach(button => {
             button.style.display = 'none';
         });
+        body.classList.remove('map-page');
 
         // Display inbox
         const inboxContainer = document.getElementById('inbox-container');
@@ -380,6 +383,7 @@ document.addEventListener('DOMContentLoaded', function() {
         directionButtons.forEach(button => {
             button.style.display = 'none';
         });
+        body.classList.remove('map-page');
 
         // Hide inbox
         const inboxContainer = document.getElementById('inbox-container');
