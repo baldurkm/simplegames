@@ -82,56 +82,60 @@ document.addEventListener('DOMContentLoaded', function() {
     mapButton.addEventListener('click', displayMapPage);
     mainMenuButton.addEventListener('click', () => handleButtonClick('Main Menu'));
 
-    function updateScreenContainerContent(screenLabel, content) {
-        // Hide all screen elements by default
-        mainDisplay.style.display = 'none';
-        screenContainer.style.display = 'none';
-        mapCanvas.style.display = 'none';
+function updateScreenContainerContent(screenLabel, content) {
+    // Hide all screen elements by default
+    mainDisplay.style.display = 'none';
+    screenContainer.style.display = 'none';
+    mapCanvas.style.display = 'none';
 
-        // Determine which element to display based on the current state
-        switch (AppState.currentPage) {
-            case 'Home':
-                mainDisplay.textContent = content;
-                mainDisplay.style.display = 'block';
-                inboxContainer.style.display = 'block';
-                const directionButtons = document.querySelectorAll('.direction-button');
-                directionButtons.forEach(button => {
-                    button.style.display = 'none';
-                });
-                break;
-            case 'Caravan':
-                const caravanContainer = document.createElement('div');
-                caravanContainer.id = 'caravan-container';
-                displayCaravanMembers();
-                screenContainer.appendChild(caravanContainer);
-                const directionButtons = document.querySelectorAll('.direction-button');
-                directionButtons.forEach(button => {
-                    button.style.display = 'none';
-                });
-                inboxContainer.style.display = 'none';
-            case 'Members':
-                screenContainer.innerHTML = `<p>${AppState.currentPage}: ${content}</p>`;
-                screenContainer.style.display = 'block';
-                inboxContainer.style.display = 'none';
-                const directionButtons = document.querySelectorAll('.direction-button');
-                directionButtons.forEach(button => {
-                    button.style.display = 'none';
-                });
-                break;
-            case 'Map':
-                // Additional logic for the map screen
-                screenContainer.style.display = 'block';
-                mapCanvas.style.display = 'block';
-                inboxContainer.style.display = 'none';
-                const directionButtons = document.querySelectorAll('.direction-button');
-                directionButtons.forEach(button => {
-                    button.style.display = 'block';
-                });
-                updateMapDisplay();                
-                break;
-            // Add additional cases for other screens if needed
-        }
+    // Declare directionButtons once here
+    let directionButtons;
+
+    // Determine which element to display based on the current state
+    switch (AppState.currentPage) {
+        case 'Home':
+            mainDisplay.textContent = content;
+            mainDisplay.style.display = 'block';
+            inboxContainer.style.display = 'block';
+            directionButtons = document.querySelectorAll('.direction-button');
+            directionButtons.forEach(button => {
+                button.style.display = 'none';
+            });
+            break;
+        case 'Caravan':
+            const caravanContainer = document.createElement('div');
+            caravanContainer.id = 'caravan-container';
+            displayCaravanMembers();
+            screenContainer.appendChild(caravanContainer);
+            directionButtons = document.querySelectorAll('.direction-button');
+            directionButtons.forEach(button => {
+                button.style.display = 'none';
+            });
+            inboxContainer.style.display = 'none';
+            break;
+        case 'Members':
+            screenContainer.innerHTML = `<p>${AppState.currentPage}: ${content}</p>`;
+            screenContainer.style.display = 'block';
+            inboxContainer.style.display = 'none';
+            directionButtons = document.querySelectorAll('.direction-button');
+            directionButtons.forEach(button => {
+                button.style.display = 'none';
+            });
+            break;
+        case 'Map':
+            // Additional logic for the map screen
+            screenContainer.style.display = 'block';
+            mapCanvas.style.display = 'block';
+            inboxContainer.style.display = 'none';
+            directionButtons = document.querySelectorAll('.direction-button');
+            directionButtons.forEach(button => {
+                button.style.display = 'block';
+            });
+            updateMapDisplay();
+            break;
+        // Add additional cases for other screens if needed
     }
+}
 
     function handleContinueButtonClick() {
         dayCounter++;
