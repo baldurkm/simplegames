@@ -75,12 +75,13 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .catch(error => console.error('Error fetching events:', error));
 
-    continueButton.addEventListener('click', handleContinueButtonClick);
-    homeButton.addEventListener('click', displayHomePage);
-    caravanButton.addEventListener('click', displayCaravanPage);
-    membersButton.addEventListener('click', displayMembersPage);
-    mapButton.addEventListener('click', displayMapPage);
+    continueButton.addEventListener('click', () => handleButtonClick('Continue'));
+    homeButton.addEventListener('click', () => handleButtonClick('Home'));
+    caravanButton.addEventListener('click', () => handleButtonClick('Caravan'));
+    membersButton.addEventListener('click', () => handleButtonClick('Members'));
+    mapButton.addEventListener('click', () => handleButtonClick('Map'));
     mainMenuButton.addEventListener('click', () => handleButtonClick('Main Menu'));
+
 
 function updateScreenContainerContent(screenLabel, content) {
     // Hide all screen elements by default
