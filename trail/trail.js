@@ -395,19 +395,42 @@ function displayMapPage() {
         // Add any additional inbox-related functionality here
     }
 
-    function displayCaravanPage() {
-        console.log("Showing Caravan Page");
+function displayCaravanPage() {
+    console.log("Showing Caravan Page");
 
-        const directionButtons = document.querySelectorAll('.direction-button');
-        directionButtons.forEach(button => {
-            button.style.display = 'none';
+    // Hide inbox
+    const inboxContainer = document.getElementById('inbox-container');
+    inboxContainer.style.display = 'none';
+    mapCanvas.style.display = 'none';
+
+    // Display caravan members
+    const caravanContainer = document.createElement('div');
+    caravanContainer.id = 'caravan-container';
+
+    // Check if there are members in the caravan
+    if (caravanMembers.length > 0) {
+        // Create a list to display members
+        const memberList = document.createElement('ul');
+
+        // Iterate through caravan members and create list items
+        caravanMembers.forEach((member, index) => {
+            const listItem = document.createElement('li');
+            listItem.textContent = `Member ${index + 1}: ${member.name} (Age: ${member.age}, Health: ${member.health})`;
+            memberList.appendChild(listItem);
         });
 
-        // Hide inbox
-        const inboxContainer = document.getElementById('inbox-container');
-        inboxContainer.style.display = 'none';
-        mapCanvas.style.display = 'none';
+        // Append the member list to the caravan container
+        caravanContainer.appendChild(memberList);
+    } else {
+        // Display a message if there are no members in the caravan
+        const noMembersMessage = document.createElement('p');
+        noMembersMessage.textContent = 'Your caravan has no members.';
+        caravanContainer.appendChild(noMembersMessage);
     }
+
+    // Append the caravan container to the screen container
+    screenContainer.appendChild(caravanContainer);
+}
     
     function createDirectionButtons() {
         const directions = ['North', 'East', 'South', 'West'];
