@@ -83,7 +83,7 @@ document.addEventListener('DOMContentLoaded', function() {
     mainMenuButton.addEventListener('click', () => handleButtonClick('Main Menu'));
 
 
-function updateScreenContainerContent(screenLabel, content) {
+function updateScreenContainerContent(screenLabel) {
     // Hide all screen elements by default
     mainDisplay.style.display = 'none';
     screenContainer.style.display = 'none';
@@ -95,7 +95,6 @@ function updateScreenContainerContent(screenLabel, content) {
     // Determine which element to display based on the current state
     switch (AppState.currentPage) {
         case 'Home':
-            mainDisplay.textContent = content;
             mainDisplay.style.display = 'block';
             inboxContainer.style.display = 'block';
             directionButtons = document.querySelectorAll('.direction-button');
@@ -115,7 +114,6 @@ function updateScreenContainerContent(screenLabel, content) {
             inboxContainer.style.display = 'none';
             break;
         case 'Members':
-            screenContainer.innerHTML = `<p>${AppState.currentPage}: ${content}</p>`;
             screenContainer.style.display = 'block';
             inboxContainer.style.display = 'none';
             directionButtons = document.querySelectorAll('.direction-button');
@@ -192,9 +190,9 @@ function updateScreenContainerContent(screenLabel, content) {
     }
 
     // Function to handle button clicks
-    function handleButtonClick(buttonLabel, content) {
+    function handleButtonClick(buttonLabel) {
         // Update the screen container content based on the button clicked
-        updateScreenContainerContent(buttonLabel, content);
+        updateScreenContainerContent(buttonLabel);
         // Show/hide the inbox based on the button clicked
     }
 
@@ -212,11 +210,6 @@ function updateScreenContainerContent(screenLabel, content) {
         container.id = 'screen-container';
         gameContainer.appendChild(container);
         return container;
-    }
-
-    // Function to update the content of the screen container
-    function updateScreenContainerContent(screenLabel, content) {
-        screenContainer.innerHTML = `<p>${screenLabel}: ${content}</p>`;
     }
 
     // Function to create the main display
