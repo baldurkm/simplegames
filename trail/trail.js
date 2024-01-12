@@ -103,6 +103,7 @@ function updateScreenContainerContent(screenLabel) {
             directionButtons.forEach(button => {
                 button.style.display = 'none';
             });
+            displayHomePage();
             break;
         case 'Caravan':
             console.log("Showing Caravan");
@@ -115,6 +116,7 @@ function updateScreenContainerContent(screenLabel) {
                 button.style.display = 'none';
             });
             inboxContainer.style.display = 'none';
+            displayCaravanPage();
             break;
         case 'Members':
             console.log("Showing Members");
@@ -124,6 +126,7 @@ function updateScreenContainerContent(screenLabel) {
             directionButtons.forEach(button => {
                 button.style.display = 'none';
             });
+            displayMemberPage();
             break;
         case 'Map':
             console.log("Showing Map");
@@ -136,6 +139,7 @@ function updateScreenContainerContent(screenLabel) {
                 button.style.display = 'block';
             });
             updateMapDisplay();
+            displayMapPage();
             break;
         // Add additional cases for other screens if needed
     }
@@ -195,31 +199,9 @@ function updateScreenContainerContent(screenLabel) {
     }
 
 function handleButtonClick(buttonLabel) {
-    switch (buttonLabel) {
-        case 'Continue':
-            handleContinueButtonClick();
-            break;
-        case 'Home':
-            displayHomePage();
-            break;
-        case 'Caravan':
-            displayCaravanPage();
-            break;
-        case 'Members':
-            displayMembersPage();
-            break;
-        case 'Map':
-            displayMapPage();
-            break;
-        case 'Main Menu':
-            // Add logic for Main Menu button if needed
-            break;
-        // Add additional cases for other buttons if needed
-        default:
-            console.log(`Unhandled button click: ${buttonLabel}`);
-    }
+    AppState.currentPage = buttonLabel;  // Update the current page before calling updateScreenContainerContent
+    updateScreenContainerContent(AppState.currentPage);
 }
-
     // Function to create the game container
     function createGameContainer() {
         const container = document.createElement('div');
