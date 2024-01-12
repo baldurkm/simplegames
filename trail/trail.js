@@ -194,12 +194,31 @@ function updateScreenContainerContent(screenLabel) {
         return filteredEvents[randomIndex];
     }
 
-    // Function to handle button clicks
-    function handleButtonClick(buttonLabel) {
-        // Update the screen container content based on the button clicked
-        updateScreenContainerContent(buttonLabel);
-        // Show/hide the inbox based on the button clicked
+function handleButtonClick(buttonLabel) {
+    switch (buttonLabel) {
+        case 'Continue':
+            handleContinueButtonClick();
+            break;
+        case 'Home':
+            displayHomePage();
+            break;
+        case 'Caravan':
+            displayCaravanPage();
+            break;
+        case 'Members':
+            displayMembersPage();
+            break;
+        case 'Map':
+            displayMapPage();
+            break;
+        case 'Main Menu':
+            // Add logic for Main Menu button if needed
+            break;
+        // Add additional cases for other buttons if needed
+        default:
+            console.log(`Unhandled button click: ${buttonLabel}`);
     }
+}
 
     // Function to create the game container
     function createGameContainer() {
