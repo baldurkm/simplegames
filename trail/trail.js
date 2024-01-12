@@ -413,12 +413,12 @@ function displayCaravanPage() {
     caravanContainer.id = 'caravan-container';
 
     // Check if there are members in the caravan
-    if (caravanMembers.length > 0) {
+    if (members.length > 0) {
         // Create a list to display members
         const memberList = document.createElement('ul');
 
         // Iterate through caravan members and create list items
-        caravanMembers.forEach((member, index) => {
+        members.forEach((member, index) => {
             const listItem = document.createElement('li');
             listItem.textContent = `Member ${index + 1}: ${member.name} (Age: ${member.age}, Health: ${member.health})`;
             memberList.appendChild(listItem);
