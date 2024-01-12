@@ -96,6 +96,7 @@ function updateScreenContainerContent(screenLabel) {
     // Determine which element to display based on the current state
     switch (AppState.currentPage) {
         case 'Home':
+            console.log("Showing Home");
             mainDisplay.style.display = 'block';
             inboxContainer.style.display = 'block';
             directionButtons = document.querySelectorAll('.direction-button');
@@ -104,6 +105,7 @@ function updateScreenContainerContent(screenLabel) {
             });
             break;
         case 'Caravan':
+            console.log("Showing Caravan");
             const caravanContainer = document.createElement('div');
             caravanContainer.id = 'caravan-container';
             displayCaravanMembers();
@@ -115,6 +117,7 @@ function updateScreenContainerContent(screenLabel) {
             inboxContainer.style.display = 'none';
             break;
         case 'Members':
+            console.log("Showing Members");
             screenContainer.style.display = 'block';
             inboxContainer.style.display = 'none';
             directionButtons = document.querySelectorAll('.direction-button');
@@ -123,6 +126,7 @@ function updateScreenContainerContent(screenLabel) {
             });
             break;
         case 'Map':
+            console.log("Showing Map");
             // Additional logic for the map screen
             screenContainer.style.display = 'block';
             mapCanvas.style.display = 'block';
