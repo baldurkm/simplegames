@@ -402,9 +402,11 @@ function displayCaravanPage() {
     const inboxContainer = document.getElementById('inbox-container');
     inboxContainer.style.display = 'none';
     mapCanvas.style.display = 'none';
-    const directionButtons = document.querySelectorAll('.direction-button');
-    directionButtons.forEach(button => {
-    button.style.display = 'none';
+    
+        const directionButtons = document.querySelectorAll('.direction-button');
+        directionButtons.forEach(button => {
+            button.style.display = 'none';
+        });
 
     // Display caravan members
     const caravanContainer = document.createElement('div');
