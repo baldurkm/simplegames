@@ -84,6 +84,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 function updateScreenContainerContent(screenLabel) {
+    console.log("Called updateScreenContainerContent");
     // Hide all screen elements by default
     mainDisplay.style.display = 'none';
     screenContainer.style.display = 'none';
