@@ -52,6 +52,10 @@ document.addEventListener('DOMContentLoaded', function() {
     let currentLocation = 'Missouri';
     let chosenDirection = null;
 
+        const AppState = {
+        currentPage: 'Home',
+        };
+
     // location mapping
     const gridMap = [
     ['Forest', 'Plains', 'River', 'Mountain', 'Plains'],
@@ -84,22 +88,46 @@ document.addEventListener('DOMContentLoaded', function() {
         screenContainer.style.display = 'none';
         mapCanvas.style.display = 'none';
 
-        // Determine which element to display based on the screen label
-        switch (screenLabel) {
+        // Determine which element to display based on the current state
+        switch (AppState.currentPage) {
             case 'Home':
                 mainDisplay.textContent = content;
                 mainDisplay.style.display = 'block';
+                inboxContainer.style.display = 'block';
+                const directionButtons = document.querySelectorAll('.direction-button');
+                directionButtons.forEach(button => {
+                    button.style.display = 'none';
+                });
                 break;
             case 'Caravan':
+                const caravanContainer = document.createElement('div');
+                caravanContainer.id = 'caravan-container';
+                displayCaravanMembers();
+                screenContainer.appendChild(caravanContainer);
+                const directionButtons = document.querySelectorAll('.direction-button');
+                directionButtons.forEach(button => {
+                    button.style.display = 'none';
+                });
+                inboxContainer.style.display = 'none';
             case 'Members':
-                screenContainer.innerHTML = `<p>${screenLabel}: ${content}</p>`;
+                screenContainer.innerHTML = `<p>${AppState.currentPage}: ${content}</p>`;
                 screenContainer.style.display = 'block';
+                inboxContainer.style.display = 'none';
+                const directionButtons = document.querySelectorAll('.direction-button');
+                directionButtons.forEach(button => {
+                    button.style.display = 'none';
+                });
                 break;
             case 'Map':
-                // Additional logic for map screen
+                // Additional logic for the map screen
                 screenContainer.style.display = 'block';
                 mapCanvas.style.display = 'block';
-                updateMapDisplay(); // Add this line to update the map when displaying the map screen
+                inboxContainer.style.display = 'none';
+                const directionButtons = document.querySelectorAll('.direction-button');
+                directionButtons.forEach(button => {
+                    button.style.display = 'block';
+                });
+                updateMapDisplay();                
                 break;
             // Add additional cases for other screens if needed
         }
@@ -293,21 +321,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Display information about the current cell and possible paths
     }
 
-function displayMapPage() {
-    console.log("Showing Map Page");
 
-    // Show map only on the map page
-    mapCanvas.style.display = 'block';
-
-    // Hide direction buttons when not on the map page
-    const directionButtons = document.querySelectorAll('.direction-button');
-    directionButtons.forEach(button => {
-        button.style.display = 'block';
-    });
-
-    // Hide inbox container
-    inboxContainer.style.display = 'none';
-}
 
     function createMapCanvas() {
         const canvas = document.createElement('canvas');
@@ -364,56 +378,28 @@ function displayMapPage() {
         mapContext.stroke();
     }
 
+    function displayMapPage() {
+        console.log("Showing Map Page");
+        AppState.currentPage = 'Map';
+    }
+    
     function displayMembersPage() {
         console.log("Showing Members Page");
-
-        // Hide inbox
-        const inboxContainer = document.getElementById('inbox-container');
-        mapCanvas.style.display = 'none';
-        inboxContainer.style.display = 'none';
-
-        const directionButtons = document.querySelectorAll('.direction-button');
-        directionButtons.forEach(button => {
-            button.style.display = 'none';
-        });
+        AppState.currentPage = 'Members';
     }
 
     function displayHomePage() {
         console.log("Showing Home Page");
-
-        // Hide direction buttons when not on the map page
-        const directionButtons = document.querySelectorAll('.direction-button');
-        directionButtons.forEach(button => {
-            button.style.display = 'none';
-        });
-
-        // Display inbox
-        const inboxContainer = document.getElementById('inbox-container');
-        inboxContainer.style.display = 'block';
-        mapCanvas.style.display = 'none';
-
-        // Add any additional inbox-related functionality here
+        AppState.currentPage = 'Home';
     }
 
-function displayCaravanPage() {
-    console.log("Showing Caravan Page");
+    function displayCaravanPage() {
+        console.log("Showing Caravan Page");
+        AppState.currentPage = 'Caravan';
+    }
 
-    // Hide elements
-    const inboxContainer = document.getElementById('inbox-container');
-    inboxContainer.style.display = 'none';
-    mapCanvas.style.display = 'none';
-    
-        const directionButtons = document.querySelectorAll('.direction-button');
-        directionButtons.forEach(button => {
-            button.style.display = 'none';
-        });
-
-    // Display caravan members
-    const caravanContainer = document.createElement('div');
-    caravanContainer.id = 'caravan-container';
-
-    // Check if there are members in the caravan
-    if (members.length > 0) {
+    function displayCaravanMembers() {
+            if (members.length > 0) {
         // Create a list to display members
         const memberList = document.createElement('ul');
 
@@ -432,10 +418,7 @@ function displayCaravanPage() {
         noMembersMessage.textContent = 'Your caravan has no members.';
         caravanContainer.appendChild(noMembersMessage);
     }
-
-    // Append the caravan container to the screen container
-    screenContainer.appendChild(caravanContainer);
-}
+    }
     
     function createDirectionButtons() {
         const directions = ['North', 'East', 'South', 'West'];
