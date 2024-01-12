@@ -20,6 +20,30 @@ document.addEventListener('DOMContentLoaded', function() {
     const mapContext = mapCanvas.getContext('2d');
     createDirectionButtons();
 
+    //caravan members
+    // Define a caravanMembers array to store members
+    let members = [];
+
+    // Function to add a member to the caravan
+    function addMember(name, age, health, skills) {
+        const member = {
+            name: name,
+            age: age,
+            health: health,
+            skills: skills
+        };
+
+        members.push(member);
+    }
+
+    // Example usage
+    addMember('John Doe', 30, 100, ['Survival', 'Cooking']);
+    addMember('Jane Smith', 25, 80, ['Medical', 'Fishing']);
+
+    // Accessing caravan members
+    console.log(members[0].name); // Output: John Doe
+    console.log(members[1].skills); // Output: ['Medical', 'Fishing']
+
     // gameplay variables
     let events;
     let dayCounter = 0;
@@ -269,22 +293,21 @@ document.addEventListener('DOMContentLoaded', function() {
         // Display information about the current cell and possible paths
     }
 
-    function displayMapPage() {
-        console.log("Showing Map Page");
+function displayMapPage() {
+    console.log("Showing Map Page");
 
-        // Show map only on the map page
-        mapCanvas.style.display = 'block';
-        body.classList.add('map-page');
+    // Show map only on the map page
+    mapCanvas.style.display = 'block';
 
-        // Hide direction buttons when not on the map page
-        const directionButtons = document.querySelectorAll('.direction-button');
-        directionButtons.forEach(button => {
-            button.style.display = 'block';
-        });
+    // Hide direction buttons when not on the map page
+    const directionButtons = document.querySelectorAll('.direction-button');
+    directionButtons.forEach(button => {
+        button.style.display = 'block';
+    });
 
-        // Hide inbox
-        inboxContainer.style.display = 'none';
-    }
+    // Hide inbox container
+    inboxContainer.style.display = 'none';
+}
 
     function createMapCanvas() {
         const canvas = document.createElement('canvas');
@@ -344,17 +367,15 @@ document.addEventListener('DOMContentLoaded', function() {
     function displayMembersPage() {
         console.log("Showing Members Page");
 
-        // Hide direction buttons when not on the map page
-        const directionButtons = document.querySelectorAll('.direction-button');
-        directionButtons.forEach(button => {
-            button.style.display = 'none';
-        });
-        body.classList.remove('map-page');
-
         // Hide inbox
         const inboxContainer = document.getElementById('inbox-container');
         mapCanvas.style.display = 'none';
         inboxContainer.style.display = 'none';
+
+        const directionButtons = document.querySelectorAll('.direction-button');
+        directionButtons.forEach(button => {
+            button.style.display = 'none';
+        });
     }
 
     function displayHomePage() {
@@ -365,7 +386,6 @@ document.addEventListener('DOMContentLoaded', function() {
         directionButtons.forEach(button => {
             button.style.display = 'none';
         });
-        body.classList.remove('map-page');
 
         // Display inbox
         const inboxContainer = document.getElementById('inbox-container');
@@ -378,12 +398,10 @@ document.addEventListener('DOMContentLoaded', function() {
     function displayCaravanPage() {
         console.log("Showing Caravan Page");
 
-        // Hide direction buttons when not on the map page
         const directionButtons = document.querySelectorAll('.direction-button');
         directionButtons.forEach(button => {
             button.style.display = 'none';
         });
-        body.classList.remove('map-page');
 
         // Hide inbox
         const inboxContainer = document.getElementById('inbox-container');
@@ -395,8 +413,8 @@ document.addEventListener('DOMContentLoaded', function() {
         const directions = ['North', 'East', 'South', 'West'];
 
         directions.forEach(direction => {
-            const button = createButton(direction, `${direction.toLowerCase()}-button direction-button`);
-            console.log(`${direction.toLowerCase()}-button`);
+            const button = createButton(direction, `${direction.toLowerCase()}-button`);
+            button.classList.add('direction-button');
             button.addEventListener('click', function() {
                 followPath(direction.toLowerCase());
             });

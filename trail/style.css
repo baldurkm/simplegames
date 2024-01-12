@@ -97,26 +97,24 @@ body {
 #west-button {
     bottom: 10%;
     left: 2%;
-    display: none;
+
 }
 
 #north-button {
     bottom: 10%;
     left: 12%;
-    display: none;
-}
+
 }
 
 #east-button {
     bottom: 10%;
     left: 22%;
-    display: none;
+
 }
 
 #south-button {
     bottom: 10%;
     left: 32%;
-    display: none;
 }
 
 #menu-button {
@@ -132,10 +130,6 @@ body {
     display: none;
 }
 
-/* Add a new class to control the visibility of the map container */
-.map-container {
-    display: none;
-}
 
 #map-screen {
     width: calc(100% - 40px);
@@ -156,4 +150,8 @@ body {
     top: 0;
     left: 0;
     border: 2px solid #000;
+}
+
+.direction-button {
+    display: none;
 }
