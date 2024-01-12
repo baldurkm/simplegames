@@ -398,10 +398,13 @@ function displayMapPage() {
 function displayCaravanPage() {
     console.log("Showing Caravan Page");
 
-    // Hide inbox
+    // Hide elements
     const inboxContainer = document.getElementById('inbox-container');
     inboxContainer.style.display = 'none';
     mapCanvas.style.display = 'none';
+    const directionButtons = document.querySelectorAll('.direction-button');
+    directionButtons.forEach(button => {
+    button.style.display = 'none';
 
     // Display caravan members
     const caravanContainer = document.createElement('div');
