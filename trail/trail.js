@@ -93,6 +93,9 @@ function updateScreenContainerContent(screenLabel) {
     // Declare directionButtons once here
     let directionButtons;
 
+    // Declare caravanContainer here
+    let caravanContainer;
+
     // Determine which element to display based on the current state
     switch (AppState.currentPage) {
         case 'Home':
@@ -107,9 +110,9 @@ function updateScreenContainerContent(screenLabel) {
             break;
         case 'Caravan':
             console.log("Showing Caravan");
-            const caravanContainer = document.createElement('div');
+            caravanContainer = document.createElement('div');
             caravanContainer.id = 'caravan-container';
-            displayCaravanMembers();
+            displayCaravanMembers(caravanContainer);
             screenContainer.appendChild(caravanContainer);
             directionButtons = document.querySelectorAll('.direction-button');
             directionButtons.forEach(button => {
@@ -144,6 +147,7 @@ function updateScreenContainerContent(screenLabel) {
         // Add additional cases for other screens if needed
     }
 }
+
 
     function handleContinueButtonClick() {
         dayCounter++;
