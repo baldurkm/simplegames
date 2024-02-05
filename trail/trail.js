@@ -401,13 +401,13 @@ function handleButtonClick(buttonLabel) {
         AppState.currentPage = 'Home';
     }
 
-    function displayCaravanPage() {
-        console.log("Showing Caravan Page");
-        AppState.currentPage = 'Caravan';
-    }
+function displayCaravanPage() {
+    console.log("Showing Caravan Page");
+    AppState.currentPage = 'Caravan';
+}
 
-    function displayCaravanMembers() {
-            if (members.length > 0) {
+function displayCaravanMembers(caravanContainer) {
+    if (members.length > 0) {
         // Create a list to display members
         const memberList = document.createElement('ul');
 
@@ -426,7 +426,7 @@ function handleButtonClick(buttonLabel) {
         noMembersMessage.textContent = 'Your caravan has no members.';
         caravanContainer.appendChild(noMembersMessage);
     }
-    }
+}
     
     function createDirectionButtons() {
         const directions = ['North', 'East', 'South', 'West'];
