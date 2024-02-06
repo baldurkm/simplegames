@@ -129,7 +129,7 @@ function updateScreenContainerContent(screenLabel) {
             directionButtons.forEach(button => {
                 button.style.display = 'none';
             });
-            displayMemberPage();
+            displayMembersPage();
             break;
         case 'Map':
             console.log("Showing Map");
