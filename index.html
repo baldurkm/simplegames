@@ -1,63 +1,172 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>SimpleGames.Click</title>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="keywords" content="Games, Simple Games, Browser Games, Fast Games, Games to Play at Work">
-    <meta name="description" content="SimpleGames.click is an online platform that offers a delightful collection of minimalist and easy-to-play games designed to entertain and engage users of all ages.">
-    <meta name="author" content="SimpleGames.click">
+    <title>SimpleGames.Click</title>
     <style>
-    body {
-        font-family: Courier;
-    }
-    @media screen and (max-width: 600px) {
         body {
-            font-size: 18px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            margin: 0 auto;
+            max-width: 1200px;
+            padding: 0 20px;
         }
-        img {
-            width: 100%;
-            height: auto;
+
+        header {
+            background-color: #f8f9fa;
+            padding: 20px;
+            text-align: center;
         }
-        h2 {
-            margin: 10px 0;
+
+        nav ul {
+            list-style-type: none;
+            margin: 0;
+            padding: 0;
         }
-        a {
-            margin-bottom: 10px;
-            display: block;
-        }
-        i {
+
+        nav ul li {
             display: inline;
-            margin-left: 10px;
+            margin-right: 20px;
         }
-    }
+
+        nav ul li a {
+            text-decoration: none;
+            color: #333;
+        }
+
+        h1 {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+
+        h2 {
+            margin-top: 20px;
+            margin-bottom: 10px;
+        }
+
+        a {
+            color: #007bff;
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        .games-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .game {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .game-image {
+    	    background-color: #ccc;
+    	    height: 100px;
+    	    width: 100px;
+    	    margin: auto; /* Center-align the image */
+    	    margin-bottom: 10px;
+        }
+
+        @media screen and (max-width: 600px) {
+            h1 {
+                font-size: 1.5em;
+            }
+
+            nav ul li {
+                display: block;
+                margin-bottom: 10px;
+            }
+        }
     </style>
 </head>
 <body>
-<img alt="A logo that reads Simple Games in pixel art style" src="logo.jpg">
+<header>
+    <nav>
+        <ul>
+            <li><a href="#games">Games</a></li>
+            <li><a href="#development">Development</a></li>
+            <li><a href="https://baldurk.itch.io/">itch.io</a></li>
+        </ul>
+    </nav>
+    <h1>SimpleGames.click</h1>
+    <img alt="A logo that reads Simple Games in pixel art style" src="logo.jpg">
+
+<p>Hi! My name is Baldur and I make games in my spare time. Here are some of my games.</p>
+
+</header>
+
+<section id="games">
     <h2>Browser Games</h2>
-    <br>
-    <a href="td2/index.html">Open World Tower Defense</a> <i>NEW GAME 27 SEP 2023. This one has been a long time coming. Still under development.</i> <br> 
-    <a href="td/td.html">Tower Defense</a> <i>Final version posted on itch.io</i> <i>mobile friendly</i> <br> 
-    <a href="space invaders.html">Space Invaders</a><br>
-    <a href="flappy/flappy.html">Flappy Bird</a>  <i>mobile friendly</i> <br>
-    <a href="solitaire/index.html">Solitaire</a> <br>
-    <a href="hangman.html">Hangman</a> <br>
-    <a href="pong.html">Pong</a> <br>
-    <a href="minesweeper.html">Minesweeper</a> <br>
-    <a href="tetris.html">Tetris</a> <br>
-    <a href="snake.html">Snake</a> <br>
-    <a href="2048.html">2048</a> <i>mobile friendly</i> <br> 
-    <a href="tic.html">Tic-Tac-Toe</a> <i>mobile friendly</i> <br> 
-    <a href="pacman-js/index.html">Pac-Man</a>  <i>semi-mobile friendly</i><br>
-    <a href="chess-ai/index.html">Chess vs. AI</a> <i>mobile friendly</i> <br>
-    <br>
-    <h2>Games in development</h2>
-    <a href="trail/index.html">trail</a> <br>
-    <br>
+    <div class="games-grid">
+        <div class="game">
+            <div class="game-image"></div>
+            <a href="td2/index.html">Open World Tower Defense</a> <br>
+            <i>NEW GAME 27 SEP 2023. This one has been a long time coming. Still under development.</i>
+        </div>
+        <div class="game">
+            <div class="game-image"></div>
+            <a href="td/td.html">Tower Defense</a> <br>
+            <i>Final version posted on itch.io</i>
+            <i>mobile friendly</i>
+        </div>
+        <div class="game">
+            <div class="game-image"></div>
+            <a href="space invaders.html">Space Invaders</a>
+        </div>
+        <div class="game">
+            <div class="game-image"></div>
+            <a href="flappy/flappy.html">Flappy Bird</a> <br>
+            <i>mobile friendly</i>
+        </div>
+        <div class="game">
+            <div class="game-image"></div>
+            <a href="hangman.html">Hangman</a>
+        </div>
+        <div class="game">
+            <div class="game-image"></div>
+            <a href="pong.html">Pong</a>
+        </div>
+        <div class="game">
+            <div class="game-image"></div>
+            <a href="tetris.html">Tetris</a>
+        </div>
+        <div class="game">
+            <div class="game-image"></div>
+            <a href="snake.html">Snake</a>
+        </div>
+        <div class="game">
+            <div class="game-image"></div>
+            <a href="tic.html">Tic-Tac-Toe</a> <br>
+            <i>mobile friendly</i>
+        </div>
+    </div>
+</section>
+
+<section id="development">
+    <h2>Games in Development</h2>
+    <div class="games-grid">
+        <div class="game">
+            <div class="game-image"></div>
+            <a href="trail/index.html">Trail</a>
+        </div>
+        <div class="game">
+            <div class="game-image"></div>
+            <a href="https://main.d3shvxb8gmzgb1.amplifyapp.com/">Outer Town</a>
+        </div>
+    </div>
+</section>
+
+<footer>
     <p>More games are constantly being added. Check back regularly.</p>
     <p>Website launched August 2023.</p>
-    <p>I also have an itch.io page: </p><a href="https://baldurk.itch.io/">baldurk.itch.io</a>
-    <br>
+    <p>I also have an <a href="https://baldurk.itch.io/">itch.io page</a>.</p>
+</footer>
+
 </body>
 </html>
